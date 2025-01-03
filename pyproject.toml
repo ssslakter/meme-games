@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=42"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "meme-games"
+version = "0.1.0"
+description = "A collection of meme games"
+authors = [
+    { name="Your Name", email="your.email@example.com" }
+]
+requires-python = ">=3.13"
+license = { text = "MIT" }
+dependencies = [
+    "python-fasthtml","fastsql"
+]
+
+
+[tool.setuptools]
+packages = ["meme_games"]
