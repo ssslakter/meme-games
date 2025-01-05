@@ -1,0 +1,81 @@
+// Variables for reusable styles
+$card-width: 200px;
+$card-height: 300px;
+$border-color: grey;
+$hover-scale: 1.05;
+$transition-time: 0.3s;
+
+// Mixin for hover effects
+@mixin hover-effect {
+  transition: transform $transition-time ease-in-out;
+  &:hover {
+    transform: scale($hover-scale);
+  }
+}
+
+// Base card styles
+.player-card {
+  width: $card-width;
+  height: $card-height;
+  position: relative;
+  border: 1px solid $border-color;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  // @include hover-effect;
+}
+
+.player-card .controls{
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+
+// Other styles
+
+.avatar {
+  width: $card-width;
+  height: $card-height;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.muted{
+    opacity: 0.5
+}
+
+
+%panel {
+    background-color: rgba(255, 252, 245, 0.58);
+}
+
+.controls {
+@extend %panel;
+}
+
+.controls-block {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  display: flex;
+  flex-direction: row-reverse;
+}
+
+.controls:hover {
+  background-color: lightgreen;
+  cursor: pointer;
+}
+
+#players{
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 30px
+}

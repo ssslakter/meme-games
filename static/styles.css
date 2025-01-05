@@ -1,18 +1,58 @@
-.muted{
-    opacity: 0.5
+.player-card {
+  width: 200px;
+  height: 300px;
+  position: relative;
+  border: 1px solid grey;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-#background {
-    background-image: url("https://meme-police.ru/who-am-i/old-german-bar.jpg");
-    background-size: cover;
-    filter: blur(5px) brightness(0.8);
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    transition: filter 2s;
-    z-index: -1;
+.player-card .controls {
+  position: absolute;
+  top: 0;
+  right: 0;
 }
 
-.panel {
-    background-color: rgba(255, 252, 245, 0.58);
+.avatar {
+  width: 200px;
+  height: 300px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
+
+.muted {
+  opacity: 0.5;
+}
+
+.controls {
+  background-color: rgba(255, 252, 245, 0.58);
+}
+
+.controls-block {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  display: flex;
+  flex-direction: row-reverse;
+}
+
+.controls:hover {
+  background-color: lightgreen;
+  cursor: pointer;
+}
+
+#players {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 30px;
+}
+
+/*# sourceMappingURL=styles.css.map */
