@@ -28,7 +28,9 @@ class BaseLobbyMember:
 
     def __getattr__(self, name): return getattr(self.user, name)
     def spectate(self): self.is_player = False
-    def play(self): self.is_player = True
+    def play(self): 
+        self.joined_at = dt.datetime.now()
+        self.is_player = True
     def connect(self, ws: FunctionType): self.ws = ws
     def disconnect(self): self.ws = None
     def add_score(self, score: int): self.score += score

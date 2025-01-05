@@ -1,4 +1,4 @@
-.player-card {
+.player-card, .new-player-card {
   width: 200px;
   height: 300px;
   position: relative;
@@ -11,11 +11,26 @@
   justify-content: center;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
-
-.player-card .controls {
+.player-card .controls, .new-player-card .controls {
   position: absolute;
   top: 0;
   right: 0;
+}
+
+.new-player-card {
+  cursor: pointer;
+}
+.new-player-card .join-icon {
+  font-size: 120px;
+  color: grey;
+  transition: transform 0.3s ease, color 0.3s ease;
+}
+.new-player-card:hover {
+  background: #e0e0e0;
+}
+.new-player-card:hover .join-icon {
+  transform: scale(1.2);
+  color: black;
 }
 
 .avatar {
@@ -30,8 +45,18 @@
   opacity: 0.5;
 }
 
-.controls {
+.controls, .spectators {
   background-color: rgba(255, 252, 245, 0.58);
+}
+
+.spectators {
+  position: absolute;
+  right: 0;
+  top: 0;
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 8px;
+  padding-right: 8px;
 }
 
 .controls-block {
