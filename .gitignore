@@ -1,4 +1,9 @@
+notebooks/static
+user-content
 .sesskey
+*.db
+*.db-shm
+*.db-wal
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -14,5 +14,6 @@ hdrs = [
           .settings:hover {
               background-color: lightgreen;
               cursor: pointer;
-          }''')
+          }'''),
+    Style(rel="stylesheet", href="/styles.css")
 ]

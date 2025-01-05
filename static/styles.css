@@ -1,0 +1,18 @@
+.muted{
+    opacity: 0.5
+}
+
+#background {
+    background-image: url("https://meme-police.ru/who-am-i/old-german-bar.jpg");
+    background-size: cover;
+    filter: blur(5px) brightness(0.8);
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    transition: filter 2s;
+    z-index: -1;
+}
+
+.panel {
+    background-color: rgba(255, 252, 245, 0.58);
+}

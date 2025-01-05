@@ -5,7 +5,6 @@ __all__ = ['User', 'init_db', 'UserManager', 'user_beforeware', 'UserName', 'Nam
 
 # %% ../notebooks/user.ipynb 1
 from functools import wraps
-from uuid import uuid4
 from dataclasses import dataclass
 from fasthtml.common import *
 from fasthtml.jupyter import JupyUvi, HTMX
@@ -18,13 +17,25 @@ from .utils import *
 class User:
     uid: str
     name: str
+    filename: Optional[str] = None
 
+    async def set_picture(self, file: UploadFile, content_path='./user-content'):
+        fname = self.uid + '.'+file.filename.split('.')[-1]
+        dir = Path(content_path)
+        dir.mkdir(parents=True, exist_ok=True)
+        with open(dir/fname, 'wb') as f: f.write(await file.read())
+        self.filename = str(fname)
+
+    def reset_picture(self, content_path='./user-content'):
+        path = Path(content_path)/self.filename
+        path.unlink(missing_ok=True)
+        self.filename = None
 
 # %% ../notebooks/user.ipynb 3
 @fc.delegates(Database)
 def init_db(filename_or_conn=':memory:', **kwargs):
     db = Database(filename_or_conn, **kwargs)
-    db.create(User, pk='uid')
+    db.create(User, pk='uid', transform=True)
     db.t.user.cls = User
     return db
 
@@ -33,7 +44,7 @@ class UserManager(DataManager):
     def __post_init__(self): self.users: fl.Table = self.db.t.user
     
     def create(self, uid: str=None, name: str = 'null'):
-        u = User(uid or str(uuid4()), name)
+        u = User(uid or random_id(), name)
         self.users.insert(u)
         return u
     
@@ -42,19 +53,20 @@ class UserManager(DataManager):
     
     def get_or_create(self, sess: dict, name: str = 'null') -> User:
         sess = sess['session'] if 'session' in sess else sess
-        uid = sess.setdefault('uid', str(uuid4()))
+        uid = sess.setdefault('uid', random_id())
         if uid in self.users: return self.users[uid]
         return self.create(uid, name)
 
 # %% ../notebooks/user.ipynb 5
 def user_beforeware(manager: UserManager, skip=None):
     '''Makes sure that request always contains valid user'''
-    def before(req: Request): req.state.user = manager.get_or_create(req)
+    def before(req: Request): req.state.user = manager.get_or_create(req.session)
     return Beforeware(before, skip)
 
 # %% ../notebooks/user.ipynb 6
-def UserName(u: User, cls='username', **kwargs):
-    return Span(u.name, dt_user = u.uid, cls=cls, **kwargs, hx_swap_oob=f'outerHTML:span[dt-user="{u.uid}"]')
+def UserName(u: User, is_connected=True, cls='username', **kwargs):
+    cls += ' muted' if not is_connected else ''
+    return Span(u.name, dt_user = u.uid, cls=cls, **kwargs, hx_swap_oob=f"outerHTML:span[dt-user='{u.uid}']")
 
 def NameSetting():
     return Div(
