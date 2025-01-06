@@ -1,20 +1,51 @@
 // Variables for reusable styles
 $card-width: 200px;
-$card-height: 300px;
+$card-height: 250px;
 $border-color: grey;
 $hover-scale: 1.05;
 $transition-time: 0.3s;
+$bg-url: url("/user-content/6r34a.png");
+
+
+$blur-amount: 5px;
+$brightness: 0.5;
+
+body {
+  margin: 0;
+  background-color: black;
+}
+
+.background {
+  position: absolute;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+
+  // Overlay background with adjustments
+  background: black $bg-url center no-repeat;
+  background-color: black;
+  background-size: cover;
+
+  // Effects
+  filter: blur($blur-amount) brightness($brightness);
+}
 
 // Mixin for hover effects
 @mixin hover-effect {
   transition: transform $transition-time ease-in-out;
+
   &:hover {
     transform: scale($hover-scale);
   }
 }
 
-// Base card styles
-.player-card {
+
+.panel {
+  background-color: rgba(255, 252, 245, 0.58);
+}
+
+.card {
+  @extend .panel;
   width: $card-width;
   height: $card-height;
   position: relative;
@@ -26,27 +57,50 @@ $transition-time: 0.3s;
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  // @include hover-effect;
+}
 
-  .controls{
+// Base card styles
+.player-card {
+  @extend .card;
+
+  &:hover .controls {
+    display: block;
     position: absolute;
     top: 0;
     right: 0;
-}
+  }
+
+  .controls {
+    display: none;
+  }
+
+  .notes.hover {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    z-index: 1;
+  }
+
+  .notes {
+    display: none;
+  }
+
 }
 
 .new-player-card {
-  @extend .player-card;
+  @extend .card;
+  opacity: 0.5;
   cursor: pointer;
 
   .join-icon {
     font-size: 120px;
-    color: grey;
+    color: $border-color;
     transition: transform 0.3s ease, color 0.3s ease;
   }
 
   &:hover {
-    background: #e0e0e0;
     .join-icon {
       transform: scale(1.2);
       color: black;
@@ -65,36 +119,57 @@ $transition-time: 0.3s;
   background-repeat: no-repeat;
 }
 
-.muted{
-    opacity: 0.5
+.muted {
+  opacity: 0.5
 }
 
 
-%panel {
-    background-color: rgba(255, 252, 245, 0.58);
-}
 
 .spectators {
-  @extend %panel;
+  @extend .panel;
   position: absolute;
   right: 0;
   top: 0;
   display: flex;
-  flex-direction: row-reverse;
+  padding: 3px;
+
+  div {
+    display: flex;
+    flex-direction: row;
+    gap: 6px;
+  }
+
   gap: 8px;
   padding-right: 8px;
 }
 
 .controls {
-@extend %panel;
+  @extend .panel;
+}
+
+.spectators-controls {
+  @extend .spectators;
+
+  &:hover {
+    cursor: pointer;
+  }
 }
 
 .controls-block {
+  @extend .panel;
   position: fixed;
   bottom: 0;
   right: 0;
   display: flex;
   flex-direction: row-reverse;
+
+  &:hover div {
+    display: flex;
+  }
+
+  div {
+    display: none;
+  }
 }
 
 .controls:hover {
@@ -102,10 +177,31 @@ $transition-time: 0.3s;
   cursor: pointer;
 }
 
-#players{
+// Players table
+
+#players {
+  padding-top: 80px;
   display: flex;
   flex-direction: row;
   justify-content: center;
   flex-wrap: wrap;
   gap: 30px
+}
+
+// notes and notes block
+
+$notes-font-size: 14px;
+
+.notes {
+  @extend .panel;
+  padding: 8px;
+  width: 200px;
+  height: 200px;
+  font-size: $notes-font-size;
+}
+
+#notes-block {
+  display: flex;
+  justify-content: center;
+  margin-top: 50px;
 }

@@ -6,7 +6,7 @@ class WhoAmIPlayer(BaseLobbyMember):
     label: str = ''
     notes: str = ''
 
-    def set_note(self, notes: str): self.notes = notes
+    def set_notes(self, notes: str): self.notes = notes
     def set_label(self, label: str): self.label = label
 
 

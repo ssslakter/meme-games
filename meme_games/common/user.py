@@ -67,17 +67,11 @@ def user_beforeware(manager: UserManager, skip=None):
     return Beforeware(before, skip)
 
 # %% ../../notebooks/user.ipynb 6
-def UserName(u: User, is_connected=True, cls='username', **kwargs):
+def UserName(r: User, u: User, is_connected=True, cls='username', **kwargs):
     cls += ' muted' if not is_connected else ''
-    return Span(u.name, dt_user = u.uid, cls=cls, **kwargs, hx_swap_oob=f"outerHTML:span[dt-user='{u.uid}']")
+    return Span(B(u.name) if r.uid==u.uid else u.name, dt_username = u.uid, cls=cls, **kwargs, hx_swap_oob=f"outerHTML:span[dt-username='{u.uid}']")
 
 def NameSetting():
     return Div(
-        I('edit', cls="material-icons"),
-        Form(Input(type='hidden', name='name'), hx_put='/name', hx_swap='none'),
-        _=r"""on click get prompt('Enter your name')
-                 if it != null then if it.trim() != "" then set x to it
-                 make RegExp from '\\s+', 'g' called myregx
-                 set x to x.replace(myregx, ' ').trim() then log x
-                 put x into @value of <form input/> in me then trigger submit on <form/> in me
-                 """, cls='controls')
+        I('edit', cls="material-icons", hx_put='/name', hx_swap='none', hx_prompt='Enter your name'),
+        cls='controls')
