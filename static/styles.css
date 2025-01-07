@@ -19,7 +19,7 @@ body {
 }
 
 .card, .new-player-card, .player-card {
-  width: 200px;
+  width: 220px;
   height: 250px;
   position: relative;
   border: 1px solid grey;
@@ -32,11 +32,15 @@ body {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
+.player-card {
+  overflow: visible;
+}
 .player-card:hover .controls {
   display: block;
   position: absolute;
   top: 0;
   right: 0;
+  z-index: 10;
 }
 .player-card .controls {
   display: none;
@@ -47,10 +51,44 @@ body {
   top: 0;
   left: 0;
   height: 100%;
-  z-index: 1;
+  width: 100%;
+  z-index: 10;
+  padding: 0;
+  margin-top: -1px;
+  margin-left: -1px;
 }
 .player-card .notes {
   display: none;
+}
+.player-card .label {
+  position: absolute;
+  top: 0;
+  box-shadow: 0 0 5px 1px black;
+  left: calc(50% - 220px / 2 / 2);
+  z-index: 3;
+  padding: 5px;
+  background-color: rgb(255, 239, 201);
+  cursor: move;
+}
+.player-card .label textarea {
+  width: calc(220px / 2);
+  height: calc(250px / 4);
+  background-color: transparent;
+  border: none;
+}
+.player-card .label-hidden::after {
+  content: "?";
+  position: absolute;
+  font-size: 40px;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  bottom: 0;
+  right: 0;
+  color: gray;
+  pointer-events: none;
 }
 
 .new-player-card {
@@ -68,7 +106,7 @@ body {
 }
 
 .avatar {
-  width: 200px;
+  width: 220px;
   height: 250px;
   background-size: cover;
   background-position: center;

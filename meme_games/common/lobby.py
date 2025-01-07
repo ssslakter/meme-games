@@ -23,7 +23,8 @@ logger = logging.getLogger(__name__)
 class BaseLobbyMember:
     user: User
     is_player: bool = False
-    ws: Optional[FunctionType] = None
+    send: Optional[FunctionType] = None
+    ws: Optional[WebSocket] = None
     joined_at: dt.datetime = field(default_factory=dt.datetime.now)
     score: int = 0
 
@@ -32,14 +33,16 @@ class BaseLobbyMember:
     def play(self): 
         self.joined_at = dt.datetime.now()
         self.is_player = True
-    def connect(self, ws: FunctionType): self.ws = ws
-    def disconnect(self): self.ws = None
+    def connect(self, send: FunctionType, ws: Optional[WebSocket]=None): self.send, self.ws = send, ws
+    def disconnect(self): self.send, self.ws = None, None
     def add_score(self, score: int): self.score += score
     def reset_score(self): self.score = 0
     def sync_user(self, u: User): self.user = u
 
     @property
-    def is_connected(self): return self.ws is not None
+    def is_connected(self): return self.send is not None
+    
+    def __eq__(self, other: Union[User, 'BaseLobbyMember']): return self.uid == other.uid
 
 # %% ../../notebooks/lobby.ipynb 4
 TMember = TypeVar('TMember', bound=BaseLobbyMember)
@@ -61,12 +64,12 @@ class BaseLobby(Generic[TMember]):
                         key=lambda m: m.joined_at): yield m
 
     @classmethod
-    def create_member(cls, user: User, ws: FunctionType = None, **kwargs):
-        return BaseLobbyMember(user, ws=ws, **kwargs)
+    def create_member(cls, user: User, send: FunctionType = None, **kwargs):
+        return BaseLobbyMember(user, send=send, **kwargs)
     
-    def add_member(self, user: User, ws: FunctionType = None, **kwargs):
+    def add_member(self, user: User, send: FunctionType = None, **kwargs):
         self.last_active = dt.datetime.now()
-        m = self.create_member(user, ws=ws, **kwargs)
+        m = self.create_member(user, send=send, **kwargs)
         self.members[user.uid] = m
         return m
 

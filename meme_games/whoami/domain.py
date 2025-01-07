@@ -13,5 +13,5 @@ class WhoAmIPlayer(BaseLobbyMember):
 @dataclass
 class WhoAmILobby(BaseLobby[WhoAmIPlayer]):
     @classmethod
-    def create_member(cls, user: User, ws=None):
-        return WhoAmIPlayer(user, ws=ws)
+    def create_member(cls, user: User, send=None, ws=None):
+        return WhoAmIPlayer(user, send=send, ws=ws)

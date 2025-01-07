@@ -1,6 +1,8 @@
 // Variables for reusable styles
-$card-width: 200px;
+$card-width: 220px;
 $card-height: 250px;
+$label-width: calc(#{$card-width}/2);
+$label-height: calc(#{$card-height}/4);
 $border-color: grey;
 $hover-scale: 1.05;
 $transition-time: 0.3s;
@@ -62,12 +64,14 @@ body {
 // Base card styles
 .player-card {
   @extend .card;
+  overflow: visible;
 
   &:hover .controls {
     display: block;
     position: absolute;
     top: 0;
     right: 0;
+    z-index: 10;
   }
 
   .controls {
@@ -80,12 +84,50 @@ body {
     top: 0;
     left: 0;
     height: 100%;
-    z-index: 1;
+    width: 100%;
+    z-index: 10;
+    padding: 0;
+    margin-top: -1px;
+    margin-left: -1px;
   }
 
   .notes {
     display: none;
   }
+
+  .label{
+    position: absolute;
+    top: 0;
+    box-shadow: 0 0 5px 1px black;
+    left: calc(50% - $label-width/2);
+    z-index: 3;
+    padding: 5px;
+    background-color: rgba(255, 239, 201, 1);
+    cursor: move;
+    
+    textarea {
+      width: $label-width;
+      height: $label-height;
+      background-color: transparent;
+      border: none;
+      
+    }
+  }
+
+  .label-hidden::after{
+    content: '?';
+    position: absolute;
+    font-size: 40px;
+    left: 0;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    bottom: 0;
+    right: 0;
+    color: gray;
+    pointer-events: none;
+}
 
 }
 

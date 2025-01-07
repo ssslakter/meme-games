@@ -33,6 +33,8 @@ class User:
         path = Path(content_path)/self.filename
         path.unlink(missing_ok=True)
         self.filename = None
+        
+    def __eq__(self, value: 'User'): return self.uid == value.uid
 
 # %% ../../notebooks/user.ipynb 3
 @fc.delegates(Database)
@@ -69,7 +71,7 @@ def user_beforeware(manager: UserManager, skip=None):
 # %% ../../notebooks/user.ipynb 6
 def UserName(r: User, u: User, is_connected=True, cls='username', **kwargs):
     cls += ' muted' if not is_connected else ''
-    return Span(B(u.name) if r.uid==u.uid else u.name, dt_username = u.uid, cls=cls, **kwargs, hx_swap_oob=f"outerHTML:span[dt-username='{u.uid}']")
+    return Span(B(u.name) if r==u else u.name, dt_username = u.uid, cls=cls, **kwargs, hx_swap_oob=f"outerHTML:span[dt-username='{u.uid}']")
 
 def NameSetting():
     return Div(

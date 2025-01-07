@@ -1,0 +1,6 @@
+def autoReturn(el, parent)
+    set pRect to parent.getBoundingClientRect()
+    set meRect to el.getBoundingClientRect()
+    
+    set @x of el to Math.max(0, Math.min(@x of el, pRect.width - meRect.width))
+    set @y of el to Math.max(0, Math.min(@y of el, pRect.height - meRect.height))
