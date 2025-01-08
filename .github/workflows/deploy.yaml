@@ -13,30 +13,5 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set Up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.13'
-
-      - name: Reuse Virtual Environment
-        run: |
-          if [ -d ".venv" ]; then
-            echo "Using existing virtual environment"
-          else
-            echo "Creating virtual environment"
-            python -m venv .venv
-          fi
-
-      - name: Install Dependencies
-        run: |
-          source .venv/bin/activate
-          pip install .
-
-      - name: Stop Previous Script
-        run: pkill -f '.venv/bin/python run.py' || echo "No running process found"
-  
-      - name: Start New Script
-        run: |
-            pwd
-            source .venv/bin/activate
-            nohup python run.py > app.log 2>&1 &
+      - name: Run docker-compose
+        run: docker compose up -d
