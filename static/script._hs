@@ -1,6 +1,68 @@
-def autoReturn(el, parent)
+def getTransformParams(el, parent, position, scale)
     set pRect to parent.getBoundingClientRect()
     set meRect to el.getBoundingClientRect()
     
-    set @x of el to Math.max(0, Math.min(@x of el, pRect.width - meRect.width))
-    set @y of el to Math.max(0, Math.min(@y of el, pRect.height - meRect.height))
+    set x to Math.max(0, Math.min(position.x, pRect.width - meRect.width))
+    set y to Math.max(0, Math.min(position.y, pRect.height - meRect.height))
+    
+    set curPos to getStylePosition(el)
+    set currScale to getStyleScale(el)
+    
+    return {x: x, y: y, curX: curPos.x, curY: curPos.y, targetScale: scale, currScale: currScale}
+end
+
+def applyTransform(el, params)
+    set currScale to params.currScale then set targScale to params.targetScale
+    if params.x == params.curX and params.y == params.curY and 
+        currScale.width == targScale.width and 
+        currScale.height == targScale.height
+        set el.isClicked to false
+        then exit
+    end
+    
+    set *transition of el to 'left 0.5s ease, top 0.5s ease'
+    if params.x != params.curX or params.y != params.curY then
+        set *left of el to params.x px then set *top of el to params.y px
+    end
+    
+    if targScale.width != currScale.width or 
+        targScale.height != currScale.height then
+        log "scaling", currScale, "to", targScale
+        set txt to first <textarea/> in el
+        set *transition of txt to 'width 0.5s ease, height 0.5s ease'
+        set *width of txt to targScale.width px 
+        set *height of txt to targScale.height px
+    end
+    
+    wait 0.5s then set *transition of el to ''
+    if txt then set *transition of txt to ''
+    set el.isClicked to false
+end
+
+
+def isJSON(str)
+    set x to JSON.parse(str)
+    return true
+catch e
+    return false
+end
+
+def getStyleScale(el)
+    set txtStyles to window.getComputedStyle(first <textarea/> in el)
+    return {width: parseInt(txtStyles.width), height: parseInt(txtStyles.height)}
+
+def getStylePosition(el)
+    set style to window.getComputedStyle(el)
+    return {x: parseInt(style.left), y: parseInt(style.top)}
+
+def setupResizeObserver(el)
+    js let resizeObserver = new ResizeObserver((entries) => {
+        for (let entry of entries) {
+                const resizeEvent = new CustomEvent('textareaResize', {
+                    detail: { width, height },
+                });
+                textarea.dispatchEvent(resizeEvent);
+        }
+    });
+    resizeObserver.observe(me);
+end

@@ -7,6 +7,7 @@ from ..common import *
 
 logger = logging.getLogger(__name__)
 
+
 def Spectators(reciever: WhoAmIPlayer | User, lobby: WhoAmILobby):
     spectate_controls = dict(hx_post='/spectate', hx_swap='beforeend', hx_target='#players', cls='spectators-controls')
     return Div(
@@ -17,68 +18,77 @@ def Spectators(reciever: WhoAmIPlayer | User, lobby: WhoAmILobby):
 
 def Avatar(u: User):
     filename = u.filename
-    filename = ('/user-content/'+filename) if filename else '/media/default-avatar.jpg'
+    filename = ('/user-content/' + filename) if filename else '/media/default-avatar.jpg'
     return Div(style=f'background-image: url({filename})', cls='avatar', hx_swap_oob=f"outerHTML:[dt-avatar='{u.uid}']", dt_avatar=u.uid)
 
 
-def PlayerLabelText(r: WhoAmIPlayer|User, owner: WhoAmIPlayer):
-    return (Textarea(owner.label,placeholder='enter label', ws_send=True, name='label', dt_label=owner.uid,
-                    _="on change set my.value to me.innerHTML",hx_vals={'owner_uid': owner.uid},
-                    hx_trigger="input changed delay:500ms", hx_swap_oob=f"innerHTML:[dt-label='{owner.uid}']")
+def PlayerLabelText(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
+    return (Textarea(owner.label, placeholder='enter label', ws_send=True, name='label', dt_label=owner.uid,
+                     _="on change set my.value to me.innerHTML", hx_vals={'owner_uid': owner.uid},
+                     hx_trigger="input changed delay:500ms", hx_swap_oob=f"innerHTML:[dt-label='{owner.uid}']")
             if r.uid != owner.uid
             else Textarea(readonly=True))
 
 
-def PlayerLabel(r: WhoAmIPlayer|User, owner: WhoAmIPlayer):
+def PlayerLabel(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
     return Div(PlayerLabelText(r, owner),
-               Div(hx_trigger='moved', ws_send=True, 
+               Div(hx_trigger='moved', ws_send=True,
                    hx_vals='js:{x: event.detail.x, y: event.detail.y, width: event.detail.width, height: event.detail.height, owner_uid: event.detail.owner_uid}'),
-               cls='draggable label' + (' label-hidden' if r == owner else ''), 
-               _ = f'''
-            on mousedown 
-                if event.target != first <textarea/> in me 
-                set me.isDragging to true
-                set {{offsetX: event.clientX - me.offsetLeft, offsetY: event.clientY - me.offsetTop}} on me
-                set *user-select of body to 'none'
+               cls='draggable label' + (' label-hidden' if r == owner else ''),
+               _=f'''
+            on mousedown
+                if not me.isClicked
+                    set me.isClicked to true
+                    if event.target != first <textarea/> in me
+                        set me.isDragging to true
+                        set {{offsetX: event.clientX - me.offsetLeft, offsetY: event.clientY - me.offsetTop}} on me
+                        set *user-select of body to 'none'
+                    end
+                end
             end
             on mousemove from document
-                if me.isDragging 
-                    set @x to event.clientX - me.offsetX
-                    set @y to event.clientY - me.offsetY
-                    set *left to @x px then set *top to @y px
+                if me.isDragging
+                    set *left to (event.clientX - me.offsetX) px
+                    set *top to (event.clientY - me.offsetY) px
                 end
             on mouseup from document
-                if me.isDragging
+                if me.isClicked then
                     set me.isDragging to false
                     set *user-select of body to ''
-                    set *transition to 'left 0.5s ease, top 0.5s ease'
-                    call autoReturn(me, me.parentElement)
-                    set txtStyles to window.getComputedStyle(first <textarea/> in me)
-                    trigger moved (x: parseInt(@x), y: parseInt(@y), \
-                        width: parseInt(txtStyles.width), height: parseInt(txtStyles.height), \
-                        owner_uid: '{owner.uid}') on first <div/> in me
-                    set *left to @x px then set *top to @y px
-                    wait 0.5s then set *transition to ''
+                    set scale to getStyleScale(me) then set pos to getStylePosition(me)
+                    set params to getTransformParams(me, me.parentElement, pos, scale)
+                    trigger moved (x: pos.x, y: pos.y, width: scale.width, height: scale.height, \
+                                   owner_uid: '{owner.uid}') on first <div/> in me
+                    call applyTransform(me, params)
+                end
+            on htmx:wsBeforeMessage from document
+                set msg to event.detail.message
+                if isJSON(msg) then set msg to JSON.parse(msg)
+                    if msg.owner_uid == '{owner.uid}' then
+                        set params to getTransformParams(me, me.parentElement, {{x: msg.x, y: msg.y}}, {{width: msg.width, height: msg.height}})
+                        call applyTransform(me, params)
+                        set txt to first <textarea/> in me
+                    end
                 end
             '''
-            )
+               )
 
 
-def PlayerCard(reciever: WhoAmIPlayer|User, p: WhoAmIPlayer, lobby: WhoAmILobby):
+def PlayerCard(reciever: WhoAmIPlayer | User, p: WhoAmIPlayer, lobby: WhoAmILobby):
     if not p.is_player: return
     if reciever == p:
-        edit =  I('edit', cls='controls material-icons',
-              _='on click set x to next <form input/> then x.click()')
-    else:  edit = (I('description',cls='material-icons controls',
+        edit = I('edit', cls='controls material-icons',
+                 _='on click set x to next <form input/> then x.click()')
+    else: edit = (I('description', cls='material-icons controls',
                     _='on mouseover send mouseover to next <.notes/>'),
-    Notes(reciever, p))
+                  Notes(reciever, p))
     return Div(edit,
                PlayerLabel(reciever, p),
                Form(Input(type='file', name='file', accept="image/*"), style='display: none;',
                     hx_trigger='change', hx_post='/picture', hx_swap='none'),
                Avatar(p.user),
                Div(UserName(reciever, p.user, is_connected=p.is_connected), " ✪" if lobby.host == p else None),
-        cls='player-card', dt_user=p.uid, _='on mouseleave remove .hover from .hover in me')
+               cls='player-card', dt_user=p.uid, _='on mouseleave remove .hover from .hover in me')
 
 
 def NewPlayerCard():
@@ -99,17 +109,17 @@ def Notes(reciever: WhoAmIPlayer | User, author: WhoAmIPlayer, **kwargs):
                     _='''on mouseover add .hover on me''')
 
 
-def NotesBlock(r: WhoAmIPlayer|User):
+def NotesBlock(r: WhoAmIPlayer | User):
     return Div(Notes(r, r) if is_player(r) else None, id='notes-block', hx_swap_oob='true')
 
 
-def Game(reciever: WhoAmIPlayer|User, lobby: WhoAmILobby):
+def Game(reciever: WhoAmIPlayer | User, lobby: WhoAmILobby):
     new_player = [] if is_player(reciever) else [NewPlayerCard()]
     return Div(
         Div(
-        *[PlayerCard(reciever, p, lobby) for p in lobby.sorted_members()] + new_player, id='players'),
+            *[PlayerCard(reciever, p, lobby) for p in lobby.sorted_members()] + new_player, id='players'),
         NotesBlock(reciever)
-        )
+    )
 
 
 def MainBlock(reciever: WhoAmIPlayer | User, lobby: WhoAmILobby):
@@ -126,8 +136,10 @@ def MainBlock(reciever: WhoAmIPlayer | User, lobby: WhoAmILobby):
 
 def JoinSpectators(r: WhoAmIPlayer, p: WhoAmIPlayer):
     return Div(UserName(r.user, p.user), hx_swap_oob='beforeend:#spectators')
-    
-def ActiveGameState(r: WhoAmIPlayer|User, lobby: WhoAmILobby): return Spectators(r, lobby), Game(r, lobby)
+
+
+def ActiveGameState(r: WhoAmIPlayer | User, lobby: WhoAmILobby): return Spectators(r, lobby), Game(r, lobby)
+
 
 def ws_fn(connected=True, render_fn: Callable = JoinSpectators):
     '''Returns a function that will be called when a user joins the lobby websocket'''
@@ -138,13 +150,15 @@ def ws_fn(connected=True, render_fn: Callable = JoinSpectators):
         if m := lobby.get_member(u.uid):
             if connected: m.connect(send, ws)
             else: m.disconnect()
-            def update(r, *_): 
+
+            def update(r, *_):
                 if r == u: return ActiveGameState(r, lobby), UserName(r.user, m.user, is_connected=connected)
                 return UserName(r.user, m.user, is_connected=connected)
         else:
             if not connected: return  # user not found in the lobby and not connecting
             m = lobby.add_member(u, send=send, ws=ws)
-            def update(r, *_): 
+
+            def update(r, *_):
                 if r == u: return ActiveGameState(r, lobby), render_fn(r, m)
                 return render_fn(r, m)
         await notify_all(lobby, update)
@@ -168,6 +182,7 @@ async def post(req: Request):
     p = lobby.get_member(req.state.user.uid)
     if p.is_player: return
     p.play()
+
     def update(r: WhoAmIPlayer, lobby):
         swap_position = 'beforeend:#players' if r.is_player else 'beforebegin:#players .new-player-card'
         return Div(hx_swap_oob=f"delete:#spectators [dt-username='{p.uid}']"), Div(PlayerCard(r, p, lobby), hx_swap_oob=swap_position)
@@ -181,6 +196,7 @@ async def post(req: Request):
     p = lobby.get_member(req.state.user.uid)
     if not p.is_player: return
     p.spectate()
+
     def update(r: WhoAmIPlayer, *_):
         return JoinSpectators(r, p), Div(hx_swap_oob=f"delete:div[dt-user='{p.user.uid}']")
     await notify_all(lobby, update)
@@ -200,7 +216,6 @@ async def post(req: Request, file: UploadFile):
     await notify_all(lobby, update)
 
 
-
 @rt('/notes')
 async def post(req: Request, text: str):
     lobby: WhoAmILobby = req.state.lobby
@@ -209,28 +224,28 @@ async def post(req: Request, text: str):
     p.set_notes(text)
     def update(r, *_): return Notes(r, p)
     await notify_all(lobby, update)
-    
+
 
 async def edit_label_text(sess, label: str, owner_uid: str):
     lobby: WhoAmILobby = lobby_manager.get_lobby(sess.get("lobby_id"))
     p = lobby.get_member(user_manager.get(sess.get('uid')).uid)
     owner = lobby.get_member(owner_uid)
-    if not (owner and p and p.is_player) or p==owner: return
+    if not (owner and p and p.is_player) or p == owner: return
     owner.set_label(label)
     def update(r, *_): return PlayerLabelText(r, owner)
     await notify_all(lobby, update, filter_fn=lambda m: m != owner)
-    
 
-async def edit_label_position(sess,  owner_uid: str,
+
+async def edit_label_position(sess, owner_uid: str,
                               x: int, y: int,
                               width: int, height: int):
     lobby: WhoAmILobby = lobby_manager.get_lobby(sess.get("lobby_id"))
     p = lobby.get_member(user_manager.get(sess.get('uid')).uid)
     owner = lobby.get_member(owner_uid)
     if not (p and owner): return
-    def update(r, *_): return PlayerLabel(r, owner)
-    # await p.ws.send_json(dict(x=x, y=y, width=width, height=height, owner_uid=owner.uid))
-    await p.send(H1('test'))
+    def update(*_): return dict(x=x, y=y, width=width, height=height, owner_uid=owner.uid)
+    await notify_all(lobby, update, json=True, filter_fn=lambda m: m != p)
+
 
 @app.ws('/ws/whoami', conn=ws_fn(), disconn=ws_fn(connected=False))
 async def ws(sess, data):
