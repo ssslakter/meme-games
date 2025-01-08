@@ -7,21 +7,43 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.9.0
+      - name: Set Up Python
+        uses: actions/setup-python@v4
         with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          python-version: '3.13'
 
-      - name: Deploy to VM
+      - name: Reuse Virtual Environment
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.VM_USER }}@${{ secrets.VM_IP }} "cd $PROJECT_PATH && .github/deploy.sh ${PROJECT_PATH}"
-        env:
-          PROJECT_PATH: ${{ secrets.PROJECT_PATH }}  # Pass the GitHub secret as an environment variable
-          VM_IP: ${{ secrets.VM_IP }}
-          VM_USER: ${{ secrets.VM_USER }}
+          if [ -d ".venv" ]; then
+            echo "Using existing virtual environment"
+          else
+            echo "Creating virtual environment"
+            python -m venv .venv
+          fi
+
+      - name: Cache Python Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+
+      - name: Install Dependencies
+        run: |
+          source .venv/bin/activate
+          pip install --upgrade pip
+          pip install .
+
+      - name: Stop Previous Script
+        run: pkill -f 'python run.py' || echo "No running process found"
+  
+      - name: Start New Script
+        run: nohup python run.py > app.log 2>&1 &
