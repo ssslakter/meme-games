@@ -27,23 +27,16 @@ jobs:
             python -m venv .venv
           fi
 
-      - name: Cache Python Dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-
       - name: Install Dependencies
         run: |
           source .venv/bin/activate
-          pip install --upgrade pip
           pip install .
 
       - name: Stop Previous Script
-        run: pkill -f 'python run.py' || echo "No running process found"
+        run: pkill -f '.venv/bin/python run.py' || echo "No running process found"
   
       - name: Start New Script
-        run: nohup python run.py > app.log 2>&1 &
+        run: |
+            pwd
+            source .venv/bin/activate
+            nohup python run.py > app.log 2>&1 &
