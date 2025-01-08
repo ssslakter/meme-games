@@ -7,12 +7,12 @@ name = "meme-games"
 version = "0.1.0"
 description = "A collection of meme games"
 authors = [
-    { name="Your Name", email="your.email@example.com" }
+    { name="Slava Chaunin", email="slava.chaunin@gmail.com" }
 ]
 requires-python = ">=3.12"
 license = { text = "MIT" }
 dependencies = [
-    "python-fasthtml","fastsql", "transitions"
+    "python-fasthtml"
 ]
 
 

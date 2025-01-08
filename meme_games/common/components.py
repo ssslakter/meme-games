@@ -1,3 +1,4 @@
+import urllib.parse
 from ..init import *
 
 
@@ -18,7 +19,8 @@ def Timer(time: dt.timedelta = dt.timedelta(hours=1)):
                 end
             end
             ''')
-    
+
+
 def LobbyInfo(lobby: Lobby):
     print(dt.datetime.now() - (lobby.last_active + lobby_manager.lobby_lifetime))
     return Div(f'{lobby.id}: ',
@@ -27,7 +29,7 @@ def LobbyInfo(lobby: Lobby):
                Div("Will be deleted in: ", Timer(lobby.last_active + lobby_manager.lobby_lifetime - dt.datetime.now())),
                style='display: flex; gap: 8px;',
                )
-    
+
 
 def Avatar(u: User):
     filename = u.filename
@@ -60,7 +62,7 @@ def Settings():
 @rt('/name')
 async def put(req: Request, hdrs: HtmxHeaders):
     u: User = req.state.user
-    name = ' '.join(hdrs.prompt.split())
+    name = ' '.join(urllib.parse.unquote(hdrs.prompt).split())
     u.name = name
     user_manager.update(u)
     lobby = lobby_manager.get_lobby(req.session.get("lobby_id"))

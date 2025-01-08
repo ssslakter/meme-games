@@ -2,7 +2,7 @@ from fasthtml.common import *
 
 from .common import *
 
-db = init_db('data.db')
+db = init_db('data/data.db')
 user_manager, lobby_manager = UserManager(db), LobbyManager()
 lobby_manager = LobbyManager()
 default_skips = [r'/static/.*', r'/user-content/.*']
@@ -17,5 +17,5 @@ hdrs = [
     Script(src="https://unpkg.com/interactjs/dist/interact.min.js"),
 ]
 
-app, rt = fast_app(pico=False, before=bwares, hdrs=hdrs, exts='ws', bodykw={'hx-boost': 'true'})
+app, rt = fast_app(pico=False, before=bwares, hdrs=hdrs, exts='ws', bodykw={'hx-boost': 'true'}, sess_path='data')
 app.static_route(ext='._hs')

@@ -17,19 +17,25 @@ def Spectators(reciever: WhoAmIPlayer | User, lobby: WhoAmILobby):
 
 
 def PlayerLabelText(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
-    return (Textarea(owner.label, placeholder='enter label', ws_send=True, name='label', dt_label=owner.uid,
-                     _="on change wait 200ms then set my.value to me.innerHTML", hx_vals={'owner_uid': owner.uid},
+    style=f'width: {owner.label_tfm.width}px; height: {owner.label_tfm.height}px;' if owner.label_tfm else ''
+    return (Textarea(owner.label_text, placeholder='enter label', ws_send=True, name='label', dt_label=owner.uid,
+                     _="on htmx:wsAfterMessage set my.value to me.innerHTML", hx_vals={'owner_uid': owner.uid},
+                     style=style,
                      hx_trigger="input changed delay:200ms", hx_swap_oob=f"innerHTML:[dt-label='{owner.uid}']")
             if r.uid != owner.uid
-            else Textarea(readonly=True))
+            else Textarea(readonly=True, style=style))
 
 
-def PlayerLabel(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
+def PlayerLabelFT(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
+    fields = ['x', 'y', 'width', 'height', 'owner_uid']
+    event_details = ', '.join([f"{field}: event.detail.transform.{field}" for field in fields])
     return Div(PlayerLabelText(r, owner),
                Div(hx_trigger='moved', ws_send=True,
-                   hx_vals='js:{x: event.detail.x, y: event.detail.y, width: event.detail.width, height: event.detail.height, owner_uid: event.detail.owner_uid}'),
+                   hx_vals=f'js:{{{event_details}}}'),
+               style=f'left: {owner.label_tfm.x}px; top: {owner.label_tfm.y}px' if owner.label_tfm else '',
                cls='draggable label' + (' label-hidden' if r == owner else ''),
                _=f'''
+            init set me.isClicked to false
             on mousedown
                 if not me.isClicked
                     set me.isClicked to true
@@ -50,22 +56,23 @@ def PlayerLabel(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
                     set me.isDragging to false
                     set *user-select of body to ''
                     set scale to getStyleScale(me) then set pos to getStylePosition(me)
-                    set params to getTransformParams(me, me.parentElement, pos, scale)
-                    trigger moved (x: pos.x, y: pos.y, width: scale.width, height: scale.height, \
-                                   owner_uid: '{owner.uid}') on first <div/> in me
-                    call applyTransform(me, params)
+                    set transform to Object.assign(scale, pos)
+                    set params to getTransformParams(me, me.parentElement, transform)
+                    set params.new.owner_uid to '{owner.uid}'
+                    trigger moved(transform: params.new) on first <div/> in me
+                    call applyTransform(me, params.old, params.new)
                 end
             on htmx:wsBeforeMessage from document
                 set msg to event.detail.message
                 if isJSON(msg) then set msg to JSON.parse(msg)
                     if msg.owner_uid == '{owner.uid}' then
-                        set params to getTransformParams(me, me.parentElement, {{x: msg.x, y: msg.y}}, {{width: msg.width, height: msg.height}})
-                        call applyTransform(me, params)
+                        set params to getTransformParams(me, me.parentElement, msg)
+                        call applyTransform(me, params.old, params.new)
                         set txt to first <textarea/> in me
                     end
                 end
-            '''
-               )
+            '''.strip()
+    )
 
 
 def PlayerCard(reciever: WhoAmIPlayer | User, p: WhoAmIPlayer, lobby: WhoAmILobby):
@@ -77,7 +84,7 @@ def PlayerCard(reciever: WhoAmIPlayer | User, p: WhoAmIPlayer, lobby: WhoAmILobb
                     _='on mouseover send mouseover to next <.notes/>'),
                   Notes(reciever, p))
     return Div(edit,
-               PlayerLabel(reciever, p),
+               PlayerLabelFT(reciever, p),
                Form(Input(type='file', name='file', accept="image/*"), style='display: none;',
                     hx_trigger='change', hx_post='/avatar', hx_swap='none'),
                Avatar(p.user),
@@ -126,7 +133,7 @@ def MainBlock(reciever: WhoAmIPlayer | User, lobby: WhoAmILobby):
                     Settings(),
                     hx_ext='ws', ws_connect='/ws/whoami'),
                 cls='who-am-i'
-                ))
+    ))
 
 
 # Routes
@@ -223,11 +230,13 @@ async def edit_label_text(sess, label: str, owner_uid: str):
 async def edit_label_position(sess, owner_uid: str,
                               x: int, y: int,
                               width: int, height: int):
+    kwargs = {'x': x, 'y': y, 'width': width, 'height': height}
     lobby: WhoAmILobby = lobby_manager.get_lobby(sess.get("lobby_id"))
     p = lobby.get_member(user_manager.get(sess.get('uid')).uid)
     owner = lobby.get_member(owner_uid)
     if not (p and owner): return
-    def update(*_): return dict(x=x, y=y, width=width, height=height, owner_uid=owner.uid)
+    owner.set_label_transform(**kwargs)
+    def update(*_): return dict(owner_uid=owner.uid, **kwargs)
     await notify_all(lobby, update, json=True, filter_fn=lambda m: m != p)
 
 

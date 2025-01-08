@@ -1,41 +1,37 @@
-def getTransformParams(el, parent, position, scale)
+def getTransformParams(el, parent, transformData)
     set pRect to parent.getBoundingClientRect()
     set meRect to el.getBoundingClientRect()
     
-    set x to Math.max(0, Math.min(position.x, pRect.width - meRect.width))
-    set y to Math.max(0, Math.min(position.y, pRect.height - meRect.height))
+    set transformData.x to Math.max(0, Math.min(transformData.x, pRect.width - meRect.width))
+    set transformData.y to Math.max(0, Math.min(transformData.y, pRect.height - meRect.height))
     
     set curPos to getStylePosition(el)
     set currScale to getStyleScale(el)
     
-    return {x: x, y: y, curX: curPos.x, curY: curPos.y, targetScale: scale, currScale: currScale}
+    return {new: transformData, old: Object.assign(curPos, currScale)}
 end
 
-def applyTransform(el, params)
-    set currScale to params.currScale then set targScale to params.targetScale
-    if params.x == params.curX and params.y == params.curY and 
-        currScale.width == targScale.width and 
-        currScale.height == targScale.height
+def applyTransform(el, old, new)
+    if new.x == old.x and new.y == old.y and 
+        old.width == new.width and 
+        old.height == new.height
         set el.isClicked to false
         then exit
     end
-    
-    set *transition of el to 'left 0.5s ease, top 0.5s ease'
-    if params.x != params.curX or params.y != params.curY then
-        set *left of el to params.x px then set *top of el to params.y px
+    add .animated to el
+    if old.x != new.x or old.y != new.y then
+        set *left of el to new.x px then set *top of el to new.y px
     end
     
-    if targScale.width != currScale.width or 
-        targScale.height != currScale.height then
-        log "scaling", currScale, "to", targScale
+    if old.width != new.width or 
+        old.height != new.height then
         set txt to first <textarea/> in el
-        set *transition of txt to 'width 0.5s ease, height 0.5s ease'
-        set *width of txt to targScale.width px 
-        set *height of txt to targScale.height px
+        set *width of txt to new.width px 
+        set *height of txt to new.height px
     end
     
-    wait 0.5s then set *transition of el to ''
-    if txt then set *transition of txt to ''
+    wait 0.5s then remove .animated from el
+    if txt then set *transition of txt to '' end
     set el.isClicked to false
 end
 

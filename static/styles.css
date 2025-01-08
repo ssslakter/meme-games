@@ -1,3 +1,7 @@
+textarea:focus, input:focus {
+  outline: none;
+}
+
 body.who-am-i {
   margin: 0;
   background-color: black;
@@ -91,6 +95,13 @@ body.who-am-i {
   pointer-events: none;
 }
 
+.label.animated {
+  transition: left 0.5s ease, top 0.5s ease;
+}
+.label.animated textarea {
+  transition: width 0.5s ease, height 0.5s ease;
+}
+
 .new-player-card {
   opacity: 0.5;
   cursor: pointer;
@@ -175,6 +186,33 @@ body.who-am-i {
   display: flex;
   justify-content: center;
   margin-top: 50px;
+}
+
+@keyframes momentum {
+  0% {
+    width: 100px;
+    height: 100px;
+    left: 0px;
+    top: 0px;
+  }
+  30% {
+    width: 120px;
+    height: 120px;
+    left: 20px;
+    top: 20px;
+  }
+  50% {
+    width: 100px;
+    height: 100px;
+    left: 0px;
+    top: 0px;
+  }
+  100% {
+    width: 100px;
+    height: 100px;
+    left: 10px;
+    top: 10px;
+  }
 }
 
 /*# sourceMappingURL=styles.css.map */

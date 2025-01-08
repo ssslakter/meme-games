@@ -12,6 +12,11 @@ $bg-url: url("/media/bar-background.jpg");
 $blur-amount: 5px;
 $brightness: 0.5;
 
+
+textarea:focus, input:focus{
+  outline: none;
+}
+
 body.who-am-i {
   margin: 0;
   background-color: black;
@@ -131,6 +136,17 @@ body.who-am-i {
 
 }
 
+
+.label.animated {
+  // animation: momentum 0.5s ease-in-out;
+  transition: left 0.5s ease, top 0.5s ease;
+
+  textarea {
+    transition: width 0.5s ease, height 0.5s ease;
+  }
+}
+
+
 .new-player-card {
   @extend .card;
   opacity: 0.5;
@@ -246,4 +262,32 @@ $notes-font-size: 14px;
   display: flex;
   justify-content: center;
   margin-top: 50px;
+}
+
+
+@keyframes momentum {
+  0% {
+      width: 100px;
+      height: 100px;
+      left: 0px;
+      top: 0px;
+  }
+  30% {
+      width: 120px;
+      height: 120px;
+      left: 20px;
+      top: 20px;
+  }
+  50% {
+      width: 100px;
+      height: 100px;
+      left: 0px;
+      top: 0px;
+  }
+  100% {
+      width: 100px;
+      height: 100px;
+      left: 10px;
+      top: 10px;
+  }
 }
