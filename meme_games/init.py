@@ -7,9 +7,10 @@ user_manager, lobby_manager = UserManager(db), LobbyManager()
 lobby_manager = LobbyManager()
 default_skips = [r'/static/.*', r'/user-content/.*']
 bwares = [user_beforeware(user_manager, skip = default_skips),
-          lobby_beforeware(lobby_manager, skip=default_skips + ['/picure', '/name', '/whoami/.*'])]
+          lobby_beforeware(lobby_manager, skip=default_skips + [r'/[\w-]*avatar', '/name', '/whoami/.*', '/monitor'])]
 hdrs = [
-    Script(src='/static/script._hs', type='text/hyperscript'),
+    Script(src='/static/movement._hs', type='text/hyperscript'),
+    Script(src='/static/timer._hs', type='text/hyperscript'),
     Script(src="https://unpkg.com/hyperscript.org@0.9.13"),
     Link(rel="stylesheet", href="https://fonts.googleapis.com/icon?family=Material+Icons"),
     Link(rel="stylesheet", href="/static/styles.css"),

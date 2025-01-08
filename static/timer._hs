@@ -1,0 +1,13 @@
+def updateTimer(el) 
+    set now to Date()
+    -- set timeString to now.toLocaleTimeString()
+    set innerHTML of el to String(now)
+
+def formatTime(time)
+    set totalSeconds to Math.floor(time / 1000)
+    set days to Math.floor(totalSeconds / (24 * 3600))
+    set hours to Math.floor((totalSeconds mod (24 * 3600)) / 3600)
+    set minutes to Math.floor((totalSeconds mod 3600) / 60)
+    set seconds to totalSeconds mod 60
+    return days + "d " + hours + "h " + minutes + "m " + seconds + "s"
+end

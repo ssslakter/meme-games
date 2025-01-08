@@ -118,12 +118,15 @@ def Game(reciever: WhoAmIPlayer | User, lobby: WhoAmILobby):
 
 def MainBlock(reciever: WhoAmIPlayer | User, lobby: WhoAmILobby):
     return (Title(f'Who Am I lobby: {lobby.id}'),
-            Main(
-                Div(cls='background'),
-                Spectators(reciever, lobby),
-                Game(reciever, lobby),
-                Settings(),
-                hx_ext='ws', ws_connect='/ws/whoami'))
+            Body(
+                Main(
+                    Div(cls='background'),
+                    Spectators(reciever, lobby),
+                    Game(reciever, lobby),
+                    Settings(),
+                    hx_ext='ws', ws_connect='/ws/whoami'),
+                cls='who-am-i'
+                ))
 
 
 # Routes
