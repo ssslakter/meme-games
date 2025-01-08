@@ -1,10 +1,13 @@
-
 services:
   web:
     build: .
     volumes:
-      - ./user-content:/app/user-content
-      - ./data:/app/data
+      - user-content:/app/user-content
+      - data:/app/data
     ports:
       - "8000:8000"
     restart: always
+
+volumes:
+  user-content:
+  data:

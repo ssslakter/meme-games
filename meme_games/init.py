@@ -17,5 +17,5 @@ hdrs = [
     Script(src="https://unpkg.com/interactjs/dist/interact.min.js"),
 ]
 
-app, rt = fast_app(pico=False, before=bwares, hdrs=hdrs, exts='ws', bodykw={'hx-boost': 'true'}, sess_path='data')
+app, rt = fast_app(pico=False, before=bwares, hdrs=hdrs, exts='ws', bodykw={'hx-boost': 'true'}, key_fname='data/.sesskey')
 app.static_route(ext='._hs')

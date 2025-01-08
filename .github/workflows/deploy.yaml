@@ -8,10 +8,9 @@ on:
 jobs:
   deploy:
     runs-on: self-hosted
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Run docker-compose
-        run: docker compose up -d
+        run: docker compose up -d --build
