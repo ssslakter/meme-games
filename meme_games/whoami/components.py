@@ -16,16 +16,10 @@ def Spectators(reciever: WhoAmIPlayer | User, lobby: WhoAmILobby):
               for p in lobby.sorted_members() if not p.is_player], id='spectators'), **spectate_controls)
 
 
-def Avatar(u: User):
-    filename = u.filename
-    filename = ('/user-content/' + filename) if filename else '/media/default-avatar.jpg'
-    return Div(style=f'background-image: url({filename})', cls='avatar', hx_swap_oob=f"outerHTML:[dt-avatar='{u.uid}']", dt_avatar=u.uid)
-
-
 def PlayerLabelText(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
     return (Textarea(owner.label, placeholder='enter label', ws_send=True, name='label', dt_label=owner.uid,
-                     _="on change set my.value to me.innerHTML", hx_vals={'owner_uid': owner.uid},
-                     hx_trigger="input changed delay:500ms", hx_swap_oob=f"innerHTML:[dt-label='{owner.uid}']")
+                     _="on change wait 200ms then set my.value to me.innerHTML", hx_vals={'owner_uid': owner.uid},
+                     hx_trigger="input changed delay:200ms", hx_swap_oob=f"innerHTML:[dt-label='{owner.uid}']")
             if r.uid != owner.uid
             else Textarea(readonly=True))
 
@@ -85,7 +79,7 @@ def PlayerCard(reciever: WhoAmIPlayer | User, p: WhoAmIPlayer, lobby: WhoAmILobb
     return Div(edit,
                PlayerLabel(reciever, p),
                Form(Input(type='file', name='file', accept="image/*"), style='display: none;',
-                    hx_trigger='change', hx_post='/picture', hx_swap='none'),
+                    hx_trigger='change', hx_post='/avatar', hx_swap='none'),
                Avatar(p.user),
                Div(UserName(reciever, p.user, is_connected=p.is_connected), " ✪" if lobby.host == p else None),
                cls='player-card', dt_user=p.uid, _='on mouseleave remove .hover from .hover in me')
@@ -97,13 +91,13 @@ def NewPlayerCard():
 
 def Notes(reciever: WhoAmIPlayer | User, author: WhoAmIPlayer, **kwargs):
     notes_kwargs = (dict(hx_post='/notes',
-                         hx_trigger="input changed delay:500ms, load",
+                         hx_trigger="input changed delay:200ms, load",
                          hx_swap='none',
                          placeholder="Your notes")
                     if reciever == author
                     else dict(readonly=True,
                               dt_notes=author.uid,
-                              hx_swap_oob=f"outerHTML:[dt-notes='{author.uid}']"))
+                              hx_swap_oob=f"innerHTML:[dt-notes='{author.uid}']"))
 
     return Textarea(author.notes, name='text', cls='notes', **notes_kwargs,
                     _='''on mouseover add .hover on me''')
@@ -201,19 +195,6 @@ async def post(req: Request):
         return JoinSpectators(r, p), Div(hx_swap_oob=f"delete:div[dt-user='{p.user.uid}']")
     await notify_all(lobby, update)
     return NewPlayerCard(), NotesBlock(p)
-
-
-@rt('/picture')
-async def post(req: Request, file: UploadFile):
-    '''Update user picture and if in lobby sync it'''
-    u: User = req.state.user
-    await u.set_picture(file)
-    user_manager.update(u)
-    lobby = lobby_manager.get_lobby(req.session.get("lobby_id"))
-    if not lobby: return
-    lobby.get_member(u.uid).sync_user(u)
-    def update(*_): return Avatar(u)
-    await notify_all(lobby, update)
 
 
 @rt('/notes')
