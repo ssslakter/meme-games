@@ -95,7 +95,7 @@ TLobby = TypeVar('TLobby', bound=BaseLobby)
 
 class LobbyManager(Generic[TLobby]):
     lobby_lifetime = dt.timedelta(days=1)
-    lobby_limit = 2
+    lobby_limit = 50
 
     def __init__(self):
         self.lobbies = {}
@@ -120,7 +120,7 @@ class LobbyManager(Generic[TLobby]):
         '''Returns the lobby if it exists, otherwise creates one if id was valid. Returns (lobby, created)'''
         if not id or not id.isascii(): raise HTTPException(400, 'Invalid lobby id, must be ascii') 
         if lobby := self.get_lobby(id, lobby_cls): return lobby, False
-        if len(self.lobbies) >= self.lobby_limit: raise HTTPException(400, 'Too many lobbies, wait for some to finish') 
+        if len(self.lobbies) >= self.lobby_limit: raise HTTPException(400, 'Too many lobbies, wait until some are finished') 
         return self.create_lobby(u, lobby_cls, id), True
 
 # %% ../../notebooks/lobby.ipynb 6
