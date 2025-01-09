@@ -13,7 +13,8 @@ $blur-amount: 5px;
 $brightness: 0.5;
 
 
-textarea:focus, input:focus{
+textarea:focus,
+input:focus {
   outline: none;
 }
 
@@ -58,7 +59,6 @@ body.who-am-i {
   position: relative;
   border: 1px solid $border-color;
   border-radius: 8px;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -67,9 +67,9 @@ body.who-am-i {
 }
 
 // Base card styles
-.player-card {
+.player-card-body {
   @extend .card;
-  overflow: visible;
+  overflow: hidden;
 
   &:hover .controls {
     display: block;
@@ -100,27 +100,31 @@ body.who-am-i {
     display: none;
   }
 
-  .label{
+}
+
+.player-card {
+  position: relative;
+  .label {
     position: absolute;
     top: 0;
     box-shadow: 0 0 5px 1px black;
     left: calc(50% - $label-width/2);
-    z-index: 3;
+    z-index: 30;
     padding: 5px;
     background-color: rgba(255, 239, 201, 1);
     cursor: move;
-    
+
     textarea {
       width: $label-width;
       height: $label-height;
       background-color: transparent;
       border: none;
-      
+
     }
   }
 
-  .label-hidden::after{
-    content: '?';
+  .label-hidden::after {
+    content: attr(dt-text);
     position: absolute;
     font-size: 40px;
     left: 0;
@@ -132,7 +136,7 @@ body.who-am-i {
     right: 0;
     color: gray;
     pointer-events: none;
-}
+  }
 
 }
 
@@ -267,27 +271,30 @@ $notes-font-size: 14px;
 
 @keyframes momentum {
   0% {
-      width: 100px;
-      height: 100px;
-      left: 0px;
-      top: 0px;
+    width: 100px;
+    height: 100px;
+    left: 0px;
+    top: 0px;
   }
+
   30% {
-      width: 120px;
-      height: 120px;
-      left: 20px;
-      top: 20px;
+    width: 120px;
+    height: 120px;
+    left: 20px;
+    top: 20px;
   }
+
   50% {
-      width: 100px;
-      height: 100px;
-      left: 0px;
-      top: 0px;
+    width: 100px;
+    height: 100px;
+    left: 0px;
+    top: 0px;
   }
+
   100% {
-      width: 100px;
-      height: 100px;
-      left: 10px;
-      top: 10px;
+    width: 100px;
+    height: 100px;
+    left: 10px;
+    top: 10px;
   }
 }

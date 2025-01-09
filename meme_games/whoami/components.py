@@ -17,7 +17,7 @@ def Spectators(reciever: WhoAmIPlayer | User, lobby: WhoAmILobby):
 
 
 def PlayerLabelText(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
-    style=f'width: {owner.label_tfm.width}px; height: {owner.label_tfm.height}px;' if owner.label_tfm else ''
+    style = f'width: {owner.label_tfm.width}px; height: {owner.label_tfm.height}px;' if owner.label_tfm else ''
     return (Textarea(owner.label_text, placeholder='enter label', ws_send=True, name='label', dt_label=owner.uid,
                      _="on htmx:wsAfterMessage set my.value to me.innerHTML", hx_vals={'owner_uid': owner.uid},
                      style=style, value=owner.label_text,
@@ -33,7 +33,7 @@ def PlayerLabelFT(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
                Div(hx_trigger='moved', ws_send=True,
                    hx_vals=f'js:{{{event_details}}}'),
                style=f'left: {owner.label_tfm.x}px; top: {owner.label_tfm.y}px' if owner.label_tfm else '',
-               cls='draggable label' + (' label-hidden' if r == owner else ''),
+               cls='draggable label' + (' label-hidden' if r == owner else ''), dt_text='?' if owner.label_text else '',
                _=f'''
             init set me.isClicked to false
             on mousedown
@@ -72,7 +72,7 @@ def PlayerLabelFT(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
                     end
                 end
             '''.strip()
-    )
+               )
 
 
 def PlayerCard(reciever: WhoAmIPlayer | User, p: WhoAmIPlayer, lobby: WhoAmILobby):
@@ -83,13 +83,15 @@ def PlayerCard(reciever: WhoAmIPlayer | User, p: WhoAmIPlayer, lobby: WhoAmILobb
     else: edit = (I('description', cls='material-icons controls',
                     _='on mouseover send mouseover to next <.notes/>'),
                   Notes(reciever, p))
-    return Div(edit,
-               PlayerLabelFT(reciever, p),
-               Form(Input(type='file', name='file', accept="image/*"), style='display: none;',
-                    hx_trigger='change', hx_post='/avatar', hx_swap='none'),
-               Avatar(p.user),
-               Div(UserName(reciever, p.user, is_connected=p.is_connected), " ✪" if lobby.host == p else None),
-               cls='player-card', dt_user=p.uid, _='on mouseleave remove .hover from .hover in me')
+    return Div(PlayerLabelFT(reciever, p),
+               Div(
+                   edit,
+                   Form(Input(type='file', name='file', accept="image/*"), style='display: none;',
+                        hx_trigger='change', hx_post='/avatar', hx_swap='none'),
+                   Avatar(p.user),
+                   Div(UserName(reciever, p.user, is_connected=p.is_connected), " ✪" if lobby.host == p else None),
+                   cls='player-card-body'), cls='player-card', dt_user=p.uid,
+               _='on mouseleave remove .hover from .hover in me')
 
 
 def NewPlayerCard():

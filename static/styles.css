@@ -1,4 +1,5 @@
-textarea:focus, input:focus {
+textarea:focus,
+input:focus {
   outline: none;
 }
 
@@ -18,17 +19,16 @@ body.who-am-i {
   filter: blur(5px) brightness(0.5);
 }
 
-.panel, .notes, .controls-block, .controls, .spectators, .spectators-controls, .card, .new-player-card, .player-card {
+.panel, .notes, .controls-block, .controls, .spectators, .spectators-controls, .card, .new-player-card, .player-card-body {
   background-color: rgba(255, 252, 245, 0.58);
 }
 
-.card, .new-player-card, .player-card {
+.card, .new-player-card, .player-card-body {
   width: 220px;
   height: 250px;
   position: relative;
   border: 1px solid grey;
   border-radius: 8px;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -36,20 +36,20 @@ body.who-am-i {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.player-card {
-  overflow: visible;
+.player-card-body {
+  overflow: hidden;
 }
-.player-card:hover .controls {
+.player-card-body:hover .controls {
   display: block;
   position: absolute;
   top: 0;
   right: 0;
   z-index: 10;
 }
-.player-card .controls {
+.player-card-body .controls {
   display: none;
 }
-.player-card .notes.hover {
+.player-card-body .notes.hover {
   display: block;
   position: absolute;
   top: 0;
@@ -61,15 +61,19 @@ body.who-am-i {
   margin-top: -1px;
   margin-left: -1px;
 }
-.player-card .notes {
+.player-card-body .notes {
   display: none;
+}
+
+.player-card {
+  position: relative;
 }
 .player-card .label {
   position: absolute;
   top: 0;
   box-shadow: 0 0 5px 1px black;
   left: calc(50% - 220px / 2 / 2);
-  z-index: 3;
+  z-index: 30;
   padding: 5px;
   background-color: rgb(255, 239, 201);
   cursor: move;
@@ -81,7 +85,7 @@ body.who-am-i {
   border: none;
 }
 .player-card .label-hidden::after {
-  content: "?";
+  content: attr(dt-text);
   position: absolute;
   font-size: 40px;
   left: 0;
