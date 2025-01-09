@@ -20,7 +20,7 @@ def PlayerLabelText(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
     style=f'width: {owner.label_tfm.width}px; height: {owner.label_tfm.height}px;' if owner.label_tfm else ''
     return (Textarea(owner.label_text, placeholder='enter label', ws_send=True, name='label', dt_label=owner.uid,
                      _="on htmx:wsAfterMessage set my.value to me.innerHTML", hx_vals={'owner_uid': owner.uid},
-                     style=style,
+                     style=style, value=owner.label_text,
                      hx_trigger="input changed delay:200ms", hx_swap_oob=f"innerHTML:[dt-label='{owner.uid}']")
             if r.uid != owner.uid
             else Textarea(readonly=True, style=style))
@@ -98,7 +98,7 @@ def NewPlayerCard():
 
 def Notes(reciever: WhoAmIPlayer | User, author: WhoAmIPlayer, **kwargs):
     notes_kwargs = (dict(hx_post='/notes',
-                         hx_trigger="input changed delay:200ms, load",
+                         hx_trigger="input changed delay:500ms, load",
                          hx_swap='none',
                          placeholder="Your notes")
                     if reciever == author
