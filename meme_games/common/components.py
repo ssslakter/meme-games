@@ -65,6 +65,7 @@ async def put(req: Request, hdrs: HtmxHeaders):
     name = ' '.join(urllib.parse.unquote(hdrs.prompt).split())
     u.name = name
     user_manager.update(u)
+    lobby_manager.sync_user_data(u)
     lobby = lobby_manager.get_lobby(req.session.get("lobby_id"))
     if not lobby: return
     m = lobby.members.get(u.uid)
@@ -79,6 +80,7 @@ async def modify_avatar(req: Request, file: UploadFile = None):
     if file: await u.set_picture(file)
     else: u.reset_picture()
     user_manager.update(u)
+    lobby_manager.sync_user_data(u)
     lobby = lobby_manager.get_lobby(req.session.get("lobby_id"))
     if not lobby: return
     lobby.get_member(u.uid).sync_user(u)

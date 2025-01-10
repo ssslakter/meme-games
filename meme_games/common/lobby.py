@@ -98,7 +98,7 @@ class LobbyManager(Generic[TLobby]):
     lobby_limit = 50
 
     def __init__(self):
-        self.lobbies = {}
+        self.lobbies: dict[str, TLobby] = {}
 
     def __repr__(self): return f'{self.__class__.__name__}(active_lobbies={len(self.lobbies)})'
 
@@ -122,6 +122,11 @@ class LobbyManager(Generic[TLobby]):
         if lobby := self.get_lobby(id, lobby_cls): return lobby, False
         if len(self.lobbies) >= self.lobby_limit: raise HTTPException(400, 'Too many lobbies, wait until some are finished') 
         return self.create_lobby(u, lobby_cls, id), True
+    
+    def sync_user_data(self, u: User):
+        for lobby in self.lobbies.values():
+            m: BaseLobbyMember = lobby.members.get(u.uid)
+            if m: m.sync_user(u)
 
 # %% ../../notebooks/lobby.ipynb 6
 def is_player(u: BaseLobbyMember|User): return isinstance(u, BaseLobbyMember) and u.is_player
