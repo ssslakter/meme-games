@@ -2,7 +2,6 @@ def updateTimer()
     set now to Date.now()
     for el in .timer
         set targ to (@target of el) as Date
-        log @target of el
         set diff to (targ - now) as Number
         set el.innerHTML to formatTime(diff)
         if diff <= 0 remove closest <li/> to el end
