@@ -9,7 +9,7 @@ db = init_db('data/data.db')
 user_manager, lobby_manager = UserManager(db), LobbyManager()
 lobby_manager = LobbyManager()
 
-static_re = [compile_path("/{fname:path}.{ext:static}")[0]]
+static_re = [compile_path("/{fname:path}.{ext:static}")[0], r".*?\._hs"]
 middlware_cls = partial(ConditionalSessionMiddleware, skip=static_re)
 
 bwares = [user_beforeware(user_manager, skip = static_re),

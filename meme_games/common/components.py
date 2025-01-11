@@ -3,22 +3,8 @@ from ..init import *
 
 
 def Timer(time: dt.timedelta = dt.timedelta(hours=1)):
-    return Span(
-        _=f'''
-            init immediately
-            set now to Date.now()
-            set target to (now+({time.total_seconds()}*1000)) as Date
-            set diff to 1
-            repeat until event stopLoop
-                set now to Date.now()
-                set diff to (target - now) as Number
-                set my innerHTML to formatTime(diff)
-                wait 0.05s
-                if diff <= 0
-                    send stopLoop to me
-                end
-            end
-            ''')
+    return Span(dt_delta = time.total_seconds()*1000, cls='timer',
+                _ = 'init immediately set @target to (Date.now()+@dt-delta as Number) as Date')
 
 
 def LobbyInfo(lobby: Lobby):
@@ -27,8 +13,7 @@ def LobbyInfo(lobby: Lobby):
                A('join', href=f'/whoami/{lobby.id}', hx_boost='false'),
                f'Last active: {lobby.last_active.strftime("%Y-%m-%d %H:%M:%S")}',
                Div("Will be deleted in: ", Timer(lobby.last_active + lobby_manager.lobby_lifetime - dt.datetime.now())),
-               style='display: flex; gap: 8px;',
-               )
+               style='display: flex; gap: 8px;')
 
 
 def Avatar(u: User):
@@ -98,6 +83,7 @@ async def delete(req: Request): await modify_avatar(req, None)
 
 @rt('/monitor')
 def get():
-    lobbies_list = Div(H3("Who am I lobbies:"), Ul(*[Li(LobbyInfo(lobby)) for lobby in lobby_manager.lobbies.values()]))
+    lobbies_list = Div(H3("Who am I lobbies:"), Ul(*[Li(LobbyInfo(lobby)) for lobby in lobby_manager.lobbies.values()]),
+                       _='init updateTimer() then setInterval(updateTimer, 500)')
     return Titled("Current active lobbies",
                   lobbies_list if len(lobby_manager.lobbies) else Div("No active lobbies"))

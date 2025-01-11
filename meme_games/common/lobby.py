@@ -94,7 +94,7 @@ class Lobby(BaseLobby[BaseLobbyMember]): pass
 TLobby = TypeVar('TLobby', bound=BaseLobby)
 
 class LobbyManager(Generic[TLobby]):
-    lobby_lifetime = dt.timedelta(days=1)
+    lobby_lifetime = dt.timedelta(hours=5)
     lobby_limit = 50
 
     def __init__(self):
