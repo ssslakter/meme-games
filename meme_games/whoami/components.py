@@ -232,7 +232,7 @@ async def edit_label_text(sess, label: str, owner_uid: str):
     if not (owner and p and p.is_player) or p == owner: return
     owner.set_label(label)
     def update(r, *_): return dict(type='label_text', owner_uid=owner.uid, label=label)
-    await notify_all(lobby, update, filter_fn=lambda m: m != owner, json=True)
+    await notify_all(lobby, update, filter_fn=lambda m: m != owner and m != p, json=True)
     await notify(owner, PlayerLabelText, owner)
 
 
@@ -246,7 +246,7 @@ async def edit_label_position(sess, owner_uid: str,
     if not (p and owner): return
     owner.set_label_transform(**kwargs)
     def update(*_): return dict(type='label_position', owner_uid=owner.uid, **kwargs)
-    await notify_all(lobby, update, json=True)
+    await notify_all(lobby, update, json=True, filter_fn=lambda m: m != p)
 
 
 @app.ws('/ws/whoami', conn=ws_fn(), disconn=ws_fn(connected=False))
