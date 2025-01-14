@@ -78,14 +78,13 @@ body.who-am-i {
   background-color: rgb(255, 239, 201);
   cursor: move;
 }
-.player-card .label textarea {
+.player-card .label .label-text {
   width: calc(220px / 2);
   height: calc(250px / 4);
   background-color: transparent;
   border: none;
 }
-.player-card .label-hidden::after {
-  content: attr(dt-text);
+.player-card .label-hidden {
   position: absolute;
   font-size: 40px;
   left: 0;
@@ -102,7 +101,7 @@ body.who-am-i {
 .label.animated {
   transition: left 0.5s ease, top 0.5s ease;
 }
-.label.animated textarea {
+.label.animated .label-text {
   transition: width 0.5s ease, height 0.5s ease;
 }
 

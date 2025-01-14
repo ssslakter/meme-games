@@ -133,7 +133,7 @@ def is_player(u: BaseLobbyMember|User): return isinstance(u, BaseLobbyMember) an
 
 # %% ../../notebooks/lobby.ipynb 7
 def lobby_beforeware(manager: LobbyManager, skip=None):
-    '''Makes sure that request always contains valid user'''
+    '''Makes sure that request always contains valid lobby'''
     def before(req: Request):
         u: User = req.state.user
         path_lobby_id = req.path_params.get('lobby_id')

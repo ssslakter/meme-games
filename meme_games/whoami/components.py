@@ -18,22 +18,24 @@ def Spectators(reciever: WhoAmIPlayer | User, lobby: WhoAmILobby):
 
 def PlayerLabelText(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
     style = f'width: {owner.label_tfm.width}px; height: {owner.label_tfm.height}px;' if owner.label_tfm else ''
-    return (Textarea(owner.label_text, placeholder='enter label', ws_send=True, name='label', dt_label=owner.uid,
-                     _="on htmx:wsAfterMessage set my.value to me.innerHTML", hx_vals={'owner_uid': owner.uid},
-                     style=style, value=owner.label_text,
-                     hx_trigger="input changed delay:200ms", hx_swap_oob=f"innerHTML:[dt-label='{owner.uid}']")
+    hx_kwargs = dict(data_label=owner.uid, hx_swap_oob=f"innerHTML:[data-label='{owner.uid}']")
+    return (Textarea(owner.label_text, placeholder='enter label', ws_send=True, name='label',
+                     _="on htmx:wsAfterMessage from body log event then set my.value to me.innerHTML",
+                     hx_vals={'owner_uid': owner.uid, "type": "label_text"},
+                     style=style, value=owner.label_text, cls='label-text',
+                     hx_trigger="input changed delay:100ms", **hx_kwargs)
             if r.uid != owner.uid
-            else Textarea(readonly=True, style=style))
+            else (Textarea(readonly=True, style=style, cls='label-text'),
+                  Div('?' if owner.label_text else '', cls='label-hidden', **hx_kwargs)))
 
 
 def PlayerLabelFT(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
     fields = ['x', 'y', 'width', 'height', 'owner_uid']
     event_details = ', '.join([f"{field}: event.detail.transform.{field}" for field in fields])
     return Div(PlayerLabelText(r, owner),
-               Div(hx_trigger='moved', ws_send=True,
-                   hx_vals=f'js:{{{event_details}}}'),
+               Div(hx_trigger='moved', ws_send=True, hx_vals=f'js:{{{event_details}, type: "label_position"}}'),
                style=f'left: {owner.label_tfm.x}px; top: {owner.label_tfm.y}px' if owner.label_tfm else '',
-               cls='draggable label' + (' label-hidden' if r == owner else ''), dt_text='?' if owner.label_text else '',
+               cls='draggable label',
                _=f'''
             init set me.isClicked to false
             on mousedown
@@ -62,13 +64,12 @@ def PlayerLabelFT(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
                     trigger moved(transform: params.new) on first <div/> in me
                     call applyTransform(me, params.old, params.new)
                 end
-            on htmx:wsBeforeMessage from document
+            on htmx:wsBeforeMessage from body
                 set msg to event.detail.message
                 if isJSON(msg) then set msg to JSON.parse(msg)
-                    if msg.owner_uid == '{owner.uid}' then
+                    if not me.isDragging and msg.owner_uid == '{owner.uid}' then
                         set params to getTransformParams(me, me.parentElement, msg)
                         call applyTransform(me, params.old, params.new)
-                        set txt to first <textarea/> in me
                     end
                 end
             '''.strip()
@@ -90,7 +91,7 @@ def PlayerCard(reciever: WhoAmIPlayer | User, p: WhoAmIPlayer, lobby: WhoAmILobb
                         hx_trigger='change', hx_post='/avatar', hx_swap='none'),
                    Avatar(p.user),
                    Div(UserName(reciever, p.user, is_connected=p.is_connected), " ✪" if lobby.host == p else None),
-                   cls='player-card-body'), cls='player-card', dt_user=p.uid,
+                   cls='player-card-body'), cls='player-card', data_user=p.uid,
                _='on mouseleave remove .hover from .hover in me')
 
 
@@ -105,8 +106,8 @@ def Notes(reciever: WhoAmIPlayer | User, author: WhoAmIPlayer, **kwargs):
                          placeholder="Your notes")
                     if reciever == author
                     else dict(readonly=True,
-                              dt_notes=author.uid,
-                              hx_swap_oob=f"innerHTML:[dt-notes='{author.uid}']"))
+                              data_notes=author.uid,
+                              hx_swap_oob=f"innerHTML:[data-notes='{author.uid}']"))
 
     return Textarea(author.notes, name='text', cls='notes', **notes_kwargs,
                     _='''on mouseover add .hover on me''')
@@ -191,7 +192,7 @@ async def post(req: Request):
 
     def update(r: WhoAmIPlayer, lobby):
         swap_position = 'beforeend:#players' if r.is_player else 'beforebegin:#players .new-player-card'
-        return Div(hx_swap_oob=f"delete:#spectators [dt-username='{p.uid}']"), Div(PlayerCard(r, p, lobby), hx_swap_oob=swap_position)
+        return Div(hx_swap_oob=f"delete:#spectators [data-username='{p.uid}']"), Div(PlayerCard(r, p, lobby), hx_swap_oob=swap_position)
     await notify_all(lobby, update)
     return NotesBlock(p)
 
@@ -204,7 +205,7 @@ async def post(req: Request):
     p.spectate()
 
     def update(r: WhoAmIPlayer, *_):
-        return JoinSpectators(r, p), Div(hx_swap_oob=f"delete:div[dt-user='{p.user.uid}']")
+        return JoinSpectators(r, p), Div(hx_swap_oob=f"delete:div[data-user='{p.user.uid}']")
     await notify_all(lobby, update)
     return NewPlayerCard(), NotesBlock(p)
 
@@ -216,7 +217,7 @@ async def post(req: Request, text: str):
     if not p.is_player: return
     p.set_notes(text)
     def update(r, *_): return Notes(r, p)
-    await notify_all(lobby, update)
+    await notify_all(lobby, update, filter_fn=lambda m: m != p)
 
 
 async def edit_label_text(sess, label: str, owner_uid: str):
@@ -226,7 +227,7 @@ async def edit_label_text(sess, label: str, owner_uid: str):
     if not (owner and p and p.is_player) or p == owner: return
     owner.set_label(label)
     def update(r, *_): return PlayerLabelText(r, owner)
-    await notify_all(lobby, update, filter_fn=lambda m: m != owner)
+    await notify_all(lobby, update, filter_fn=lambda m: m != p)
 
 
 async def edit_label_position(sess, owner_uid: str,
@@ -245,6 +246,7 @@ async def edit_label_position(sess, owner_uid: str,
 @app.ws('/ws/whoami', conn=ws_fn(), disconn=ws_fn(connected=False))
 async def ws(sess, data):
     try:
-        if 'label' in data: await edit_label_text(sess, **data)
-        elif 'x' in data: await edit_label_position(sess, **data)
+        msg_type = data.pop('type')
+        if msg_type == 'label_text': await edit_label_text(sess, **data)
+        elif msg_type == 'label_position': await edit_label_position(sess, **data)
     except Exception as e: logger.error(e)

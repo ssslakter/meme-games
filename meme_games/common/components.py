@@ -3,8 +3,8 @@ from ..init import *
 
 
 def Timer(time: dt.timedelta = dt.timedelta(hours=1)):
-    return Span(dt_delta = time.total_seconds()*1000, cls='timer',
-                _ = 'init immediately set @target to (Date.now()+@dt-delta as Number) as Date')
+    return Span(data_delta = time.total_seconds()*1000, cls='timer',
+                _ = 'init immediately set @target to (Date.now()+@data-delta as Number) as Date')
 
 
 def LobbyInfo(lobby: Lobby):
@@ -19,7 +19,7 @@ def LobbyInfo(lobby: Lobby):
 def Avatar(u: User):
     filename = u.filename
     filename = ('/user-content/' + filename) if filename else '/media/default-avatar.jpg'
-    return Div(style=f'background-image: url({filename})', cls='avatar', hx_swap_oob=f"outerHTML:[dt-avatar='{u.uid}']", dt_avatar=u.uid)
+    return Div(style=f'background-image: url({filename})', cls='avatar', hx_swap_oob=f"outerHTML:[data-avatar='{u.uid}']", data_avatar=u.uid)
 
 
 def NameSetting():

@@ -89,5 +89,6 @@ d = { 'settings': { 'doc_baseurl': '/meme-games',
             'meme_games.init': {},
             'meme_games.main': {},
             'meme_games.middleware': {},
+            'meme_games.video.components': {},
             'meme_games.whoami.components': {},
             'meme_games.whoami.domain': {}}}
