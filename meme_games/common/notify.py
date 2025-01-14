@@ -1,6 +1,8 @@
 import asyncio
 import logging
 from typing import Callable, Any
+
+from .user import User
 from .lobby import Lobby, BaseLobbyMember
 
 logger = logging.getLogger(__name__)
@@ -12,6 +14,11 @@ async def send(u: BaseLobbyMember, fn, *args, json=False):
     except Exception as e:
         logger.error(e)
         u.disconnect()
+
+
+async def notify(u: User | BaseLobbyMember,
+                 fn: Callable[[BaseLobbyMember, tuple[Any, ...]], Any], *args, json=False):
+    await send(u, fn, *args, json=json)
 
 
 async def notify_all(lobby: Lobby, fn: Callable[[BaseLobbyMember, Lobby, tuple[Any, ...]], Any], *args, filter_fn=None, json=False):
