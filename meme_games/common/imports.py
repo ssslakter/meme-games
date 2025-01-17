@@ -1,3 +1,4 @@
+import dataclasses
 import random, string, asyncio
 import datetime as dt
 import fastlite as fl
