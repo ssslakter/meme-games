@@ -1,0 +1,1 @@
+from .components import ar as video_ar

@@ -50,11 +50,9 @@ async def put(req: Request, hdrs: HtmxHeaders):
     name = ' '.join(urllib.parse.unquote(hdrs.prompt).split())
     u.name = name
     user_manager.update(u)
-    lobby_manager.sync_user_data(u)
-    lobby = lobby_manager.get_lobby(req.session.get("lobby_id"))
+    lobby_service.sync_active_lobbies_user(u)
+    lobby = lobby_service.get_lobby(req.session.get("lobby_id"))
     if not lobby: return
-    m = lobby.members.get(u.uid)
-    m.sync_user(u)
     def update(r, *_): return UserName(r, u)
     await notify_all(lobby, update)
 
@@ -65,10 +63,9 @@ async def modify_avatar(req: Request, file: UploadFile = None):
     if file: await u.set_picture(file)
     else: u.reset_picture()
     user_manager.update(u)
-    lobby_manager.sync_user_data(u)
-    lobby = lobby_manager.get_lobby(req.session.get("lobby_id"))
+    lobby_service.sync_active_lobbies_user(u)
+    lobby = lobby_service.get_lobby(req.session.get("lobby_id"))
     if not lobby: return
-    lobby.get_member(u.uid).sync_user(u)
     def update(*_): return Avatar(u)
     await notify_all(lobby, update)
 

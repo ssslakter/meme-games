@@ -2,12 +2,15 @@ from starlette.routing import compile_path
 from fasthtml.common import *
 
 from meme_games.middleware import ConditionalSessionMiddleware
-
 from .common import *
+from .whoami.domain import *
 
 db = init_db('data/data.db')
-user_manager, lobby_manager = UserManager(db), LobbyManager()
-lobby_manager = LobbyManager()
+user_manager = UserManager(db)
+member_manager = MemberManager(user_manager)
+lobby_manager = LobbyManager(member_manager)
+whoami_manger = WhoAmIManager(member_manager)
+lobby_service = LobbyService(lobby_manager)
 
 reg_re_param("xtra", "_hs|json")
 
@@ -15,7 +18,7 @@ static_re = [compile_path("/{fname:path}.{ext:static}")[0], compile_path("/{fnam
 middlware_cls = partial(ConditionalSessionMiddleware, skip=static_re)
 
 bwares = [user_beforeware(user_manager, skip = static_re),
-          lobby_beforeware(lobby_manager, skip = static_re + [r'/[\w-]*avatar', '/name', '/whoami/.*', '/monitor', '/video/.*', '/meme*'])]
+          lobby_beforeware(lobby_service, skip = static_re + [r'/[\w-]*avatar', '/name', '/whoami/.*', '/monitor', '/video/.*', '/meme*'])]
 hdrs = [
     Script(src='/static/movement._hs', type='text/hyperscript'),
     Script(src='/static/timer._hs', type='text/hyperscript'),

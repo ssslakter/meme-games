@@ -33,5 +33,8 @@ jobs:
                 echo "Killing process $PID using port $PORT"
                 kill -9 $PID || echo "Failed to kill process $PID"
               fi
-          RUNNER_TRACKING_ID="" && nohup python run.py > app.log 2>&1 &
-          echo "App started"
+          mkdir -p logs
+          TIMESTAMP=$(date '+%Y-%m-%d_%H-%M-%S')
+          LOG_FILE="logs/deploy_${TIMESTAMP}.log"
+          RUNNER_TRACKING_ID="" && nohup python run.py > $LOG_FILE 2>&1 &
+          echo "App started and. Logs written to $LOG_FILE"

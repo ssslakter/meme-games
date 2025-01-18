@@ -2,8 +2,6 @@ import logging
 from ..common.components import *
 from ..init import *
 from fasthtml.common import *
-from .domain import *
-from ..common import *
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +11,7 @@ whoami_hdrs = [
 ]
 
 
-def Spectators(reciever: WhoAmIPlayer | User, lobby: WhoAmILobby):
+def Spectators(reciever: WhoAmIPlayer | User, lobby: Lobby):
     spectate_controls = dict(hx_post='/spectate', hx_swap='beforeend', hx_target='#players', cls='spectators-controls')
     return Div(
         "Spectators: ",
@@ -80,7 +78,7 @@ def PlayerLabelFT(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
                )
 
 
-def PlayerCard(reciever: WhoAmIPlayer | User, p: WhoAmIPlayer, lobby: WhoAmILobby):
+def PlayerCard(reciever: WhoAmIPlayer | User, p: WhoAmIPlayer, lobby: Lobby):
     if not p.is_player: return
     if reciever == p:
         edit = I('edit', cls='controls material-icons',
@@ -121,7 +119,7 @@ def NotesBlock(r: WhoAmIPlayer | User):
     return Div(Notes(r, r) if is_player(r) else None, id='notes-block', hx_swap_oob='true')
 
 
-def Game(reciever: WhoAmIPlayer | User, lobby: WhoAmILobby):
+def Game(reciever: WhoAmIPlayer | User, lobby: Lobby):
     new_player = [] if is_player(reciever) else [NewPlayerCard()]
     return Div(
         Div(
@@ -130,7 +128,7 @@ def Game(reciever: WhoAmIPlayer | User, lobby: WhoAmILobby):
     )
 
 
-def MainBlock(reciever: WhoAmIPlayer | User, lobby: WhoAmILobby):
+def MainBlock(reciever: WhoAmIPlayer | User, lobby: Lobby):
     return Main(
         Div(cls='background'),
         Spectators(reciever, lobby),
@@ -140,21 +138,24 @@ def MainBlock(reciever: WhoAmIPlayer | User, lobby: WhoAmILobby):
         _='on htmx:wsBeforeMessage call sendWSEvent(event)'
     )
 
-
-# Routes
-
 def JoinSpectators(r: WhoAmIPlayer, p: WhoAmIPlayer):
     return Div(UserName(r.user, p.user), hx_swap_oob='beforeend:#spectators')
 
 
-def ActiveGameState(r: WhoAmIPlayer | User, lobby: WhoAmILobby): return Spectators(r, lobby), Game(r, lobby)
+def ActiveGameState(r: WhoAmIPlayer | User, lobby: Lobby): return Spectators(r, lobby), Game(r, lobby)
+
+
+############################
+########## Routes ##########
+############################
+
 
 
 def ws_fn(connected=True, render_fn: Callable = JoinSpectators):
     '''Returns a function that will be called when a user joins the lobby websocket'''
     async def user_joined(sess, send, ws):
         u = user_manager.get_or_create(sess)
-        lobby: Lobby = lobby_manager.get_lobby(sess.get('lobby_id'))
+        lobby: WAILobby = lobby_service.get_lobby(sess.get('lobby_id'))
         if not lobby: return
         if m := lobby.get_member(u.uid):
             if connected: m.connect(send, ws)
@@ -165,7 +166,7 @@ def ws_fn(connected=True, render_fn: Callable = JoinSpectators):
                 return UserName(r.user, m.user, is_connected=connected)
         else:
             if not connected: return  # user not found in the lobby and not connecting
-            m = lobby.add_member(u, send=send, ws=ws)
+            m = lobby.create_member(u, send=send, ws=ws)
 
             def update(r, *_):
                 if r == u: return ActiveGameState(r, lobby), render_fn(r, m)
@@ -179,7 +180,7 @@ def ws_fn(connected=True, render_fn: Callable = JoinSpectators):
 def get(req: Request, lobby_id: str = None):
     if not lobby_id: return Redirect(f"/whoami/{random_id()}")
     u: User = req.state.user
-    lobby, _ = lobby_manager.get_or_create(u, lobby_id, WhoAmILobby)
+    lobby, _ = lobby_service.get_or_create(u, lobby_id, WhoAmIPlayer)
     m = lobby.get_member(u.uid)
     req.session['lobby_id'] = lobby.id
     req.bodykw['cls'] = 'who-am-i'
@@ -190,7 +191,7 @@ def get(req: Request, lobby_id: str = None):
 
 @rt('/play')
 async def post(req: Request):
-    lobby: Lobby = req.state.lobby
+    lobby: WAILobby = req.state.lobby
     p = lobby.get_member(req.state.user.uid)
     if p.is_player: return
     p.play()
@@ -204,7 +205,7 @@ async def post(req: Request):
 
 @rt('/spectate')
 async def post(req: Request):
-    lobby: WhoAmILobby = req.state.lobby
+    lobby: WAILobby = req.state.lobby
     p = lobby.get_member(req.state.user.uid)
     if not p.is_player: return
     p.spectate()
@@ -217,7 +218,7 @@ async def post(req: Request):
 
 @rt('/notes')
 async def post(req: Request, text: str):
-    lobby: WhoAmILobby = req.state.lobby
+    lobby: WAILobby = req.state.lobby
     p = lobby.get_member(req.state.user.uid)
     if not p.is_player: return
     p.set_notes(text)
@@ -226,7 +227,7 @@ async def post(req: Request, text: str):
 
 
 async def edit_label_text(sess, label: str, owner_uid: str):
-    lobby: WhoAmILobby = lobby_manager.get_lobby(sess.get("lobby_id"))
+    lobby: WAILobby = lobby_service.get_lobby(sess.get("lobby_id"))
     p = lobby.get_member(user_manager.get(sess.get('uid')).uid)
     owner = lobby.get_member(owner_uid)
     if not (owner and p and p.is_player) or p == owner: return
@@ -236,15 +237,12 @@ async def edit_label_text(sess, label: str, owner_uid: str):
     await notify(owner, PlayerLabelText, owner)
 
 
-async def edit_label_position(sess, owner_uid: str,
-                              x: int, y: int,
-                              width: int, height: int):
-    kwargs = {'x': x, 'y': y, 'width': width, 'height': height}
-    lobby: WhoAmILobby = lobby_manager.get_lobby(sess.get("lobby_id"))
+async def edit_label_position(sess, owner_uid: str, **kwargs):
+    lobby: WAILobby = lobby_service.get_lobby(sess.get("lobby_id"))
     p = lobby.get_member(user_manager.get(sess.get('uid')).uid)
     owner = lobby.get_member(owner_uid)
     if not (p and owner): return
-    owner.set_label_transform(**kwargs)
+    owner.set_label_transform(kwargs)
     def update(*_): return dict(type='label_position', owner_uid=owner.uid, **kwargs)
     await notify_all(lobby, update, json=True, filter_fn=lambda m: m != p)
 
