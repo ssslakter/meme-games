@@ -1,1 +1,2 @@
 python-fasthtml
+fastcore @ git+https://github.com/AnswerDotAI/fastcore

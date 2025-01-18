@@ -21,7 +21,7 @@ jobs:
           python-version: '3.13'
       - name: Set Up env
         run: |
-          pip install -r requirements.txt  
+          pip install -e .
           mkdir -p ./data
       
       - name: Deploy

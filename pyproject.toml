@@ -9,7 +9,10 @@ description = "A collection of meme games"
 authors = [{ name = "Slava Chaunin", email = "slava.chaunin@gmail.com" }]
 requires-python = ">=3.12"
 license = { text = "MIT" }
-dependencies = ["python-fasthtml"]
+dependencies = [
+    "python-fasthtml",
+    "fastcore @ git+https://github.com/AnswerDotAI/fastcore"
+    ]
 
 [project.optional-dependencies]
 "dev" = ["nbdev"]
