@@ -42,6 +42,7 @@ class UserManager(DataManager):
     def _set_tables(self): 
         self.db.create(User, pk='uid', transform=True)
         self.users: fl.Table = self.db.t.user
+        return self.users
     
     def create(self, uid: str=None, name: str = 'null'):
         u = User(uid or random_id(), name)

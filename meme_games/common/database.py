@@ -1,5 +1,5 @@
 from shlex import join
-from typing import get_args
+from typing import get_args, Generic, TypeVar
 from .imports import *
 
 
@@ -9,12 +9,25 @@ def init_db(filename_or_conn=':memory:', **kwargs):
     return db
 
 
-class DataManager:
+T = TypeVar('T')
+
+
+class DataManager(Generic[T]):
+    
     def __init__(self, db: fl.Database):
         self.db = db
-        self._set_tables()
+        self.table: fl.Table = self._set_tables()
+        self.pk = self.table.pks[0] if len(self.table.pks) == 1 else self.table.pks
 
-    def _set_tables(self): pass
+    def _set_tables(self):
+        '''Used to create the default table for the data-manager'''
+        raise NotImplementedError()
+
+    def insert(self, obj: T): self.table.insert(obj); return obj
+    def upsert(self, obj: T): self.table.upsert(obj, pk=self.pk); return obj
+    def update(self, obj: T): self.table.update(obj); return obj
+    def delete(self, id: Union[list, tuple, str, int, float]): self.table.delete(id)
+    def upsert_all(self, objs: list[T]): self.table.upsert_all(objs, pk=self.pk); return objs
 
 
 def to_basic_t(t: type):
