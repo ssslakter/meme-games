@@ -1,15 +1,16 @@
 from starlette.routing import compile_path
 from fasthtml.common import *
 
-from meme_games.middleware import ConditionalSessionMiddleware
+from .middleware import ConditionalSessionMiddleware
 from .common import *
 from .whoami.domain import *
 
 db = init_db('data/data.db')
 user_manager = UserManager(db)
-member_manager = MemberManager(user_manager)
-lobby_manager = LobbyManager(member_manager)
-whoami_manger = WhoAmIManager(member_manager)
+mm = MemberManager(user_manager)
+register_manager(mm, LobbyMember)
+register_manager(WhoAmIManager(mm), WhoAmIPlayer)
+lobby_manager = LobbyManager(db)
 lobby_service = LobbyService(lobby_manager)
 
 reg_re_param("xtra", "_hs|json")

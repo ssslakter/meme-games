@@ -34,6 +34,7 @@ def to_basic_t(t: type):
 
 MODELS_REGISTRY = {}
 
+
 class Model:
     '''Base class to put classes in sqlite database'''
     _ignore = ()
@@ -42,7 +43,9 @@ class Model:
         super().__init_subclass__(**kwargs)
         MODELS_REGISTRY[cls.__name__] = cls
 
-    def _asdict(self): return {k: v for k, v in dataclasses.asdict(self).items() if k not in self._ignore}
+    def _asdict(self):
+        return {f.name: getattr(self, f.name) for f in dataclasses.fields(self) if f.name not in self._ignore}
+
     @classmethod
     def fields(cls): return tuple(f for f in dataclasses.fields(cls) if f.name not in cls._ignore)
 

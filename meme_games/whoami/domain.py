@@ -17,6 +17,7 @@ class PlayerLabel:
 
 @dataclass
 class WhoAmIPlayer(LobbyMember):
+    _lobby_type = 'whoami'
     _ignore = LobbyMember._ignore + ('label_tfm',)
     label_text: str = ''
     label_tfm: Optional[PlayerLabel] = None
