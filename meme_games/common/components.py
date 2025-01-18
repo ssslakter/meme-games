@@ -8,11 +8,11 @@ def Timer(time: dt.timedelta = dt.timedelta(hours=1)):
 
 
 def LobbyInfo(lobby: Lobby):
-    print(dt.datetime.now() - (lobby.last_active + lobby_manager.lobby_lifetime))
+    print(dt.datetime.now() - (lobby.last_active + lobby_service.lobby_lifetime))
     return Div(f'{lobby.id}: ',
                A('join', href=f'/whoami/{lobby.id}', hx_boost='false'),
                f'Last active: {lobby.last_active.strftime("%Y-%m-%d %H:%M:%S")}',
-               Div("Will be deleted in: ", Timer(lobby.last_active + lobby_manager.lobby_lifetime - dt.datetime.now())),
+               Div("Will be deleted in: ", Timer(lobby.last_active + lobby_service.lobby_lifetime - dt.datetime.now())),
                style='display: flex; gap: 8px;')
 
 
