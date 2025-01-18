@@ -80,7 +80,7 @@ async def delete(req: Request): await modify_avatar(req, None)
 
 @rt('/monitor')
 def get():
-    lobbies_list = Div(H3("Who am I lobbies:"), Ul(*[Li(LobbyInfo(lobby)) for lobby in lobby_manager.lobbies.values()]),
+    lobbies_list = Div(H3("Who am I lobbies:"), Ul(*[Li(LobbyInfo(lobby)) for lobby in lobby_service.lobbies.values()]),
                        _='init updateTimer() then setInterval(updateTimer, 500)')
     return Titled("Current active lobbies",
-                  lobbies_list if len(lobby_manager.lobbies) else Div("No active lobbies"))
+                  lobbies_list if len(lobby_service.lobbies) else Div("No active lobbies"))
