@@ -1,0 +1,14 @@
+body.live2d {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+}
+body.live2d .live2d-canvas {
+  position: absolute;
+  bottom: 0;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/*# sourceMappingURL=live2d.css.map */

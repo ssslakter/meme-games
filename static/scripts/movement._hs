@@ -36,13 +36,6 @@ def applyTransform(el, old, new)
 end
 
 
-def isJSON(str)
-    set x to JSON.parse(str)
-    return true
-catch e
-    return false
-end
-
 def getStyleScale(el)
     set txtStyles to window.getComputedStyle(first <textarea/> in el)
     return {width: parseInt(txtStyles.width), height: parseInt(txtStyles.height)}
@@ -50,15 +43,3 @@ def getStyleScale(el)
 def getStylePosition(el)
     set style to window.getComputedStyle(el)
     return {x: parseInt(style.left), y: parseInt(style.top)}
-
-def setupResizeObserver(el)
-    js let resizeObserver = new ResizeObserver((entries) => {
-        for (let entry of entries) {
-                const resizeEvent = new CustomEvent('textareaResize', {
-                    detail: { width, height },
-                });
-                textarea.dispatchEvent(resizeEvent);
-        }
-    });
-    resizeObserver.observe(me);
-end

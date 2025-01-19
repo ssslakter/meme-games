@@ -1,8 +1,9 @@
 from starlette.routing import compile_path
 from fasthtml.common import *
-
+from .not_found import not_found
 from .middleware import ConditionalSessionMiddleware
 from .common import *
+from .utils import Statics
 from .whoami.domain import *
 
 db = init_db('data/data.db')
@@ -12,35 +13,45 @@ mm = register_manager(MemberManager(user_manager), LobbyMember)
 wm = register_manager(WhoAmIManager(mm), WhoAmIPlayer)
 lobby_service = LobbyService(lobby_manager)
 
-reg_re_param("xtra", "_hs|json")
+reg_re_param("xtra", "_hs|json|moc|mtn")
 
+static_path = '.'
 static_re = [compile_path("/{fname:path}.{ext:static}")[0], compile_path("/{fname:path}.{ext:xtra}")[0]]
 middlware_cls = partial(ConditionalSessionMiddleware, skip=static_re)
 
 bwares = [user_beforeware(user_manager, skip = static_re),
           lobby_beforeware(lobby_service, skip = static_re + [r'/[\w-]*avatar', '/name', '/whoami/.*', '/monitor', '/video/.*', '/meme*'])]
 hdrs = [
-    Script(src='/static/movement._hs', type='text/hyperscript'),
-    Script(src='/static/timer._hs', type='text/hyperscript'),
-    Script(src='/static/youtube._hs', type='text/hyperscript'),
+    Statics(ext='_hs', static_path='static'),
     Script(src="https://unpkg.com/hyperscript.org@0.9.13"),
+    Statics(ext='js', static_path='static', wc='live2d/*.js'),
+    Statics(ext='js', static_path='static', wc='scripts/*.js'),
     Link(rel="stylesheet", href="https://fonts.googleapis.com/icon?family=Material+Icons"),
-    Link(rel="stylesheet", href="/static/styles.css"),
-    Script(src="https://unpkg.com/interactjs/dist/interact.min.js")
+    Statics(ext='css', static_path='static'),
 ]
 
 yt_hdrs = [
     # Script(src="https://www.youtube.com/iframe_api"),
     # Script(src="/static/youtube.js"),
-    # Script(src="https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js"),
-    # Script(src="https://cdn.jsdelivr.net/gh/dylanNew/live2d/webgl/Live2D/lib/live2d.min.js"),
-    # Script(src="https://cdn.jsdelivr.net/npm/pixi.js@6.5.2/dist/browser/pixi.min.js"),
-    # Script(src="https://cdn.jsdelivr.net/npm/pixi-live2d-display/dist/index.min.js")
 ]
 
 bodykw = {'hx-boost': 'true'}
 
-app, rt = fast_app(pico=False, before=bwares, hdrs=hdrs+yt_hdrs,
-                   exts='ws', bodykw={**bodykw,'sess_cls': middlware_cls}, key_fname='data/.sesskey')
+exception_handlers = {404: not_found}
 
-app.static_route_exts(prefix='/', exts='xtra')
+app: FastHTML
+app, rt = fast_app(pico=False, before=bwares, hdrs=hdrs+yt_hdrs,
+                   exts='ws',
+                   bodykw={**bodykw,'sess_cls': middlware_cls},
+                   key_fname='data/.sesskey',
+                   exception_handlers=exception_handlers)
+
+async def file_resp(fname:str, ext:str): 
+    cache_age = 60*60*24*7 if 'media' in fname else 10*60
+    return FileResponse(f'{static_path}/{fname}.{ext}', headers={'Cache-Control': f'public, max-age={cache_age}'})
+
+app.route("/{fname:path}.{ext:static}")(file_resp)
+app.route("/{fname:path}.{ext:xtra}")(file_resp)
+
+app.router.routes.append(app.router.routes.pop(0)) # change the order for static router
+print(app.routes)

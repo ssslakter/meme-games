@@ -1,0 +1,34 @@
+def resizeCanvas(canvas)
+   set width to @width of canvas
+   set height to @height of canvas
+   set screenWidth to Math.max(document.documentElement.clientWidth, window.innerWidth or 0) 
+   set screenHeight to Math.max(document.documentElement.clientHeight, window.innerHeight or 0)
+   set scale to Math.min(screenWidth / width, screenHeight / height)
+
+  --  set *width  of canvas to Math.floor(scale * width) px
+  --  set *height of canvas to Math.floor(scale * height) px
+  -- set *transform of canvas to `scale(${scale})`
+end
+
+js
+async function initLive2D(canvas, width, height, modelPath) {
+    window.app = new PIXI.Application({
+        view: canvas,
+        autoStart: true,
+        autoDensity: true,
+        transparent: true,
+        antialias: true,
+        width: width,
+        height: height
+    });
+
+    const model = await PIXI.live2d.Live2DModel.from(modelPath);
+
+    app.stage.addChild(model);
+    model.x = app.screen.width / 2;
+    model.y = app.screen.height / 2;
+    model.pivot.x = model.width / 2;
+    model.pivot.y = model.height / 2;
+    model.scale.set(0.6);
+}
+end
