@@ -21,8 +21,11 @@ async def notify(u: User | LobbyMember,
     await send(u, fn, *args, json=json)
 
 
-async def notify_all(lobby: Lobby, fn: Callable[[LobbyMember, Lobby, tuple[Any, ...]], Any], *args, filter_fn=None, json=False):
+async def notify_all(lobby: Lobby, fn: Callable[[LobbyMember, Lobby, tuple[Any, ...]], Any], *args,
+                     but: list[LobbyMember] | LobbyMember = None, filter_fn=None, json=False):
     '''Sends results of `fn(member:LobbyMember, lobby, *args)` for all connected members of `lobby`'''
+    but = but or []
+    if not isinstance(but, list): but = [but]
     tasks = [send(u, fn, lobby, *args, json=json) for u in lobby.sorted_members()
-             if u.is_connected and (filter_fn is None or filter_fn(u))]
+             if u.is_connected and (filter_fn is None or filter_fn(u)) and u not in but]
     await asyncio.gather(*tasks)

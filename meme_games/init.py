@@ -45,6 +45,7 @@ app, rt = fast_app(pico=False, before=bwares, hdrs=hdrs+yt_hdrs,
                    bodykw={**bodykw,'sess_cls': middlware_cls},
                    key_fname='data/.sesskey',
                    exception_handlers=exception_handlers)
+setup_toasts(app, duration=1.5)
 
 async def file_resp(fname:str, ext:str): 
     cache_age = 60*60*24*7 if 'media' in fname else 10*60
@@ -54,4 +55,3 @@ app.route("/{fname:path}.{ext:static}")(file_resp)
 app.route("/{fname:path}.{ext:xtra}")(file_resp)
 
 app.router.routes.append(app.router.routes.pop(0)) # change the order for static router
-print(app.routes)

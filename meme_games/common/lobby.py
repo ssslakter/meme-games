@@ -98,6 +98,8 @@ class Lobby[T: LobbyMember](Model):
     
     id: str = field(default_factory=random_id)
     lobby_type: str = LobbyMember._lobby_type
+    locked: bool = False
+    game_state: Optional[dict] = None
     host: Optional[T] = None
     members: dict[str, T] = field(default_factory=dict)
     last_active: dt.datetime = field(default_factory=dt.datetime.now)
@@ -131,6 +133,9 @@ class Lobby[T: LobbyMember](Model):
     def get_member(self, uid: str) -> Optional[T]:
         self.last_active = dt.datetime.now()
         return self.members.get(uid)
+    
+    def lock(self): self.locked = True
+    def unlock(self): self.locked = False
 
     @fc.delegates(create_member)
     def get_or_create_member(self, user: User, **kwargs) -> T:

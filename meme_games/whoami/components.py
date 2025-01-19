@@ -6,11 +6,6 @@ from fasthtml.common import *
 logger = logging.getLogger(__name__)
 
 
-whoami_hdrs = [
-    Script(src='/static/whoami.js')
-]
-
-
 def Spectators(reciever: WhoAmIPlayer | User, lobby: Lobby):
     spectate_controls = dict(hx_post='/spectate', hx_swap='beforeend', hx_target='#players', cls='spectators-controls')
     return Div(
@@ -21,15 +16,14 @@ def Spectators(reciever: WhoAmIPlayer | User, lobby: Lobby):
 
 def PlayerLabelText(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
     style = f'width: {owner.label_tfm.width}px; height: {owner.label_tfm.height}px;' if owner.label_tfm else ''
-    hx_kwargs = dict(data_label_text=owner.uid, hx_swap_oob=f"innerHTML:[data-label-text='{owner.uid}']")
     return (Textarea(owner.label_text, placeholder='enter label', ws_send=True, name='label',
                      _="on wsMessage(label) set me.value to label",
                      hx_vals={'owner_uid': owner.uid, "type": "label_text"},
                      style=style, value=owner.label_text, cls='label-text',
-                     hx_trigger="input changed delay:100ms", **hx_kwargs)
+                     hx_trigger="input changed delay:100ms")
             if r.uid != owner.uid
             else (Textarea(readonly=True, style=style, cls='label-text'),
-                  Div('?' if owner.label_text else '', cls='label-hidden', **hx_kwargs)))
+                  Div('?' if owner.label_text else '', cls='label-hidden', data_label_text=owner.uid)))
 
 
 def PlayerLabelFT(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
@@ -98,7 +92,7 @@ def PlayerCard(reciever: WhoAmIPlayer | User, p: WhoAmIPlayer, lobby: Lobby):
 
 
 def NewPlayerCard():
-    return Div(Div('+', cls='join-icon'), cls='new-player-card', hx_post='/play', hx_swap='delete')
+    return Div(Div('+', cls='join-icon'), cls='new-player-card', hx_post='/play', hx_swap='outerHTML')
 
 
 def Notes(reciever: WhoAmIPlayer | User, author: WhoAmIPlayer, **kwargs):
@@ -108,8 +102,8 @@ def Notes(reciever: WhoAmIPlayer | User, author: WhoAmIPlayer, **kwargs):
                          placeholder="Your notes")
                     if reciever == author
                     else dict(readonly=True,
-                              data_notes=author.uid,
-                              hx_swap_oob=f"innerHTML:[data-notes='{author.uid}']"))
+                              data_notes=author.uid)
+                    )
 
     return Textarea(author.notes, name='text', cls='notes', **notes_kwargs,
                     _='''on mouseover add .hover on me''')
@@ -133,10 +127,11 @@ def MainBlock(reciever: WhoAmIPlayer | User, lobby: Lobby):
         Div(cls='background'),
         Spectators(reciever, lobby),
         Game(reciever, lobby),
-        Settings(),
+        Settings(reciever, lobby),
         hx_ext='ws', ws_connect='/ws/whoami',
         _='on htmx:wsBeforeMessage call sendWSEvent(event)'
     )
+
 
 def JoinSpectators(r: WhoAmIPlayer, p: WhoAmIPlayer):
     return Div(UserName(r.user, p.user), hx_swap_oob='beforeend:#spectators')
@@ -150,7 +145,6 @@ def ActiveGameState(r: WhoAmIPlayer | User, lobby: Lobby): return Spectators(r, 
 ############################
 
 
-
 def ws_fn(connected=True, render_fn: Callable = JoinSpectators):
     '''Returns a function that will be called when a user joins the lobby websocket'''
     async def user_joined(sess, send, ws):
@@ -162,8 +156,9 @@ def ws_fn(connected=True, render_fn: Callable = JoinSpectators):
             else: m.disconnect()
 
             def update(r, *_):
-                if r == u: return ActiveGameState(r, lobby), UserName(r.user, m.user, is_connected=connected)
-                return UserName(r.user, m.user, is_connected=connected)
+                hx=f"outerHTML:span[data-username='{u.uid}']"
+                if r == u: return ActiveGameState(r, lobby), UserName(r.user, m.user, is_connected=connected, hx_swap_oob=hx)
+                return UserName(r.user, m.user, is_connected=connected, hx_swap_oob=hx)
         else:
             if not connected: return  # user not found in the lobby and not connecting
             m = lobby.create_member(u, send=send, ws=ws)
@@ -181,13 +176,12 @@ def ws_fn(connected=True, render_fn: Callable = JoinSpectators):
 def get(req: Request, lobby_id: str = None):
     if not lobby_id: return Redirect(f"/whoami/{random_id()}")
     u: User = req.state.user
-    lobby, _ = lobby_service.get_or_create(u, lobby_id, WhoAmIPlayer)
-    lobby_service.update(lobby)
+    lobby, was_created = lobby_service.get_or_create(u, lobby_id, WhoAmIPlayer)
+    if was_created: lobby_service.update(lobby)
     m = lobby.get_member(u.uid)
     req.session['lobby_id'] = lobby.id
     req.bodykw['cls'] = 'who-am-i'
     return (Title(f'Who Am I lobby: {lobby.id}'),
-            *whoami_hdrs,
             MainBlock(m or u, lobby))
 
 
@@ -196,14 +190,19 @@ async def post(req: Request):
     lobby: WAILobby = req.state.lobby
     p = lobby.get_member(req.state.user.uid)
     if p.is_player: return
+    if lobby.locked: 
+        add_toast(req.session, "Game is locked", "error")
+        return NewPlayerCard()
     p.play()
     lobby_service.update(lobby)
 
     def update(r: WhoAmIPlayer, lobby):
         swap_position = 'beforeend:#players' if r.is_player else 'beforebegin:#players .new-player-card'
-        return Div(hx_swap_oob=f"delete:#spectators [data-username='{p.uid}']"), Div(PlayerCard(r, p, lobby), hx_swap_oob=swap_position)
+        res = (Div(hx_swap_oob=f"delete:#spectators [data-username='{p.uid}']"),)
+        if r != p: res += (Div(PlayerCard(r, p, lobby), hx_swap_oob=swap_position),)
+        return res
     await notify_all(lobby, update)
-    return NotesBlock(p)
+    return NotesBlock(p), PlayerCard(p, p, lobby)
 
 
 @rt('/spectate')
@@ -211,6 +210,7 @@ async def post(req: Request):
     lobby: WAILobby = req.state.lobby
     p = lobby.get_member(req.state.user.uid)
     if not p.is_player: return
+    if lobby.locked: return add_toast(req.session, "Game is locked", "error")
     p.spectate()
     lobby_service.update(lobby)
 
@@ -227,9 +227,9 @@ async def post(req: Request, text: str):
     if not p.is_player: return
     p.set_notes(text)
     lobby_service.update(lobby)
-    
-    def update(r, *_): return Notes(r, p)
-    await notify_all(lobby, update, filter_fn=lambda m: m != p)
+
+    def update(r, *_): return Notes(r, p)(hx_swap_oob=f"innerHTML:[data-notes='{p.uid}']")
+    await notify_all(lobby, update, but=p)
 
 
 async def edit_label_text(sess, label: str, owner_uid: str):
@@ -239,9 +239,10 @@ async def edit_label_text(sess, label: str, owner_uid: str):
     if not (owner and p and p.is_player) or p == owner: return
     owner.set_label(label)
     lobby_service.update(lobby)
-    def update(r, *_): return dict(type='label_text', owner_uid=owner.uid, label=label)
-    await notify_all(lobby, update, filter_fn=lambda m: m != owner and m != p, json=True)
-    await notify(owner, PlayerLabelText, owner)
+    def update(*_): return dict(type='label_text', owner_uid=owner.uid, label=label)
+    await notify_all(lobby, update, but=[owner, p], json=True)
+    def update(r, *_): return PlayerLabelText(r, r)[1](hx_swap_oob=f"innerHTML:[data-label-text='{owner.uid}']")
+    await notify(owner, update, owner)
 
 
 async def edit_label_position(sess, owner_uid: str, **kwargs):
@@ -252,7 +253,7 @@ async def edit_label_position(sess, owner_uid: str, **kwargs):
     owner.set_label_transform(kwargs)
     lobby_service.update(lobby)
     def update(*_): return dict(type='label_position', owner_uid=owner.uid, **kwargs)
-    await notify_all(lobby, update, json=True, filter_fn=lambda m: m != p)
+    await notify_all(lobby, update, json=True, but=p)
 
 
 @app.ws('/ws/whoami', conn=ws_fn(), disconn=ws_fn(connected=False))

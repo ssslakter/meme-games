@@ -76,7 +76,7 @@ def mk_aliases(dt_cls: Model, table: fl.Table):
                      for coln, _ in dt_cls.columns().items())
 
 
-def cols2dict(cols: dict, as_model=True):
+def cols2dict(cols: dict, as_model=True) -> dict[Union[str, type], dict]:
     '''Converts key,value pairs of aliased columns to nested dict'''
     res = {}
     for k, v in cols.items():

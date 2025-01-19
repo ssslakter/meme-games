@@ -22,7 +22,7 @@ class WhoAmIPlayer(LobbyMember):
     label_text: str = ''
     label_tfm: Optional[PlayerLabel] = None
     notes: str = ''
-    
+
     def __post_init__(self):
         if isinstance(self.label_tfm, str): self.label_tfm = PlayerLabel(**ast.literal_eval(self.label_tfm))
         return super().__post_init__()
@@ -30,14 +30,20 @@ class WhoAmIPlayer(LobbyMember):
     def set_notes(self, notes: str): self.notes = notes
     def set_label(self, label: str): self.label_text = label
     def set_label_transform(self, tfm: dict = None): self.label_tfm = PlayerLabel(**(tfm or {}))
-    
+
     @classmethod
     def columns(cls):
         cols = dict(set(super().columns().items()) - set(LobbyMember.columns().items()))
         cols.update({'id': str})
         return cols
-    
-    
+
+    @classmethod
+    def from_cols(cls, data: dict):
+        data = cols2dict(data)
+        data[cls]['user'] = User.from_cols(data.pop(User))
+        data[cls].update(data.pop(LobbyMember))
+        return super(LobbyMember, cls).from_cols(data[cls])
+
 
 WAILobby = Lobby[WhoAmIPlayer]
 
