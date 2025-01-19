@@ -1,3 +1,4 @@
+from dataclasses import is_dataclass
 from shlex import join
 from typing import get_args, Generic, TypeVar
 from .imports import *
@@ -28,7 +29,8 @@ class DataManager[T]:
 
 
 def to_basic_t(t: type):
-    if get_args(t): return get_args(t)[0]
+    if get_args(t): return to_basic_t(get_args(t)[0])
+    if is_dataclass(t): return dict
     return t
 
 
@@ -43,18 +45,29 @@ class Model:
         super().__init_subclass__(**kwargs)
         MODELS_REGISTRY[cls.__name__] = cls
 
-    def _asdict(self):
-        return {f.name: getattr(self, f.name) for f in dataclasses.fields(self) if f.name not in self._ignore}
+    def _asdict(self, columns: list[str] = None):
+        '''Convert to a dict, possibly with only the given columns'''
+        res = {}
+        for f in self.fields():
+            if columns and f.name not in columns: continue
+            v = getattr(self, f.name)
+            res[f.name] = asdict(v) if is_dataclass(v) else v
+        return res
 
     @classmethod
-    def fields(cls): return tuple(f for f in dataclasses.fields(cls) if f.name not in cls._ignore)
+    def fields(cls): 
+        '''Return (name, type) pairs of the model fields that are not ignored'''
+        return tuple(f for f in dataclasses.fields(cls) if f.name not in cls._ignore)
 
     @classmethod
     def columns(cls):
+        '''Get (name, type) pairs of the table columns for this model'''
         return {f.name: to_basic_t(f.type) for f in cls.fields()}
 
     @classmethod
-    def from_cols(cls, data: dict): return cls(**data)
+    def from_cols(cls, data: dict): 
+        '''Reconstruct a model from a flat dict of column values'''
+        return cls(**data)
 
 
 def mk_aliases(dt_cls: Model, table: fl.Table):

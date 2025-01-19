@@ -7,10 +7,9 @@ from .whoami.domain import *
 
 db = init_db('data/data.db')
 user_manager = UserManager(db)
-mm = MemberManager(user_manager)
-register_manager(mm, LobbyMember)
-register_manager(WhoAmIManager(mm), WhoAmIPlayer)
 lobby_manager = LobbyManager(db)
+mm = register_manager(MemberManager(user_manager), LobbyMember)
+wm = register_manager(WhoAmIManager(mm), WhoAmIPlayer)
 lobby_service = LobbyService(lobby_manager)
 
 reg_re_param("xtra", "_hs|json")

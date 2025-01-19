@@ -167,7 +167,7 @@ def ws_fn(connected=True, render_fn: Callable = JoinSpectators):
         else:
             if not connected: return  # user not found in the lobby and not connecting
             m = lobby.create_member(u, send=send, ws=ws)
-            lobby_manager.update(lobby)
+            lobby_service.update(lobby)
 
             def update(r, *_):
                 if r == u: return ActiveGameState(r, lobby), render_fn(r, m)
@@ -182,7 +182,7 @@ def get(req: Request, lobby_id: str = None):
     if not lobby_id: return Redirect(f"/whoami/{random_id()}")
     u: User = req.state.user
     lobby, _ = lobby_service.get_or_create(u, lobby_id, WhoAmIPlayer)
-    lobby_manager.update(lobby)
+    lobby_service.update(lobby)
     m = lobby.get_member(u.uid)
     req.session['lobby_id'] = lobby.id
     req.bodykw['cls'] = 'who-am-i'
@@ -197,7 +197,7 @@ async def post(req: Request):
     p = lobby.get_member(req.state.user.uid)
     if p.is_player: return
     p.play()
-    lobby_manager.update(lobby)
+    lobby_service.update(lobby)
 
     def update(r: WhoAmIPlayer, lobby):
         swap_position = 'beforeend:#players' if r.is_player else 'beforebegin:#players .new-player-card'
@@ -212,7 +212,7 @@ async def post(req: Request):
     p = lobby.get_member(req.state.user.uid)
     if not p.is_player: return
     p.spectate()
-    lobby_manager.update(lobby)
+    lobby_service.update(lobby)
 
     def update(r: WhoAmIPlayer, *_):
         return JoinSpectators(r, p), Div(hx_swap_oob=f"delete:div[data-user='{p.user.uid}']")
@@ -226,7 +226,7 @@ async def post(req: Request, text: str):
     p = lobby.get_member(req.state.user.uid)
     if not p.is_player: return
     p.set_notes(text)
-    lobby_manager.update(lobby)
+    lobby_service.update(lobby)
     
     def update(r, *_): return Notes(r, p)
     await notify_all(lobby, update, filter_fn=lambda m: m != p)
@@ -238,7 +238,7 @@ async def edit_label_text(sess, label: str, owner_uid: str):
     owner = lobby.get_member(owner_uid)
     if not (owner and p and p.is_player) or p == owner: return
     owner.set_label(label)
-    lobby_manager.update(lobby)
+    lobby_service.update(lobby)
     def update(r, *_): return dict(type='label_text', owner_uid=owner.uid, label=label)
     await notify_all(lobby, update, filter_fn=lambda m: m != owner and m != p, json=True)
     await notify(owner, PlayerLabelText, owner)
@@ -250,7 +250,7 @@ async def edit_label_position(sess, owner_uid: str, **kwargs):
     owner = lobby.get_member(owner_uid)
     if not (p and owner): return
     owner.set_label_transform(kwargs)
-    lobby_manager.update(lobby)
+    lobby_service.update(lobby)
     def update(*_): return dict(type='label_position', owner_uid=owner.uid, **kwargs)
     await notify_all(lobby, update, json=True, filter_fn=lambda m: m != p)
 
