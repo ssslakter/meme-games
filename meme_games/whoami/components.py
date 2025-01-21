@@ -162,6 +162,7 @@ def ws_fn(connected=True, render_fn: Callable = JoinSpectators):
         else:
             if not connected: return  # user not found in the lobby and not connecting
             m = lobby.create_member(u, send=send, ws=ws)
+            print('created', m)
             lobby_service.update(lobby)
 
             def update(r, *_):

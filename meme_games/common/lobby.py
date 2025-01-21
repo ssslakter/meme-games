@@ -254,7 +254,8 @@ class LobbyService:
         return self.create_lobby(u, id, ltype), True
 
     def sync_active_lobbies_user(self, u: User):
-        for l in self.lobbies.values(): l.members[u.uid].update_user(u)
+        for l in self.lobbies.values(): 
+            if u.uid in l.members: l.members[u.uid].update_user(u)
 
     def update(self, lobby: Lobby): self.lm.update(lobby)
 
