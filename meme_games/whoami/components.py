@@ -18,6 +18,7 @@ def PlayerLabelText(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
     style = f'width: {owner.label_tfm.width}px; height: {owner.label_tfm.height}px;' if owner.label_tfm else ''
     return (Textarea(owner.label_text, placeholder='enter label', ws_send=True, name='label',
                      _="on wsMessage(label) set me.value to label",
+                     data_label_text=owner.uid,
                      hx_vals={'owner_uid': owner.uid, "type": "label_text"},
                      style=style, value=owner.label_text, cls='label-text',
                      hx_trigger="input changed delay:100ms")
