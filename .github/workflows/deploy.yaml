@@ -1,16 +1,12 @@
-name: build
+name: Build and Deploy
 
 on:
-  workflow_run:
-    workflows:
-      - Generate Requirements
-    types:
-      - completed
+  push:
+    branches: [main]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -32,14 +28,29 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Upload docker-compose.yml
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-compose.yml
+          path: docker-compose.yml
+
   deploy:
     needs: build
     if: ${{ ! contains(github.event.head_commit.message, '[no-deploy]') }}
     runs-on: self-hosted
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - name: Download docker-compose.yml
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-compose.yml
+
+      - name: Stop and remove old containers
+        run: docker compose down --remove-orphans
 
       - name: Deploy with Docker Compose
+        run: docker compose up -d
+
+      - name: Clean up
+        if: always()
         run: |
-          docker-compose up -d --build
+          docker image prune -af

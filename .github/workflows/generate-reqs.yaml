@@ -3,6 +3,9 @@ name: Generate Requirements
 on:
   push:
     branches: [main]
+    paths:
+      - 'pyproject.toml'
+
 
 jobs:
   generate:
