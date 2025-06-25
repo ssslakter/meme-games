@@ -3,20 +3,33 @@ requires = ["setuptools>=42"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "meme-games"
+name="meme-games"
 version = "0.1.0"
 description = "A collection of meme games"
 authors = [{ name = "Slava Chaunin", email = "slava.chaunin@gmail.com" }]
-requires-python = ">=3.12"
+requires-python=">=3.9"
 license = { text = "MIT" }
 dependencies = [
     "python-fasthtml",
-    "fastcore @ git+https://github.com/AnswerDotAI/fastcore"
+    "fastcore"
     ]
 
 [project.optional-dependencies]
-"dev" = ["nbdev"]
+"dev" = ["nbdev", "pip-tools", "pre-commit"]
 
 
 [tool.setuptools]
 packages = ["meme_games"]
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["win-64", "linux-64"]
+
+[tool.pixi.pypi-dependencies]
+meme-games = { path = ".", editable = true }
+
+[tool.pixi.environments]
+default = { solve-group = "default" }
+dev = { features = ["dev"], solve-group = "default" }
+
+[tool.pixi.tasks]

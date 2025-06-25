@@ -12,29 +12,7 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-        with:
-          clean: false
 
-      - name: Set Up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.13'
-      - name: Set Up env
+      - name: Deploy with Docker Compose
         run: |
-          pip install -e .
-          mkdir -p ./data
-      
-      - name: Deploy
-        run: |
-          echo "Using Python at: $(which python)"
-          PORT=8000
-          PID=$(lsof -t -i:$PORT) || echo "No process found on port $PORT"
-              if [ -n "$PID" ]; then
-                echo "Killing process $PID using port $PORT"
-                kill -9 $PID || echo "Failed to kill process $PID"
-              fi
-          mkdir -p logs
-          TIMESTAMP=$(date '+%Y-%m-%d_%H-%M-%S')
-          LOG_FILE="logs/deploy_${TIMESTAMP}.log"
-          RUNNER_TRACKING_ID="" && nohup python run.py > $LOG_FILE 2>&1 &
-          echo "App started and. Logs written to $LOG_FILE"
+          docker-compose up -d --build
