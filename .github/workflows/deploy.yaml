@@ -1,12 +1,39 @@
-name: deploy
+name: build
 
 on:
-  push:
-    branches:
-      - main   # Trigger deployment when pushing to the main branch
+  workflow_run:
+    workflows:
+      - Generate Requirements
+    types:
+      - completed
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with: 
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@v3
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/meme-games
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
   deploy:
+    needs: build
     if: ${{ ! contains(github.event.head_commit.message, '[no-deploy]') }}
     runs-on: self-hosted
     steps:

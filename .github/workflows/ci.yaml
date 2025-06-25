@@ -1,0 +1,40 @@
+name: Generate Requirements
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.check.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.13
+          cache: "pip"
+
+      - name: Generate requirements.txt
+        run: |
+          pip install pip-tools
+          pip-compile pyproject.toml -o requirements.txt
+
+      - name: Check for changes
+        id: check
+        run: |
+          if git diff --quiet HEAD requirements.txt; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            git config --global user.name github-actions
+            git config --global user.email github-actions@users.noreply.github.com
+            if [[ "${{ github.event.head_commit.message }}" == *"[no-deploy]"* ]]; then
+              DEPLOY="[no-deploy]"
+            else
+              DEPLOY=""
+            fi
+            git commit -am "$DEPLOY Update requirements"
+            git push
+          fi
