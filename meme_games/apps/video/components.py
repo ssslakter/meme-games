@@ -1,4 +1,5 @@
 from meme_games.core import *
+from ..shared import *
 
 rt = APIRouter('/video')
 
@@ -30,6 +31,6 @@ def get(id: str):
     return YoutubePlayer(id)
 
 
-@rt.ws('/ws')
+@ws_rt.ws('/ws')
 async def ws(sess, data):
     print(data)

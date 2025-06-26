@@ -1,6 +1,6 @@
 from meme_games.core import *
 from meme_games.domain import *
-from ..shared.components import *
+from ..shared import *
 from .domain import *
 
 rt = APIRouter('/whoami')
@@ -263,7 +263,7 @@ async def edit_label_position(sess, owner_uid: str, **kwargs):
     await notify_all(lobby, update, json=True, but=p)
 
 
-@rt.ws('/ws', conn=ws_fn(), disconn=ws_fn(connected=False))
+@ws_rt.ws('/whoami', conn=ws_fn(), disconn=ws_fn(connected=False))
 async def ws(sess, data):
     print(sess, data)
     try:
@@ -272,4 +272,4 @@ async def ws(sess, data):
         elif msg_type == 'label_position': await edit_label_position(sess, **data)
     except Exception as e: logger.error(e)
 
-ws_url = rt.wss[0][1] # first websocket url
+ws_url = rt.wss[0][-1] # latest added websocket url
