@@ -60,13 +60,14 @@ def Settings(reciever: User|LobbyMember, lobby: Lobby):
         I('settings', cls="material-icons controls"),
         NameSetting(),
         AvatarRemoval(),
+        SetBackground(lobby),
         *(HostSettings(lobby) if isinstance(reciever, LobbyMember) and reciever.is_host else []),
         cls='controls-block'
     )
 
 
 def HostSettings(lobby: Lobby):
-    return tuple(f(lobby) for f in (LockLobby, SetBackground))
+    return tuple(f(lobby) for f in (LockLobby,))
 
 
 #-----------------------------------#
