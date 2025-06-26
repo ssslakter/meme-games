@@ -123,9 +123,7 @@ async def lock_lobby(req: Request):
 @rt('/background', methods=['post'])
 async def change_background(req: Request, hdrs: HtmxHeaders):
     lobby: Lobby[LobbyMember] = req.state.lobby
-    p = lobby.get_member(req.state.user.uid)
-    if not p.is_host: return
     lobby.background_url = urllib.parse.unquote(hdrs.prompt)
     lobby_service.update(lobby)
     def update(*_): return Background(lobby.background_url)
-    return await notify(p, update)
+    return await notify_all(lobby, update)
