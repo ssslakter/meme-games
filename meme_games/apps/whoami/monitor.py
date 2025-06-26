@@ -6,7 +6,6 @@ lobby_service = DI.get(LobbyService)
 
 
 def LobbyInfo(lobby: Lobby):
-    print(dt.datetime.now() - (lobby.last_active + lobby_service.lobby_lifetime))
     return Div(f'{lobby.id}: ',
                A('join', href=f'/whoami/{lobby.id}', hx_boost='false'),
                f'Last active: {lobby.last_active.strftime("%Y-%m-%d %H:%M:%S")}',

@@ -29,11 +29,11 @@ class CodenamesPlayer(LobbyMember):
         return cols
 
     @classmethod
-    def from_cols(cls, data: dict):
+    def from_dict(cls, data: dict):
         data = cols2dict(data)
-        data[cls]['user'] = User.from_cols(data.pop(User))
+        data[cls]['user'] = User.from_dict(data.pop(User))
         data[cls].update(data.pop(LobbyMember))
-        return super(LobbyMember, cls).from_cols(data[cls])
+        return super(LobbyMember, cls).from_dict(data[cls])
 
 
 CodenamesLobby = Lobby[CodenamesPlayer]
@@ -75,7 +75,7 @@ class CodenamesManager(DataManager[CodenamesPlayer]):
                   join {self.members_t} on {self.members_t.c.id} = {self.players.c.id} \
                   join {self.mm.users} on {self.members_t.c.user_uid} = {self.mm.users.c.uid} \
                   where {self.members_t.c.lobby_id} = ?'''
-        return list(map(CodenamesPlayer.from_cols, self.db.q(qry, [lobby_id])))
+        return list(map(CodenamesPlayer.from_dict, self.db.q(qry, [lobby_id])))
 
 
 

@@ -58,12 +58,15 @@ class UserManager(DataManager):
         return self.create(uid, name)
 
 # %% ../../notebooks/user.ipynb 4
+DI.register_service(UserManager)
+
+# %% ../../notebooks/user.ipynb 5
 def user_beforeware(manager: UserManager, skip=None):
     '''Makes sure that request always contains valid user'''
     def before(req: Request): req.state.user = manager.get_or_create(req.session)
     return Beforeware(before, skip)
 
-# %% ../../notebooks/user.ipynb 5
+# %% ../../notebooks/user.ipynb 6
 def UserName(r: User, u: User, is_connected=True, cls='username', **kwargs):
     """Renders the user's name as a styled HTML span."""
     cls += ' muted' if not is_connected else ''

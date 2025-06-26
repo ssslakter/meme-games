@@ -6,7 +6,6 @@ __all__ = ['logger', 'LOBBY_REGISTRY', 'MEMBER_MANAGER_REGISTRY', 'GameData', 'L
            'lobby_beforeware', 'Members']
 
 # %% ../../notebooks/lobby.ipynb 1
-from dataclasses import field
 from ..core import *
 from .user import *
 
@@ -85,10 +84,10 @@ class LobbyMember(fc.GetAttr, Model):
     def __eq__(self, other: Union[User, 'LobbyMember']): return self.uid == other.uid
 
     @classmethod
-    def from_cols(cls, data: dict):
+    def from_dict(cls, data: dict):
         data = cols2dict(data)
-        data[cls]['user'] = User.from_cols(data.pop(User))
-        return super().from_cols(data[cls])
+        data[cls]['user'] = User.from_dict(data.pop(User))
+        return super().from_dict(data[cls])
 
     @classmethod
     def convert(cls, member: Optional['LobbyMember'] = None):
@@ -200,7 +199,7 @@ class LobbyManager(DataManager[Lobby]):
     def get(self, id: str) -> Lobby[LobbyMember]:
         """Retrieves a lobby and its members from the database."""
         if id not in self.lobbies: return
-        lobby = Lobby.from_cols(self.lobbies.get(id))
+        lobby = Lobby.from_dict(self.lobbies.get(id))
         lobby.members = {m.user_uid: m for m in self.memm[LOBBY_REGISTRY[lobby.lobby_type]].get_all(id)}
         hosts = [m for m in lobby.members.values() if m.is_host]
         if hosts: lobby.host = hosts[0]
@@ -235,7 +234,7 @@ class MemberManager(DataManager[LobbyMember]):
                   {mk_aliases(User, self.users)}
                   from {self.members} join {self.users}
                   on {cols.user_uid} = {self.users.c.uid} where {cols.lobby_id} = ?"""
-        return list(map(LobbyMember.from_cols, self.db.q(qry, [lobby_id])))
+        return list(map(LobbyMember.from_dict, self.db.q(qry, [lobby_id])))
 
 
 # %% ../../notebooks/lobby.ipynb 9
@@ -291,10 +290,13 @@ class LobbyService:
 
     def update(self, lobby: Lobby): self.lm.update(lobby)
 
-# %% ../../notebooks/lobby.ipynb 13
-def is_player(u: LobbyMember|User): return isinstance(u, LobbyMember) and u.is_player
+# %% ../../notebooks/lobby.ipynb 10
+DI.register_services([LobbyManager, MemberManager, LobbyService])
 
 # %% ../../notebooks/lobby.ipynb 14
+def is_player(u: LobbyMember|User): return isinstance(u, LobbyMember) and u.is_player
+
+# %% ../../notebooks/lobby.ipynb 15
 def lobby_beforeware(service: LobbyService, skip=None):
     '''Makes sure that request always contains valid lobby'''
     def before(req: Request):
@@ -306,7 +308,7 @@ def lobby_beforeware(service: LobbyService, skip=None):
         
     return Beforeware(before, skip)
 
-# %% ../../notebooks/lobby.ipynb 16
+# %% ../../notebooks/lobby.ipynb 17
 def Members(r: User|LobbyMember, lobby: Lobby):
     """Renders a table of lobby members."""
     return Table(

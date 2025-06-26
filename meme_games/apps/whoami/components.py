@@ -168,7 +168,6 @@ def ws_fn(connected=True, render_fn: Callable = JoinSpectators):
         else:
             if not connected: return  # user not found in the lobby and not connecting
             m = lobby.create_member(u, send=send, ws=ws)
-            print('created', m)
             lobby_service.update(lobby)
 
             def update(r, *_):
@@ -265,11 +264,10 @@ async def edit_label_position(sess, owner_uid: str, **kwargs):
 
 @ws_rt.ws('/whoami', conn=ws_fn(), disconn=ws_fn(connected=False))
 async def ws(sess, data):
-    print(sess, data)
     try:
         msg_type = data.pop('type')
         if msg_type == 'label_text': await edit_label_text(sess, **data)
         elif msg_type == 'label_position': await edit_label_position(sess, **data)
     except Exception as e: logger.error(e)
 
-ws_url = rt.wss[0][-1] # latest added websocket url
+ws_url = ws_rt.wss[-1][1] # latest added websocket url

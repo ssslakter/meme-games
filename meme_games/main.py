@@ -5,11 +5,9 @@ from meme_games.apps import *
 
 db = init_db('data/data.db')
 DI.register_instance(db)
-DI.register_services([UserManager, LobbyManager, MemberManager, WhoAmIManager, CodenamesManager, LobbyService])
-
-register_lobby_member_manager(DI.get(MemberManager), LobbyMember)
-register_lobby_member_manager(DI.get(WhoAmIManager), WhoAmIPlayer)
-register_lobby_member_manager(DI.get(CodenamesManager), CodenamesPlayer)
+for man, member in zip([MemberManager, WhoAmIManager, CodenamesManager],
+                       [LobbyMember, WhoAmIPlayer, CodenamesPlayer]):
+    register_lobby_member_manager(DI.get(man), member)
 
 reg_re_param("xtra", "_hs|json|moc|mtn")
 
@@ -47,7 +45,7 @@ app, _ = fast_app(pico=False, before=bwares, hdrs=hdrs+yt_hdrs,
 
 setup_toasts(app, duration=1.5)
 
-for rt in [shared_rt, whoami_rt, video_rt, word_packs_rt, codenames_rt]:
+for rt in [shared_rt, whoami_rt, video_rt, word_packs_rt, codenames_rt, ws_rt]:
     rt.to_app(app)
 
 
