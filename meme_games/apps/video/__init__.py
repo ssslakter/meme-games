@@ -1,0 +1,1 @@
+from .components import rt as video_rt
