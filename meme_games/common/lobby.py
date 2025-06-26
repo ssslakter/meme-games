@@ -270,12 +270,11 @@ def is_player(u: LobbyMember|User): return isinstance(u, LobbyMember) and u.is_p
 def lobby_beforeware(service: LobbyService, skip=None):
     '''Makes sure that request always contains valid lobby'''
     def before(req: Request):
-        u: User = req.state.user
+        if 'session' not in req.scope: return
         path_lobby_id = req.path_params.get('lobby_id')
         if path_lobby_id: req.session['lobby_id'] = path_lobby_id
         lobby: Lobby = service.get_lobby(req.session.get("lobby_id"))
-        if not lobby: raise HTTPException(404, 'Lobby not found')
-        req.state.lobby = lobby
+        if lobby: req.state.lobby = lobby
         
     return Beforeware(before, skip)
 

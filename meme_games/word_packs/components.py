@@ -1,7 +1,8 @@
 import logging
 from meme_games.common.components import *
 from .domain import *
-from . import rt
+
+rt = APIRouter('/word_packs')
 
 logger = logging.getLogger(__name__)
 

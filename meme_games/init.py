@@ -46,7 +46,7 @@ bodykw = {'hx-boost': 'true'}
 exception_handlers = {404: not_found}
 
 app: FastHTML
-app, rt = fast_app(pico=False, before=bwares, hdrs=hdrs+yt_hdrs,
+app, _ = fast_app(pico=False, before=bwares, hdrs=hdrs+yt_hdrs,
                    exts='ws',
                    bodykw={**bodykw,'sess_cls': middlware_cls},
                    key_fname='data/.sesskey',

@@ -1,10 +1,11 @@
 import logging
 from meme_games.init import *
-from . import rt
+
+rt = APIRouter('/video')
+
 
 logger = logging.getLogger(__name__)
 
-ar = APIRouter(prefix='/video')
 
 
 def YoutubePlayer(video_id: str):
@@ -14,7 +15,7 @@ def YoutubePlayer(video_id: str):
             )
 
 
-@ar
+@rt
 def index():
     return Titled("Video",
                   Form(
@@ -25,11 +26,11 @@ def index():
                   Div(hx_ext='ws', ws_connect='/video/ws'))
 
 
-@ar('/yt')
+@rt('/yt')
 def get(id: str):
     return YoutubePlayer(id)
 
 
-@ar.ws('/ws')
+@rt.ws('/ws')
 async def ws(sess, data):
     print(data)

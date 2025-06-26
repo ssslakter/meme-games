@@ -1,6 +1,8 @@
 import urllib.parse
 from meme_games.init import *
-from . import rt
+
+rt = APIRouter()
+
 
 lobby_service = di_context.get(LobbyService)
 user_manager = di_context.get(UserManager)

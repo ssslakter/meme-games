@@ -2,9 +2,10 @@ import logging
 from meme_games.common.components import *
 from meme_games.init import *
 
+rt = APIRouter('/whoami')
+
 logger = logging.getLogger(__name__)
 
-rt = APIRouter(prefix='/whoami')
 
 lobby_service = di_context.get(LobbyService)
 user_manager = di_context.get(UserManager)
