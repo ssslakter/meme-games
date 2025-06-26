@@ -130,7 +130,7 @@ def Game(reciever: WhoAmIPlayer | User, lobby: Lobby):
 
 def MainBlock(reciever: WhoAmIPlayer | User, lobby: Lobby):
     return Main(
-        Div(cls='background'),
+        Background(lobby.background_url),
         Spectators(reciever, lobby),
         Game(reciever, lobby),
         Settings(reciever, lobby),

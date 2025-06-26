@@ -20,7 +20,7 @@ bwares = [user_beforeware(DI.get(UserManager), skip = static_re),
           ]
 hdrs = [
     Statics(ext='_hs', static_path='static'),
-    Script(src="https://unpkg.com/hyperscript.org@0.9.13"),
+    Script(src="/static/_hyperscript.min.js"),
     Statics(ext='js', static_path='static', wc='live2d/*.js'),
     Statics(ext='js', static_path='static', wc='scripts/*.js'),
     Link(rel="stylesheet", href="https://fonts.googleapis.com/icon?family=Material+Icons"),

@@ -115,7 +115,7 @@ class Lobby[T: LobbyMember](Model):
     id: str = field(default_factory=random_id)
     lobby_type: str = LobbyMember._lobby_type
     locked: bool = False
-    game_state: Optional[dict] = None
+    background_url: Optional[str] = None
     host: Optional[T] = None
     members: dict[str, T] = field(default_factory=dict)
     last_active: dt.datetime = field(default_factory=dt.datetime.now)

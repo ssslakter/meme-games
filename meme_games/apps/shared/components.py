@@ -48,6 +48,13 @@ def LockLobby(l: Lobby):
     args = ('lock_open', 'Lock lobby') if not l.locked else ('lock', 'Unlock lobby')
     return Setting(*args, hx_post=lock_lobby.to(), hx_swap=None)(hx_swap_oob='innerHTML', id='lock-lobby')
 
+def Background(url: str = None): 
+    return Div(id='background', cls='background', style=f'background-image: url({url})' if url else None, hx_swap_oob='true')
+
+
+def SetBackground(l: Lobby):
+    return Setting('image', title='Background', hx_post=change_background.to(), hx_prompt='Enter the URL of the background image')
+
 def Settings(reciever: User|LobbyMember, lobby: Lobby):
     return Div(
         I('settings', cls="material-icons controls"),
@@ -59,7 +66,7 @@ def Settings(reciever: User|LobbyMember, lobby: Lobby):
 
 
 def HostSettings(lobby: Lobby):
-    return (LockLobby(lobby),)
+    return tuple(f(lobby) for f in (LockLobby, SetBackground))
 
 
 #-----------------------------------#
@@ -110,4 +117,15 @@ async def lock_lobby(req: Request):
     else: lobby.lock()
     lobby_service.update(lobby)
     def update(*_): return LockLobby(lobby)
+    return await notify(p, update)
+
+
+@rt('/background', methods=['post'])
+async def change_background(req: Request, hdrs: HtmxHeaders):
+    lobby: Lobby[LobbyMember] = req.state.lobby
+    p = lobby.get_member(req.state.user.uid)
+    if not p.is_host: return
+    lobby.background_url = urllib.parse.unquote(hdrs.prompt)
+    lobby_service.update(lobby)
+    def update(*_): return Background(lobby.background_url)
     return await notify(p, update)
