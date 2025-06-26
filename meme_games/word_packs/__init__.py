@@ -1,3 +1,3 @@
 from fasthtml.common import *
 
-rt = APIRouter('/video')
+rt = APIRouter('/word_packs')

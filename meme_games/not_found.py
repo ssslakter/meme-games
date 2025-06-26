@@ -9,7 +9,7 @@ static_dir = Path(__file__).parent.parent / 'static'
 def not_found(req: Request, exc):
     if req.method.lower() != 'get': return Response('Not found', status_code=404)
     model_path = '/media/shizuku/shizuku.model.json'
-    return (Title("Not Found"), Body(H1("404! Sorry, our librarian could not find the page (she's not sorry)."),
+    return (Title("Not Found"), Body(H1("404😭! Sorry, this page does not exist."),
                                      Canvas(id="canvas", cls='live2d-canvas',
                                             width=1000, height=900, style='opacity: 0;',
                                             _=f'''

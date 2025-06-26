@@ -2,16 +2,21 @@ from starlette.routing import compile_path
 from fasthtml.common import *
 from .not_found import not_found
 from .middleware import ConditionalSessionMiddleware
-from .common import *
 from .utils import Statics
 from .whoami.domain import *
+from .codenames.domain import *
+from .di import DiContext
+
+di_context = DiContext()
 
 db = init_db('data/data.db')
-user_manager = UserManager(db)
-lobby_manager = LobbyManager(db)
-mm = register_manager(MemberManager(user_manager), LobbyMember)
-wm = register_manager(WhoAmIManager(mm), WhoAmIPlayer)
-lobby_service = LobbyService(lobby_manager)
+di_context.register_instance(db)
+
+di_context.register_services([UserManager, LobbyManager, MemberManager, WhoAmIManager, CodenamesManager, LobbyService])
+
+register_lobby_member_manager(di_context.get(MemberManager), LobbyMember)
+register_lobby_member_manager(di_context.get(WhoAmIManager), WhoAmIPlayer)
+register_lobby_member_manager(di_context.get(CodenamesManager), CodenamesPlayer)
 
 reg_re_param("xtra", "_hs|json|moc|mtn")
 
@@ -19,8 +24,9 @@ static_path = '.'
 static_re = [compile_path("/{fname:path}.{ext:static}")[0], compile_path("/{fname:path}.{ext:xtra}")[0]]
 middlware_cls = partial(ConditionalSessionMiddleware, skip=static_re)
 
-bwares = [user_beforeware(user_manager, skip = static_re),
-          lobby_beforeware(lobby_service, skip = static_re + [r'/[\w-]*avatar', '/name', '/whoami/.*', '/monitor', '/video/.*', '/meme*'])]
+bwares = [user_beforeware(di_context.get(UserManager), skip = static_re),
+          lobby_beforeware(di_context.get(LobbyService))
+          ]
 hdrs = [
     Statics(ext='_hs', static_path='static'),
     Script(src="https://unpkg.com/hyperscript.org@0.9.13"),

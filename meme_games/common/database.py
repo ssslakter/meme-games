@@ -11,6 +11,7 @@ def init_db(filename_or_conn=':memory:', **kwargs):
 
 
 class DataManager[T]:
+    '''Base class to manage database tables'''
 
     def __init__(self, db: fl.Database):
         self.db = db

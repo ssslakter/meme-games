@@ -33,3 +33,6 @@ default = { solve-group = "default" }
 dev = { features = ["dev"], solve-group = "default" }
 
 [tool.pixi.tasks]
+
+[dependency-groups]
+dev = ["ipykernel>=6.29.5,<7"]

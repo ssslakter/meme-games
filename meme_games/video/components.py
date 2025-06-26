@@ -1,8 +1,6 @@
 import logging
-from ..common.components import *
-from ..init import *
-from fasthtml.common import *
-from ..common import *
+from meme_games.init import *
+from . import rt
 
 logger = logging.getLogger(__name__)
 

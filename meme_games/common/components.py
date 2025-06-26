@@ -1,19 +1,13 @@
 import urllib.parse
-from ..init import *
+from meme_games.init import *
+from . import rt
 
+lobby_service = di_context.get(LobbyService)
+user_manager = di_context.get(UserManager)
 
 def Timer(time: dt.timedelta = dt.timedelta(hours=1)):
     return Span(data_delta=time.total_seconds() * 1000, cls='timer',
                 _='init immediately set @target to (Date.now()+@data-delta as Number) as Date')
-
-
-def LobbyInfo(lobby: Lobby):
-    print(dt.datetime.now() - (lobby.last_active + lobby_service.lobby_lifetime))
-    return Div(f'{lobby.id}: ',
-               A('join', href=f'/whoami/{lobby.id}', hx_boost='false'),
-               f'Last active: {lobby.last_active.strftime("%Y-%m-%d %H:%M:%S")}',
-               Div("Will be deleted in: ", Timer(lobby.last_active + lobby_service.lobby_lifetime - dt.datetime.now())),
-               style='display: flex; gap: 8px;')
 
 
 def Avatar(u: User):
@@ -28,14 +22,14 @@ def Setting(icon: str, title: str = None, hx_swap='none', **kwargs):
         cls='controls')
 
 
-def NameSetting(): return Setting('edit', title='Edit name', hx_put='/name', hx_prompt='Enter your name')
+def NameSetting(): return Setting('edit', title='Edit name', hx_put=edit_name.to(), hx_prompt='Enter your name')
 
-def AvatarRemoval(): return Setting('delete', title='Remove avatar', hx_delete='/reset-avatar',
+def AvatarRemoval(): return Setting('delete', title='Remove avatar', hx_delete=reset_avatar.to(),
                                     hx_confirm="Confirm that you want to remove your avatar?")
 
 def LockLobby(l: Lobby): 
     args = ('lock_open', 'Lock lobby') if not l.locked else ('lock', 'Unlock lobby')
-    return Setting(*args, hx_post='/lock', hx_swap=None)(hx_swap_oob='innerHTML', id='lock-lobby')
+    return Setting(*args, hx_post=lock_lobby.to(), hx_swap=None)(hx_swap_oob='innerHTML', id='lock-lobby')
 
 def Settings(reciever: User|LobbyMember, lobby: Lobby):
     return Div(
@@ -51,8 +45,13 @@ def HostSettings(lobby: Lobby):
     return (LockLobby(lobby),)
 
 
-@rt('/name')
-async def put(req: Request, hdrs: HtmxHeaders):
+#-----------------------------------#
+#------------- Routes --------------#
+#-----------------------------------#
+
+
+@rt('/name', methods=['put'])
+async def edit_name(req: Request, hdrs: HtmxHeaders):
     u: User = req.state.user
     name = ' '.join(urllib.parse.unquote(hdrs.prompt).split())
     u.name = name
@@ -77,23 +76,16 @@ async def modify_avatar(req: Request, file: UploadFile = None):
     await notify_all(lobby, update)
 
 
-@rt('/avatar')
-async def post(req: Request, file: UploadFile): await modify_avatar(req, file)
+@rt('/avatar', methods=['post'])
+async def edit_avatar(req: Request, file: UploadFile): await modify_avatar(req, file)
 
 
-@rt('/reset-avatar')
-async def delete(req: Request): await modify_avatar(req, None)
+@rt('/avatar', methods=['delete'])
+async def reset_avatar(req: Request): await modify_avatar(req, None)
 
 
-@rt('/monitor')
-def get():
-    lobbies_list = Div(H3("Who am I lobbies:"), Ul(*[Li(LobbyInfo(lobby)) for lobby in lobby_service.lobbies.values()]),
-                       _='init updateTimer() then setInterval(updateTimer, 500)')
-    return Titled("Current active lobbies",
-                  lobbies_list if len(lobby_service.lobbies) else Div("No active lobbies"))
-
-@rt('/lock')
-async def post(req: Request):
+@rt('/lock', methods=['post'])
+async def lock_lobby(req: Request):
     lobby: Lobby[LobbyMember] = req.state.lobby
     p = lobby.get_member(req.state.user.uid)
     if not p.is_host: return

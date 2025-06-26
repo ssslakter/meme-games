@@ -1,13 +1,16 @@
 import logging
-from ..common.components import *
-from ..init import *
-from fasthtml.common import *
+from meme_games.common.components import *
+from meme_games.init import *
 
 logger = logging.getLogger(__name__)
 
+rt = APIRouter(prefix='/whoami')
+
+lobby_service = di_context.get(LobbyService)
+user_manager = di_context.get(UserManager)
 
 def Spectators(reciever: WhoAmIPlayer | User, lobby: Lobby):
-    spectate_controls = dict(hx_post='/spectate', hx_swap='beforeend', hx_target='#players', cls='spectators-controls')
+    spectate_controls = dict(hx_post=spectate, hx_swap='beforeend', hx_target='#players', cls='spectators-controls')
     return Div(
         "Spectators: ",
         Div(*[UserName(reciever, p.user, is_connected=p.is_connected)
@@ -85,7 +88,7 @@ def PlayerCard(reciever: WhoAmIPlayer | User, p: WhoAmIPlayer, lobby: Lobby):
                Div(
                    edit,
                    Form(Input(type='file', name='file', accept="image/*"), style='display: none;',
-                        hx_trigger='change', hx_post='/avatar', hx_swap='none'),
+                        hx_trigger='change', hx_post=edit_avatar.to(), hx_swap='none'),
                    Avatar(p.user),
                    Div(UserName(reciever, p.user, is_connected=p.is_connected), " ✪" if lobby.host == p else None),
                    cls='player-card-body'), cls='player-card', data_user=p.uid,
@@ -93,11 +96,11 @@ def PlayerCard(reciever: WhoAmIPlayer | User, p: WhoAmIPlayer, lobby: Lobby):
 
 
 def NewPlayerCard():
-    return Div(Div('+', cls='join-icon'), cls='new-player-card', hx_post='/play', hx_swap='outerHTML')
+    return Div(Div('+', cls='join-icon'), cls='new-player-card', hx_post=play, hx_swap='outerHTML')
 
 
 def Notes(reciever: WhoAmIPlayer | User, author: WhoAmIPlayer, **kwargs):
-    notes_kwargs = (dict(hx_post='/notes',
+    notes_kwargs = (dict(hx_post=notes,
                          hx_trigger="input changed delay:500ms, load",
                          hx_swap='none',
                          placeholder="Your notes")
@@ -129,7 +132,7 @@ def MainBlock(reciever: WhoAmIPlayer | User, lobby: Lobby):
         Spectators(reciever, lobby),
         Game(reciever, lobby),
         Settings(reciever, lobby),
-        hx_ext='ws', ws_connect='/ws/whoami',
+        hx_ext='ws', ws_connect=ws_url,
         _='on htmx:wsBeforeMessage call sendWSEvent(event)'
     )
 
@@ -141,9 +144,9 @@ def JoinSpectators(r: WhoAmIPlayer, p: WhoAmIPlayer):
 def ActiveGameState(r: WhoAmIPlayer | User, lobby: Lobby): return Spectators(r, lobby), Game(r, lobby)
 
 
-############################
-########## Routes ##########
-############################
+#---------------------------------#
+#------------- Routes ------------#
+#---------------------------------#
 
 
 def ws_fn(connected=True, render_fn: Callable = JoinSpectators):
@@ -174,9 +177,9 @@ def ws_fn(connected=True, render_fn: Callable = JoinSpectators):
     return user_joined
 
 
-@rt("/whoami/{lobby_id}")
-def get(req: Request, lobby_id: str = None):
-    if not lobby_id: return Redirect(f"/whoami/{random_id()}")
+@rt('/{lobby_id}', methods=['get'])
+def lobby(req: Request, lobby_id: str = None):
+    if not lobby_id: return Redirect(req.url_for('lobby', lobby_id=random_id()))
     u: User = req.state.user
     lobby, was_created = lobby_service.get_or_create(u, lobby_id, WhoAmIPlayer)
     if was_created: lobby_service.update(lobby)
@@ -187,8 +190,8 @@ def get(req: Request, lobby_id: str = None):
             MainBlock(m or u, lobby))
 
 
-@rt('/play')
-async def post(req: Request):
+@rt
+async def play(req: Request):
     lobby: WAILobby = req.state.lobby
     p = lobby.get_member(req.state.user.uid)
     if p.is_player: return
@@ -207,8 +210,8 @@ async def post(req: Request):
     return NotesBlock(p), PlayerCard(p, p, lobby)
 
 
-@rt('/spectate')
-async def post(req: Request):
+@rt
+async def spectate(req: Request):
     lobby: WAILobby = req.state.lobby
     p = lobby.get_member(req.state.user.uid)
     if not p.is_player: return
@@ -222,8 +225,8 @@ async def post(req: Request):
     return NewPlayerCard(), NotesBlock(p)
 
 
-@rt('/notes')
-async def post(req: Request, text: str):
+@rt
+async def notes(req: Request, text: str):
     lobby: WAILobby = req.state.lobby
     p = lobby.get_member(req.state.user.uid)
     if not p.is_player: return
@@ -258,10 +261,13 @@ async def edit_label_position(sess, owner_uid: str, **kwargs):
     await notify_all(lobby, update, json=True, but=p)
 
 
-@app.ws('/ws/whoami', conn=ws_fn(), disconn=ws_fn(connected=False))
+@rt.ws('/ws', conn=ws_fn(), disconn=ws_fn(connected=False))
 async def ws(sess, data):
+    print(sess, data)
     try:
         msg_type = data.pop('type')
         if msg_type == 'label_text': await edit_label_text(sess, **data)
         elif msg_type == 'label_position': await edit_label_position(sess, **data)
     except Exception as e: logger.error(e)
+
+ws_url = rt.wss[0][1] # first websocket url
