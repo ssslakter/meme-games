@@ -24,7 +24,8 @@ hdrs = [
     Statics(ext='js', static_path='static', wc='live2d/*.js'),
     Statics(ext='js', static_path='static', wc='scripts/*.js'),
     Link(rel="stylesheet", href="https://fonts.googleapis.com/icon?family=Material+Icons"),
-    Statics(ext='css', static_path='static'),
+    # Statics(ext='css', static_path='static'),
+    mui.Theme.blue.headers()
 ]
 
 yt_hdrs = [

@@ -9,3 +9,4 @@ from typing import Callable
 from pathlib import Path
 from dataclasses import dataclass, asdict
 from fasthtml.common import *
+from monsterui.all import *

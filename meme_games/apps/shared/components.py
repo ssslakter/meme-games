@@ -1,6 +1,7 @@
 import urllib
 from meme_games.core import *
 from meme_games.domain import *
+import monsterui.all as mui
 
 ext2ft = {
         'js': lambda fname: Script(src=f'/{fname}'),
@@ -64,6 +65,9 @@ def Settings(reciever: User|LobbyMember, lobby: Lobby):
         *(HostSettings(lobby) if isinstance(reciever, LobbyMember) and reciever.is_host else []),
         cls='controls-block'
     )
+    
+def NightThemeToggle():
+    return mui.ThemePicker(color=False, radii=False, shadows=False, font=False, mode=True, cls='controls')
 
 
 def HostSettings(lobby: Lobby):

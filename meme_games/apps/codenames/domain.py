@@ -7,13 +7,23 @@ class CardColor(Enum):
     TEAM_BLUE = "team_blue"
     NEUTRAL = "neutral"
     BOMB = "bomb"
+    
+    def to_css_color(self):
+        return {
+            CardColor.TEAM_RED: 'red',
+            CardColor.TEAM_BLUE: 'blue',
+            CardColor.NEUTRAL: 'gray',
+            CardColor.BOMB: 'black',
+        }[self]
 
 @dataclass
 class WordCard:
     word: str
     color: CardColor
     is_revealed: bool = False
-
+    
+    def __ft__(self):
+        return Card(H4(self.word), style=f'background-color: {self.color.to_css_color()}')
 
 
 

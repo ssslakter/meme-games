@@ -179,8 +179,8 @@ def ws_fn(connected=True, render_fn: Callable = JoinSpectators):
 
 
 @rt('/{lobby_id}', methods=['get'])
-def lobby(req: Request, lobby_id: str = None):
-    if not lobby_id: return Redirect(req.url_for('lobby', lobby_id=random_id()))
+def index(req: Request, lobby_id: str = None):
+    if not lobby_id: return redirect(random_id())
     u: User = req.state.user
     lobby, was_created = lobby_service.get_or_create(u, lobby_id, WhoAmIPlayer)
     if was_created: lobby_service.update(lobby)
@@ -189,6 +189,8 @@ def lobby(req: Request, lobby_id: str = None):
     req.bodykw['cls'] = 'who-am-i'
     return (Title(f'Who Am I lobby: {lobby.id}'),
             MainBlock(m or u, lobby))
+    
+def redirect(lobby_id: str): return Redirect(index.to(lobby_id=lobby_id))
 
 
 @rt
