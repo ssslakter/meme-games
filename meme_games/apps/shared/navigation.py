@@ -8,5 +8,5 @@ def register_page(name: str, url: str):
     PAGES_REGISTRY[name] = url
 
 def Navbar():
-    return NavBar(*[A(name,href=url) for name, url in PAGES_REGISTRY.items()],
+    return NavBar(*[H4(A(name,href=url)) for name, url in PAGES_REGISTRY.items()],
                   brand=H3('Meme Games'))

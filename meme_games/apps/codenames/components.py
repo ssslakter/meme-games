@@ -3,7 +3,7 @@ from meme_games.domain import *
 from .domain import *
 from ..word_packs.domain import *
 from ..shared.components import *
-from monsterui.all import *
+from ..shared.navigation import *
 
 rt = APIRouter('/codenames')
 
@@ -103,4 +103,5 @@ def select_pack(wordpack: str):
     return Div(
         *[WordCard(word, CardColor.NEUTRAL) for word in wordpack_manager.get_by_id(wordpack).words],
     )
-    
+
+register_page('Code Names', '/codenames')

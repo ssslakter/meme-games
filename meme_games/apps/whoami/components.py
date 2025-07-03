@@ -273,3 +273,5 @@ async def ws(sess, data):
     except Exception as e: logger.error(e)
 
 ws_url = ws_rt.wss[-1][1] # latest added websocket url
+
+register_page('Who Am I', '/whoami')
