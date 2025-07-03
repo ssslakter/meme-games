@@ -46,34 +46,38 @@ def WordPackEditor(wp: WordPack = None, empty: bool = False, **kwargs):
 
 
 def MainBlock():
-    return Titled(
-        "Word packs",
-        Navbar(),
-        Div(
-            id="main-block",
-            style="display: flex; flex-direction: row; padding: 10px; justify-content: space-around;",
-        )(
+    return (
+        Title("Word packs"),
+        MainPage(
             Div(
+                id="main-block",
+                style="display: flex; flex-direction: row; padding: 10px; justify-content: space-around;",
+            )(
                 Div(
-                    Form(hx_post=upload.to(), hx_target="#wordpacks")(
-                        Input(type="file", name="file", accept="text/plain"),
-                        Button("Upload", type="submit", value="Upload", cls="secondary"),
+                    Div(
+                        Form(hx_post=upload.to(), hx_target="#wordpacks")(
+                            Input(type="file", name="file", accept="text/plain"),
+                            Button(
+                                "Upload", type="submit", value="Upload", cls="secondary"
+                            ),
+                        ),
+                        Button(
+                            "New", hx_get=new.to(), hx_target="#editor", cls="secondary"
+                        ),
+                        style="display: flex; flex-direction: row; gap: 10px; align-items: flex-start;",
                     ),
-                    Button("New", hx_get=new.to(), hx_target="#editor", cls="secondary"),
-                    style="display: flex; flex-direction: row; gap: 10px; align-items: flex-start;",
+                    Packs(),
                 ),
-                Packs(),
-            ),
-            WordPackEditor(empty=True),
-            NightThemeToggle(),
+                WordPackEditor(empty=True),
+                NightThemeToggle(),
+            )
         ),
     )
-    
-    
 
-#---------------------------------#
-#------------- Routes ------------#
-#---------------------------------#
+
+# ---------------------------------#
+# ------------- Routes ------------#
+# ---------------------------------#
 
 
 @rt("/upload", methods=["post"])

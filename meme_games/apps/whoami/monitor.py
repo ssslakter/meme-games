@@ -1,6 +1,6 @@
 from meme_games.core import *
 from meme_games.domain import *
-from ..shared.components import *
+from ..shared import *
 
 lobby_service = DI.get(LobbyService)
 
@@ -13,7 +13,7 @@ def LobbyInfo(lobby: Lobby):
                style='display: flex; gap: 8px;')
 
 
-@rt
+@settings_rt
 def monitor():
     lobbies_list = Div(H3("Who am I lobbies:"), Ul(*[Li(LobbyInfo(lobby)) for lobby in lobby_service.lobbies.values()]),
                        _='init updateTimer() then setInterval(updateTimer, 500)')

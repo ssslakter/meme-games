@@ -2,8 +2,9 @@ from meme_games.core import *
 from meme_games.domain import *
 from .domain import *
 from ..word_packs.domain import *
-from ..shared.components import *
+from ..shared.utils import *
 from ..shared.navigation import *
+from ..shared.settings import *
 
 rt = APIRouter('/codenames')
 
@@ -34,55 +35,15 @@ def MainBlock(reciever: CodenamesPlayer | User, lobby: Lobby):
 #------------- Routes ------------#
 #---------------------------------#
 
-products = [
-    {"name": "Laptop", "price": "$999", "img": "https://picsum.photos/400/100?random=1"},
-    {"name": "Smartphone", "price": "$599", "img": "https://picsum.photos/400/100?random=2"},
-    {"name": "Headphones", "price": "$199", "img": "https://picsum.photos/400/100?random=3"},
-    {"name": "Smartwatch", "price": "$299", "img": "https://picsum.photos/400/100?random=4"},
-    {"name": "Tablet", "price": "$449", "img": "https://picsum.photos/400/100?random=5"},
-    {"name": "Camera", "price": "$799", "img": "https://picsum.photos/400/100?random=6"},]
-
-def ProductCard(p):
-    # Card does lots of boilerplate classes so you can just pass in the content
-    return Card( 
-        # width:100% makes the image take the full width so we are guarenteed that we won't
-        # have the image cut off or not large enough. Because all our images are a consistent
-        # size we do not need to worry about stretching or skewing the image, this is ideal.
-        # If you have images of different sizes, you will need to use object-fit:cover and/or
-        # height to either strech, shrink, or crop the image. It is much better to adjust your
-        # images to be a consistent size upfront so you don't have to handle edge cases of
-        # different images skeweing/stretching differently.
-        Img(src=p["img"], alt=p["name"], style="width:100%"),
-        # All components can take a cls argument to add additional styling - `mt-2` adds margin
-        # to the top (see spacing tutorial for details on spacing).
-        # 
-        # Often adding space makes a site look more put together - usually the 2 - 5 range is a
-        # good choice
-        H4(p["name"], cls="mt-2"), 
-        # There are helpful Enums, such as TextPresetsT, ButtonT, ContainerT, etc that allow for easy
-        # discoverability of class options.
-        # bold_sm is helpful for things that you want to look like regular text, but stand out
-        # visually for emphasis.
-        P(p["price"], cls=TextPresets.bold_sm), 
-        # ButtonT.primary is useful for actions you really want the user to take (like adding
-        # something to the card) - these stand out visually. For dangerous actions (like
-        # deleting something) you generally would want to use ButtonT.destructive. For UX actions
-        # that aren't a goal of the page (like cancelling something that hasn't been submitted)
-        # you generally want the default styling.
-        Button("Click me!", cls=(ButtonT.primary, "mt-2"),  
-               # HTMX can be used as normal on any component
-               hx_push_url='true',
-               hx_target='body'))
-
-
 @rt
 def index():
-    # Titled using a H1 title, sets the page title, and wraps contents in Main(Container(...)) using
-    # frankenui styles. Generally you will want to use Titled for all of your pages
-    return Titled("Example Store Front!",
-        Grid(*[ProductCard(p) for p in products], cols_lg=3))
-
-
+    return Div(
+        H1("Game Lobby"),
+        # ... other components for the lobby (like a player list) ...
+        Div(cls="mt-8 max-w-md")( # Constrain the width for a "small box" feel
+            LobbySettings()
+        )
+    )
 
 @rt('/{lobby_id}', methods=['get'])
 def index(req: Request, lobby_id: str = None):

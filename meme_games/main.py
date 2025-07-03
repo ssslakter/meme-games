@@ -20,11 +20,8 @@ bwares = [user_beforeware(DI.get(UserManager), skip = static_re),
           ]
 hdrs = [
     Statics(ext='_hs', static_path='static'),
-    Script(src="/static/_hyperscript.min.js"),
-    Statics(ext='js', static_path='static', wc='live2d/*.js'),
-    Statics(ext='js', static_path='static', wc='scripts/*.js'),
+    Statics(ext='js', static_path='static', wc='scripts/**/*.js'),
     Link(rel="stylesheet", href="https://fonts.googleapis.com/icon?family=Material+Icons"),
-    # Statics(ext='css', static_path='static'),
     Theme.blue.headers()
 ]
 
@@ -37,16 +34,16 @@ bodykw = {'hx-boost': 'true'}
 
 exception_handlers = {404: not_found}
 
-app: FastHTML
-app, _ = fast_app(pico=False, before=bwares, hdrs=hdrs+yt_hdrs,
+app = FastHTML(before=bwares, hdrs=hdrs+yt_hdrs,
                    exts='ws',
-                   bodykw={**bodykw,'sess_cls': middlware_cls},
+                   sess_cls=middlware_cls,
                    key_fname='data/.sesskey',
-                   exception_handlers=exception_handlers)
+                   exception_handlers=exception_handlers,
+                   bodykw=bodykw)
 
 setup_toasts(app, duration=1.5)
 
-for rt in [shared_rt, whoami_rt, video_rt, word_packs_rt, codenames_rt, ws_rt]:
+for rt in [settings_rt, whoami_rt, video_rt, word_packs_rt, codenames_rt, ws_rt]:
     rt.to_app(app)
 
 

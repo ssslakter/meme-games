@@ -129,7 +129,7 @@ def Game(reciever: WhoAmIPlayer | User, lobby: Lobby):
 
 
 def MainBlock(reciever: WhoAmIPlayer | User, lobby: Lobby):
-    return Main(
+    return MainPage(
         Background(lobby.background_url),
         Spectators(reciever, lobby),
         Game(reciever, lobby),
@@ -186,7 +186,6 @@ def index(req: Request, lobby_id: str = None):
     if was_created: lobby_service.update(lobby)
     m = lobby.get_member(u.uid)
     req.session['lobby_id'] = lobby.id
-    req.bodykw['cls'] = 'who-am-i'
     return (Title(f'Who Am I lobby: {lobby.id}'),
             MainBlock(m or u, lobby))
     

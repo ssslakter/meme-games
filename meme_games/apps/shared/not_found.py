@@ -10,8 +10,7 @@ def not_found(req: Request, exc):
     model_path = "/media/shizuku/shizuku.model.json"
     return (
         Title("Not Found"),
-        Body(
-            Navbar(),
+        MainPage(
             H1("404😭! Sorry, this page does not exist."),
             Canvas(
                 id="canvas",
