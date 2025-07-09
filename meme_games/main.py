@@ -22,6 +22,7 @@ hdrs = [
     Statics(ext='_hs', static_path='static'),
     Statics(ext='js', static_path='static', wc='scripts/**/*.js'),
     Link(rel="stylesheet", href="https://fonts.googleapis.com/icon?family=Material+Icons"),
+    Statics(ext='css', static_path='static', wc='styles/**/*.css'),
     Theme.blue.headers()
 ]
 

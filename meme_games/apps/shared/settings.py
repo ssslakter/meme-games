@@ -1,6 +1,7 @@
 import urllib
 from meme_games.core import *
 from meme_games.domain import *
+from .general import *
 
 
 rt = APIRouter()
@@ -12,18 +13,15 @@ user_manager = DI.get(UserManager)
 # --- Class Constants ---
 BASE_SETTING_ROW_CLS = "space-x-2 p-2 bg-white/60 rounded-md dark:bg-gray-800/60"
 SETTING_ROW_CLS = f"{BASE_SETTING_ROW_CLS} hover:bg-green-300 cursor-pointer dark:hover:bg-gray-700"
-NIGHT_MODE_ROW_CLS = f"{BASE_SETTING_ROW_CLS} justify-between items-center"
 
 BASE_THEME_BTN_CLS = "inline-flex items-center px-3 py-1.5 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:z-10 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
-CARD_CLS = "fixed bottom-0 right-0 p-4 border border-gray-400 rounded-lg shadow-lg bg-white/60 space-y-2 dark:border-gray-700 dark:bg-gray-900/60"
-AVATAR_CLS = "w-72 h-72 bg-cover bg-center bg-no-repeat"
 BACKGROUND_CLS = "absolute inset-0 z-[-1] bg-black bg-cover bg-center bg-no-repeat filter blur-sm brightness-50"
 
 
 def Avatar(u: User):
     filename = u.filename
     filename = ('/user-content/' + filename) if filename else '/media/default-avatar.jpg'
-    return Div(style=f'background-image: url({filename})', cls=AVATAR_CLS, data_avatar=u.uid)
+    return Div(style=f'background-image: url({filename})', cls="w-full h-full bg-cover bg-center bg-no-repeat", data_avatar=u.uid)
 
 
 def Setting(icon: str, title: str = None, hx_swap='none', **kwargs):
@@ -83,7 +81,7 @@ def ThemeSwitcher():
 
 def Settings(reciever: User|LobbyMember, lobby: Lobby):
     card_header_content = DivLAligned(
-        UkIcon('cog', cls="text-4xl"),
+        UkIcon('cog', width=25, height=25),
         H4('Settings', cls="text-xl font-bold ml-2")
     )
 
@@ -97,22 +95,44 @@ def Settings(reciever: User|LobbyMember, lobby: Lobby):
 
     settings_items.append(
         DivLAligned(
-            UkIcon('sun', cls="text-3xl"),
+            UkIcon('sun', width=20, height=20),
             P('Night Mode', cls="text-lg"),
             ThemeSwitcher(),
-            cls=NIGHT_MODE_ROW_CLS
+            cls=f"{BASE_SETTING_ROW_CLS} justify-between items-center"
         )
     )
     
     return Card(
         *settings_items,
         header=card_header_content,
-        cls=CARD_CLS
+        cls = 'space-y-2'
     )
     
 
 def HostSettings(lobby: Lobby):
     return tuple(f(lobby) for f in (LockLobby,))
+
+
+def SettingsPopover(reciever: User|LobbyMember, lobby: Lobby):
+    button = Panel(
+        UkIcon('cog', width=45, height=45),
+        _ = "on mouseenter toggle .hidden on the next <div/> then toggle .hidden on me",
+        cls="cursor-pointer rounded-full",
+        hoverable=True
+    )
+
+    settings_card = Settings(reciever, lobby)
+    panel_wrapper = Div(
+        settings_card,
+        cls="fixed bottom-0 right-0 p-4 mt-2 w-auto z-10 hidden",
+        _ = "on mouseleave toggle .hidden on me then toggle .hidden on the previous <div/>",
+    )
+
+    return Div(
+        button,
+        panel_wrapper,
+        cls="fixed bottom-0 right-0 p-4"
+    )
 
 
 #-----------------------------------#
@@ -133,10 +153,11 @@ async def edit_name(req: Request, hdrs: HtmxHeaders):
     await notify_all(lobby, update)
 
 
-async def modify_avatar(req: Request, file: UploadFile = None):
+async def modify_avatar(req: Request, file: Optional[UploadFile] = None):
     '''Update user avatar and if in lobby sync it'''
     u: User = req.state.user
-    await u.set_picture(file)
+    if file: await u.set_picture(file)
+    else: u.reset_picture()
     user_manager.update(u)
     lobby_service.sync_active_lobbies_user(u)
     lobby = lobby_service.get_lobby(req.session.get("lobby_id"))

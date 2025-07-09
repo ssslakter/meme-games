@@ -1,4 +1,5 @@
 from meme_games.core import *
+from ..shared.settings import *
 
 # will contain name and url for each page
 PAGES_REGISTRY = {}
@@ -13,8 +14,7 @@ def Navbar():
         Div()(
             Button("Select game"),
             DropDownNavContainer(
-                *[Li(A(name, href=url)) for name, url in PAGES_REGISTRY.items()],
-                uk_dropdown="delay-hide: 100"
+                *[Li(A(name, href=url)) for name, url in PAGES_REGISTRY.items()]
             )(cls="min-w-48"),
         ),
         brand=H3("Meme Games"),
@@ -41,8 +41,12 @@ def Navbar():
     )
 
 
-def MainPage(*args, **kwargs):
+def MainPage(*args, background_url: str = None, **kwargs):
     """
     Main page of the app, contains the navbar and the main content.
     """
-    return Div(Navbar(), *args, **kwargs)
+    return Div(
+        Navbar(),
+        Background(background_url),
+        Div(*args, **kwargs),
+    cls="relative isolate h-screen")

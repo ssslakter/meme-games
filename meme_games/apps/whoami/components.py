@@ -3,6 +3,16 @@ from meme_games.domain import *
 from ..shared import *
 from .domain import *
 
+
+def Background(url: str):
+    """
+    Creates a background div with the given image url and styles it with tailwind classes.
+    """
+    url = url or '/media/background.jpg'
+    classes = 'absolute top-0 left-0 -z-10 h-full w-full bg-black bg-cover bg-center bg-no-repeat blur-[5px] brightness-50'
+    return Div(style=f"background-image: url('{url}')", cls=classes)
+
+
 rt = APIRouter('/whoami')
 
 logger = logging.getLogger(__name__)
@@ -20,26 +30,36 @@ def Spectators(reciever: WhoAmIPlayer | User, lobby: Lobby):
 
 
 def PlayerLabelText(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
+    label_text_classes = 'text-center text-xl font-[Impact] bg-transparent border-none w-full h-full resize-none scrollbar-hide'
     style = f'width: {owner.label_tfm.width}px; height: {owner.label_tfm.height}px;' if owner.label_tfm else ''
-    return (Textarea(owner.label_text, placeholder='enter label', ws_send=True, name='label',
-                     _="on wsMessage(label) set me.value to label",
-                     data_label_text=owner.uid,
-                     hx_vals={'owner_uid': owner.uid, "type": "label_text"},
-                     style=style, value=owner.label_text, cls='label-text',
-                     hx_trigger="input changed delay:100ms")
-            if r.uid != owner.uid
-            else (Textarea(readonly=True, style=style, cls='label-text'),
-                  Div('?' if owner.label_text else '', cls='label-hidden', data_label_text=owner.uid)))
+    if r.uid != owner.uid:
+        return Textarea(
+            owner.label_text, placeholder='enter label', ws_send=True, name='label',
+            _="on wsMessage(label) set me.value to label",
+            data_label_text=owner.uid,
+            hx_vals={'owner_uid': owner.uid, "type": "label_text"},
+            style=style, value=owner.label_text, cls=label_text_classes,
+            hx_trigger="input changed delay:100ms")
+    else:
+        label_hidden_classes = 'absolute text-4xl left-0 top-0 flex items-center justify-center bottom-0 right-0 text-gray-500 pointer-events-none'
+        return (
+            Textarea(readonly=True, style=style, cls=label_text_classes),
+            Div('?' if owner.label_text else '', cls=label_hidden_classes, data_label_text=owner.uid))
 
 
 def PlayerLabelFT(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
     fields = ['x', 'y', 'width', 'height', 'owner_uid']
     event_details = ', '.join([f"{field}: event.detail.transform.{field}" for field in fields])
+    if owner.label_tfm:
+        style = f'left: {owner.label_tfm.x}px; top: {owner.label_tfm.y}px;'
+    else:
+        style = 'left: calc(50%-var(--label-width)/2);'
+    style += 'background-color: rgba(255, 239, 201, 1);'
     return Div(PlayerLabelText(r, owner),
                Div(hx_trigger='moved', ws_send=True, hx_vals=f'js:{{{event_details}, type: "label_position"}}'),
-               style=f'left: {owner.label_tfm.x}px; top: {owner.label_tfm.y}px' if owner.label_tfm else '',
+               style=style,
                data_label=owner.uid,
-               cls='draggable label',
+               cls='absolute z-30 top-0 p-5 cursor-move',
                _=f'''
             init set me.isClicked to false
             on mousedown
@@ -80,28 +100,39 @@ def PlayerLabelFT(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
 
 def PlayerCard(reciever: WhoAmIPlayer | User, p: WhoAmIPlayer, lobby: Lobby):
     if not p.is_player: return
+    controls_classes = 'absolute top-0 right-0 z-10 hidden group-hover:block cursor-pointer p-1 bg-white/60 dark:bg-gray-900/60'
+    notes_classes = 'absolute top-0 left-0 h-full w-full z-10 p-2 hidden peer-hover:block'
+    
     if reciever == p:
-        edit = I('edit', cls='controls material-icons',
+        edit = I('edit', cls=f'{controls_classes} material-icons',
                  _='on click set x to next <form input/> then x.click()')
-    else: edit = (I('description', cls='material-icons controls',
-                    _='on mouseover send mouseover to next <.notes/>'),
-                  Notes(reciever, p))
-    return Div(PlayerLabelFT(reciever, p),
-               Div(
-                   edit,
-                   Form(Input(type='file', name='file', accept="image/*"), style='display: none;',
-                        hx_trigger='change', hx_post=edit_avatar.to(), hx_swap='none'),
-                   Avatar(p.user),
-                   Div(UserName(reciever, p.user, is_connected=p.is_connected), " ✪" if lobby.host == p else None),
-                   cls='player-card-body'), cls='player-card', data_user=p.uid,
-               _='on mouseleave remove .hover from .hover in me')
+    else: 
+        edit = (
+            I('description', cls=f'{controls_classes} material-icons peer'),
+            Notes(reciever, p, cls=notes_classes))
+
+    return Card(
+        PlayerLabelFT(reciever, p),
+        edit,
+        Form(Input(type='file', name='file', accept="image/*"), style='display: none;',
+            hx_trigger='change', hx_post=edit_avatar.to(), hx_swap='none'),
+        Avatar(p.user),
+        footer=Div(UserName(reciever, p.user, is_connected=p.is_connected), " ✪" if lobby.host == p else None),
+        footer_cls="p-0 backdrop-blur-sm text-xl justify-center flex",
+        data_user=p.uid,
+        body_cls='flex-1 relative overflow-hidden p-0',
+        cls="w-[var(--card-width)] h-[var(--card-height)] flex flex-col overflow-hidden rounded-lg shadow-lg border"
+    )
 
 
 def NewPlayerCard():
-    return Div(Div('+', cls='join-icon'), cls='new-player-card', hx_post=play, hx_swap='outerHTML')
+    card_classes = 'opacity-50 cursor-pointer group'
+    icon_classes = 'text-[120px] text-gray-400 transition-all duration-300 ease-in-out group-hover:scale-[1.2] group-hover:text-black dark:group-hover:text-white'
+    return Panel(Div('+', cls=icon_classes), cls=card_classes, hx_post=play, hx_swap='outerHTML')
 
 
 def Notes(reciever: WhoAmIPlayer | User, author: WhoAmIPlayer, **kwargs):
+    notes_base_classes = 'w-[var(--card-width)] h-[var(--card-height)] text-2xl p-2 scrollbar-hide outline-none'
     notes_kwargs = (dict(hx_post=notes,
                          hx_trigger="input changed delay:500ms, load",
                          hx_swap='none',
@@ -111,8 +142,7 @@ def Notes(reciever: WhoAmIPlayer | User, author: WhoAmIPlayer, **kwargs):
                               data_notes=author.uid)
                     )
 
-    return Textarea(author.notes, name='text', cls='notes', **notes_kwargs,
-                    _='''on mouseover add .hover on me''')
+    return Panel(Textarea(author.notes, name='text', cls=(notes_base_classes, kwargs.pop('cls', '')), **notes_kwargs, **kwargs))
 
 
 def NotesBlock(r: WhoAmIPlayer | User):
@@ -121,20 +151,21 @@ def NotesBlock(r: WhoAmIPlayer | User):
 
 def Game(reciever: WhoAmIPlayer | User, lobby: Lobby):
     new_player = [] if is_player(reciever) else [NewPlayerCard()]
+    player_classes = 'pt-20 flex flex-row justify-center flex-wrap gap-8'
     return Div(
         Div(
-            *[PlayerCard(reciever, p, lobby) for p in lobby.sorted_members()] + new_player, id='players'),
+            *[PlayerCard(reciever, p, lobby) for p in lobby.sorted_members()] + new_player, id='players', cls=player_classes),
         NotesBlock(reciever)
     )
 
 
 def MainBlock(reciever: WhoAmIPlayer | User, lobby: Lobby):
     return MainPage(
-        Background(lobby.background_url),
         Spectators(reciever, lobby),
         Game(reciever, lobby),
-        Settings(reciever, lobby),
+        SettingsPopover(reciever, lobby),
         hx_ext='ws', ws_connect=ws_url,
+        background_url=lobby.background_url,
         _='on htmx:wsBeforeMessage call sendWSEvent(event)'
     )
 

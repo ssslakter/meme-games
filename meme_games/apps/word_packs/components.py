@@ -69,7 +69,7 @@ def MainBlock():
                     Packs(),
                 ),
                 WordPackEditor(empty=True),
-                NightThemeToggle(),
+                ThemeSwitcher(),
             )
         ),
     )

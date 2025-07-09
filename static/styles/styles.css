@@ -7,27 +7,6 @@ input:focus {
   outline: none;
 }
 
-body.who-am-i {
-  margin: 0;
-  background-color: black;
-}
-
-.background {
-  position: absolute;
-  z-index: -1;
-  width: 100%;
-  height: 100%;
-  background: black url("/media/background.jpg") center no-repeat;
-  background-color: black;
-  background-size: cover;
-  filter: blur(5px) brightness(0.5);
-}
-
-.panel, .notes, .controls-block, .controls, .spectators, .spectators-controls, .card, .new-player-card, .player-card-body {
-  font-size: 20px;
-  background-color: rgba(255, 252, 245, 0.58);
-}
-
 .card, .new-player-card, .player-card-body {
   width: 280px;
   height: 300px;
@@ -176,15 +155,6 @@ body.who-am-i {
 .controls:hover {
   background-color: lightgreen;
   cursor: pointer;
-}
-
-#players {
-  padding-top: 80px;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 30px;
 }
 
 .notes {
