@@ -1,11 +1,10 @@
-from meme_games.core import *
-from meme_games.domain import *
 from ...shared import *
 from ..domain import *
+from .basic import *
 
 def Notes(reciever: WhoAmIPlayer | User, author: WhoAmIPlayer, **kwargs):
     from ..routes import notes
-    notes_base_classes = 'w-[var(--card-width)] h-[var(--card-height)] text-2xl p-2 scrollbar-hide outline-none'
+    # notes_base_classes = 'w-[var(--card-width)] h-[var(--card-height)] text-2xl p-2 scrollbar-hide outline-none'
     notes_kwargs = (dict(hx_post=notes,
                          hx_trigger="input changed delay:500ms, load",
                          hx_swap='none',
@@ -15,7 +14,7 @@ def Notes(reciever: WhoAmIPlayer | User, author: WhoAmIPlayer, **kwargs):
                               data_notes=author.uid)
                     )
 
-    return Panel(Textarea(author.notes, name='text', cls=(notes_base_classes, kwargs.pop('cls', '')), **notes_kwargs, **kwargs))
+    return PlayerCardBase(Textarea(author.notes, name='text'), **notes_kwargs, **kwargs)
 
 
 def NotesBlock(r: WhoAmIPlayer | User):

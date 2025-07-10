@@ -1,5 +1,3 @@
-from meme_games.core import *
-from meme_games.domain import *
 from ...shared import *
 from ..domain import *
 from .cards import *
@@ -18,8 +16,11 @@ def Background(url: str):
 def Spectators(reciever: WhoAmIPlayer | User, lobby: Lobby):
     from ..routes import spectate
 
-    panel_classes = "text-[20px] bg-white/60 dark:bg-gray-900/60"
-    spectator_classes = "absolute right-0 top-0 flex p-[3px] pr-2 gap-2"
+    panel_classes = "bg-white/60 dark:bg-gray-900/60"
+    spectator_classes = (
+        "fixed right-0 top-1/2 -translate-y-1/2 "
+        "flex flex-col p-2 gap-1 rounded-l-lg shadow-lg"
+    )
     spectate_controls = dict(
         hx_post=spectate,
         hx_swap="beforeend",
@@ -27,9 +28,9 @@ def Spectators(reciever: WhoAmIPlayer | User, lobby: Lobby):
         cls=f"{panel_classes} {spectator_classes} cursor-pointer",
     )
 
-    inner_div_classes = "flex flex-row gap-[6px]"
+    inner_div_classes = "flex flex-col gap-1"
 
-    return Div(
+    return Panel(
         "Spectators: ",
         Div(
             *[
@@ -40,6 +41,7 @@ def Spectators(reciever: WhoAmIPlayer | User, lobby: Lobby):
             id="spectators",
             cls=inner_div_classes,
         ),
+        rounded='0',
         **spectate_controls,
     )
 

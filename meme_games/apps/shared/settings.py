@@ -14,12 +14,10 @@ user_manager = DI.get(UserManager)
 BASE_SETTING_ROW_CLS = "space-x-2 p-2 bg-white/60 rounded-md dark:bg-gray-800/60"
 SETTING_ROW_CLS = f"{BASE_SETTING_ROW_CLS} hover:bg-green-300 cursor-pointer dark:hover:bg-gray-700"
 
-BASE_THEME_BTN_CLS = "inline-flex items-center px-3 py-1.5 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:z-10 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
-
 def Avatar(u: User):
     filename = u.filename
     filename = ('/user-content/' + filename) if filename else '/media/default-avatar.jpg'
-    return Div(style=f'background-image: url({filename})', cls="w-full h-full bg-cover bg-center bg-no-repeat", data_avatar=u.uid)
+    return Div(style=f'background-image: url({filename})', cls="w-full h-full bg-cover bg-center bg-no-repeat dark:brightness-75", data_avatar=u.uid)
 
 
 def Setting(icon: str, title: str = None, hx_swap='none', **kwargs):
@@ -44,35 +42,13 @@ def LockLobby(l: Lobby):
 def Background(url: str = None): 
     return Div(
         id='background',
-        cls=f"fixed inset-0 z-[-1] bg-[url('{url or '/media/background.jpg'}')] bg-cover bg-center bg-fixed filter blur-sm brightness-50",
+        cls=f"fixed inset-0 z-[-1] bg-[url('{url or '/media/background.jpg'}')] bg-cover bg-center bg-fixed filter blur-sm brightness-90 dark:brightness-50",
         hx_swap_oob='true'
     )
 
 
 def SetBackground(l: Lobby):
     return Setting('image', title='Background', hx_post=change_background.to(), hx_prompt='Enter the URL of the background image')
-
-
-def _ThemeButton(icon: str, text: str, action: str, extra_cls: str = ''):
-    return Div(
-        UkIcon(icon, cls="w-5 h-5 mr-2"),
-        text,
-        _=action,
-        cls=f"{BASE_THEME_BTN_CLS} {extra_cls}"
-    )
-
-def ThemeSwitcher():
-    light_btn = _ThemeButton(
-        'sun', 'Light', 
-        "on click remove .dark from <html/> then call setThemeMode(false)",
-        "rounded-l-md"
-    )
-    dark_btn = _ThemeButton(
-        'moon', 'Dark',
-        "on click add .dark to <html/> then call setThemeMode(true)",
-        "-ml-px rounded-r-md"
-    )
-    return Div(light_btn, dark_btn, cls="ml-auto isolate inline-flex rounded-md shadow-sm")
 
 
 def Settings(reciever: User|LobbyMember, lobby: Lobby):
@@ -88,15 +64,6 @@ def Settings(reciever: User|LobbyMember, lobby: Lobby):
     ]
     if isinstance(reciever, LobbyMember) and reciever.is_host:
         settings_items.extend(HostSettings(lobby))
-
-    settings_items.append(
-        DivLAligned(
-            UkIcon('sun', width=20, height=20),
-            P('Night Mode', cls="text-lg"),
-            ThemeSwitcher(),
-            cls=f"{BASE_SETTING_ROW_CLS} justify-between items-center"
-        )
-    )
     
     return Card(
         *settings_items,
@@ -120,7 +87,7 @@ def SettingsPopover(reciever: User|LobbyMember, lobby: Lobby):
     settings_card = Settings(reciever, lobby)
     panel_wrapper = Div(
         settings_card,
-        cls="fixed bottom-0 right-0 p-4 mt-2 w-auto z-10 hidden",
+        cls="fixed bottom-0 right-0 p-4 mt-2 max-w-3xl w-80 z-10 hidden",
         _ = "on mouseleave toggle .hidden on me then toggle .hidden on the previous <div/>",
     )
 

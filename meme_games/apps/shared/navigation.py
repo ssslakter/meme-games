@@ -7,16 +7,38 @@ PAGES_REGISTRY = {}
 
 def register_page(name: str, url: str):
     PAGES_REGISTRY[name] = url
+    
+def _ThemeButton(icon: str, text: str, action: str, extra_cls: str = ''):
+    return Div(
+        UkIcon(icon, cls="w-5 h-5 mr-2"),
+        text,
+        _=action,
+        cls=f"uk-btn uk-btn-default cursor-pointer {extra_cls}"
+    ) 
+
+    
+def ThemeSwitcher():
+    light_btn = _ThemeButton(
+        'sun', 'Light', 
+        "on click remove .dark from <html/> then call setThemeMode(false)",
+        "rounded-l-md"
+    )
+    dark_btn = _ThemeButton(
+        'moon', 'Dark',
+        "on click add .dark to <html/> then call setThemeMode(true)",
+        "-ml-px rounded-r-md"
+    )
+    return Div(light_btn, dark_btn, cls="ml-auto isolate inline-flex rounded-md shadow-sm")
+
 
 
 def Navbar():
     inner_navbar = NavBar(
-        Div()(
-            Button("Select game"),
+            Button("Select game", cls=(ButtonT.default, "rounded-md")),
             DropDownNavContainer(
                 *[Li(A(name, href=url)) for name, url in PAGES_REGISTRY.items()]
             )(cls="min-w-48"),
-        ),
+            ThemeSwitcher(),
         brand=H3("Meme Games"),
     )
 

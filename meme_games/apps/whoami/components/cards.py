@@ -1,11 +1,11 @@
-from meme_games.core import *
-from meme_games.domain import *
 from ...shared import *
 from ..domain import *
 from .notes import *
+from .basic import *
+
 
 def PlayerLabelText(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
-    label_text_classes = 'text-center text-xl font-[Impact] bg-transparent border-none w-full h-full scrollbar-hide resize'
+    label_text_classes = 'text-center text-xl font-[Impact] bg-transparent border-none w-full h-full scrollbar-hide resize text-black'
     style = f'width: {owner.label_tfm.width}px; height: {owner.label_tfm.height}px;' if owner.label_tfm else ''
     if r.uid != owner.uid:
         return Textarea(
@@ -26,15 +26,15 @@ def PlayerLabelFT(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
     fields = ['x', 'y', 'width', 'height', 'owner_uid']
     event_details = ', '.join([f"{field}: event.detail.transform.{field}" for field in fields])
     if owner.label_tfm:
-        style = f'left: {owner.label_tfm.x}px; top: {owner.label_tfm.y}px;'
+        style = f'left: {int2px(owner.label_tfm.x)}; top: {int2px(owner.label_tfm.y)};'
     else:
-        style = 'left: calc(50%-var(--label-width)/2);'
-    style += 'background-color: rgba(255, 239, 201, 1);'
+        style = f'left: calc(50%-{LABEL_WIDTH}/2);'
+    style += 'background-color: rgba(239, 255, 200, 0.6);'
     return Div(PlayerLabelText(r, owner),
                Div(hx_trigger='moved', ws_send=True, hx_vals=f'js:{{{event_details}, type: "label_position"}}'),
                style=style,
                data_label=owner.uid,
-               cls='absolute z-30 top-0 p-1 cursor-move',
+               cls='absolute z-30 top-0 p-1 cursor-move shadow-lg border-2 rounded-lg',
                _=f'''
                 init call initLabel(me)
                 on mousedown call onLabelMouseDown(event)
@@ -51,27 +51,26 @@ def PlayerCard(reciever: WhoAmIPlayer | User, p: WhoAmIPlayer, lobby: Lobby):
     notes_classes = 'absolute top-0 left-0 h-full w-full z-10 p-2 hidden peer-hover:block'
     
     if reciever == p:
-        edit = I('edit', cls=f'{controls_classes} material-icons',
-                 _='on click set x to next <form input/> then x.click()')
-    else: 
+        edit = UkIcon('pencil', width=30, height=30, cls=controls_classes,
+                      _='on click set x to next <form input/> then x.click()')
+    else:
         edit = (
-            I('description', cls=f'{controls_classes} material-icons peer'),
+            UkIcon('file-text', width=30, height=30, cls=f'{controls_classes} peer'),
             Notes(reciever, p, cls=notes_classes))
 
-    return Card(
+    return PlayerCardBase(
+        edit,
         Form(Input(type='file', name='file', accept="image/*"), style='display: none;',
             hx_trigger='change', hx_post=edit_avatar.to(), hx_swap='none'),
         Avatar(p.user),
         footer=Div(UserName(reciever, p.user, is_connected=p.is_connected), " ✪" if lobby.host == p else None),
         footer_cls="p-0 backdrop-blur-sm text-xl justify-center flex rounded-lg",
         data_user=p.uid,
-        body_cls='flex-1 relative overflow-hidden p-0',
-        cls="w-[var(--card-width)] h-[var(--card-height)] flex flex-col rounded-lg shadow-lg border"
-    )(PlayerLabelFT(reciever, p), edit)
+        body_cls='flex-1 relative p-0 overflow-hidden w-full rounded-t-lg',
+    )(PlayerLabelFT(reciever, p))
 
 
 def NewPlayerCard():
     from ..routes import play
-    card_classes = 'opacity-50 cursor-pointer group'
-    icon_classes = 'text-[120px] text-gray-400 transition-all duration-300 ease-in-out group-hover:scale-[1.2] group-hover:text-black dark:group-hover:text-white'
-    return Panel(Div('+', cls=icon_classes), cls=card_classes, hx_post=play, hx_swap='outerHTML')
+    icon_classes = 'text-center text-[120px] text-gray-400 transition-all duration-300 ease-in-out group-hover:scale-[1.2] group-hover:text-black dark:group-hover:text-white'
+    return PlayerCardBase('+', body_cls=icon_classes, cls='group opacity-50 cursor-pointer', hx_post=play, hx_swap='outerHTML')

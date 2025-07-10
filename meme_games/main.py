@@ -18,6 +18,24 @@ middlware_cls = partial(ConditionalSessionMiddleware, skip=static_re)
 bwares = [user_beforeware(DI.get(UserManager), skip = static_re),
           lobby_beforeware(DI.get(LobbyService))
           ]
+
+style = Style(
+    '''
+    :root {
+        --uk-global-font-size: 1.3rem;
+    }
+    html {
+        font-family: "Times New Roman", Times, serif !important;
+    }
+    .animated {
+        transition: left 0.5s ease, top 0.5s ease;
+    }
+    .animated textarea {
+        transition: width 0.5s ease, height 0.5s ease;
+    }
+    '''
+)
+
 hdrs = [
     Statics(ext='_hs', static_path='static'),
     Script(src='/static/scripts/imports/_hyperscript.min.js'),
@@ -28,8 +46,8 @@ hdrs = [
     Statics(ext='js', static_path='static', wc='scripts/common/**/*.js'),
     Statics(ext='js', static_path='static', wc='scripts/whoami/**/*.js'),
     Link(rel="stylesheet", href="https://fonts.googleapis.com/icon?family=Material+Icons"),
-    Statics(ext='css', static_path='static', wc='styles/**/*.css'),
-    Theme.blue.headers()
+    Theme.blue.headers(),
+    style
 ]
 
 yt_hdrs = [

@@ -11,12 +11,12 @@ def not_found(req: Request, exc):
     return (
         Title("Not Found"),
         MainPage(
-            H1("404😭! Sorry, this page does not exist.", cls="mt-12 text-center"),
+            H1("404😭! Sorry, this page does not exist.", cls="mt-12 text-center text-white"),
             Div(cls="flex-1"),  # Spacer
             Div(
                 Canvas(
                     id="canvas",
-                    cls="aspect-1 max-h-[80vh] max-w-full mx-auto brightness-75",
+                    cls="aspect-1 max-h-[80vh] max-w-full mx-auto brightness-90 dark:brightness-50",
                     style="opacity: 0;",
                     _=f"""init call initLive2D(me, "{model_path}")
                                 then wait 10ms then transition my opacity to 1 over 4000ms end""",

@@ -1,6 +1,0 @@
-:root {
-    --card-width: 280px;
-    --card-height: 300px;
-    --label-width: calc(var(--card-width)/2);
-    --label-height: calc(var(--card-height)/4);
-}

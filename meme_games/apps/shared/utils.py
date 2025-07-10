@@ -18,3 +18,10 @@ def Statics(ext: str ='css', static_path: str|Path = 'static', wc: str = None):
 def Timer(time: dt.timedelta = dt.timedelta(hours=1)):
     return Span(data_delta=time.total_seconds() * 1000, cls='timer',
                 _='init immediately set @target to (Date.now()+@data-delta as Number) as Date')
+
+
+def int2css(value: int, unit: str = 'px'):
+    return f'{value}{unit}'
+
+def int2px(value: int):
+    return int2css(value, 'px')
