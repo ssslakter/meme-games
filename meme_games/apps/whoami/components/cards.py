@@ -39,7 +39,7 @@ def PlayerLabelFT(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
                 init call initLabel(me)
                 on mousedown call onLabelMouseDown(event)
                 on mousemove from document call onDocumentMouseMove(event)
-                on mouseup from document call onDocumentMouseUp('{owner.uid}')
+                on mouseup from document call onDocumentMouseUp(event)
                 on wsMessage call onLabelWsMessage(event)
                '''.strip()
     )

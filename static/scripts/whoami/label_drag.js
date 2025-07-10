@@ -11,6 +11,13 @@ function onLabelMouseDown(event) {
     if (label.isClicked) return;
     label.isClicked = true;
 
+    const classes = 'transition-all duration-500 ease-in-out';
+    for (const cls of classes.split(' ')) {
+        htmx.removeClass(label, cls);
+        const txt = htmx.find(label, 'textarea');
+        if (txt) htmx.removeClass(txt, cls);
+    }
+
     const textarea = label.querySelector('textarea');
     if (event.target !== textarea) {
         label.isDragging = true;
@@ -27,9 +34,9 @@ function onDocumentMouseMove(event) {
     }
 }
 
-function onDocumentMouseUp(ownerUID) {
+function onDocumentMouseUp(event) {
     if (!draggedLabel) return;
-
+    let ownerUID = htmx.find(draggedLabel.parentElement, 'div[data-label]').getAttribute('data-label');
     if (draggedLabel.isClicked) {
         draggedLabel.isDragging = false;
         document.body.style.userSelect = '';
@@ -42,9 +49,7 @@ function onDocumentMouseUp(ownerUID) {
         params.new.owner_uid = ownerUID;
 
         const triggerEl = htmx.findAll(draggedLabel, "div");
-        console.log(triggerEl);
         if (triggerEl) {
-            console.log({transform: params.new});
             htmx.trigger(triggerEl[triggerEl.length - 1], 'moved', { transform: params.new });
         }
         applyTransform(draggedLabel, params.old, params.new);

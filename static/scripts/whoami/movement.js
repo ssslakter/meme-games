@@ -7,10 +7,22 @@
  */
 function getTransformParams(el, parent, transformData) {
     const pRect = parent.getBoundingClientRect();
-    const meRect = el.getBoundingClientRect();
 
-    transformData.x = Math.max(0, Math.min(transformData.x, pRect.width - meRect.width));
-    transformData.y = Math.max(0, Math.min(transformData.y, pRect.height - meRect.height));
+    let newX = transformData.x;
+    let newY = transformData.y;
+    let newW = transformData.width;
+    let newH = transformData.height;
+
+    newW = Math.min(newW, pRect.width);
+    newH = Math.min(newH, pRect.height);
+
+    newX = Math.max(0, Math.min(newX, pRect.width - newW));
+    newY = Math.max(0, Math.min(newY, pRect.height - newH));
+
+    transformData.x = newX;
+    transformData.y = newY;
+    transformData.width = newW;
+    transformData.height = newH;
 
     const curPos = getStylePosition(el);
     const currScale = getStyleScale(el);
@@ -33,23 +45,30 @@ function applyTransform(el, old, newParams) {
         return;
     }
 
-    htmx.addClass(el, 'animated');
+    const classes = 'transition-all duration-500 ease-in-out';
+    const txt = htmx.find(el, 'textarea');
+
+    for (const cls of classes.split(' ')) {
+        htmx.addClass(el, cls);
+        if (txt) htmx.addClass(txt, cls);
+    }
 
     if (old.x !== newParams.x || old.y !== newParams.y) {
         el.style.left = `${newParams.x}px`;
         el.style.top = `${newParams.y}px`;
     }
 
-    const txt = htmx.find(el, 'textarea');
     if (txt && (old.width !== newParams.width || old.height !== newParams.height)) {
-        txt.style.width = `${newParams.width}px`;
-        txt.style.height = `${newParams.height}px`;
+        const deltaWidth = el.offsetWidth - txt.offsetWidth;
+        const deltaHeight = el.offsetHeight - txt.offsetHeight;
+        txt.style.width = `${newParams.width - deltaWidth}px`;
+        txt.style.height = `${newParams.height - deltaHeight}px`;
     }
 
     setTimeout(() => {
-        htmx.removeClass(el, 'animated');
-        if (txt) {
-            txt.style.transition = 'none';
+        for (const cls of classes.split(' ')) {
+            htmx.removeClass(el, cls);
+            if (txt) htmx.removeClass(txt, cls);
         }
         el.isClicked = false;
     }, 500);
@@ -61,13 +80,10 @@ function applyTransform(el, old, newParams) {
  * @returns {{width: number, height: number}}
  */
 function getStyleScale(el) {
-    const txt = htmx.find(el, 'textarea');
-    if (!txt) return { width: 0, height: 0 };
-
-    const txtStyles = window.getComputedStyle(txt);
+    const elStyles = window.getComputedStyle(el);
     return {
-        width: parseInt(txtStyles.width, 10),
-        height: parseInt(txtStyles.height, 10)
+        width: parseInt(elStyles.width, 10),
+        height: parseInt(elStyles.height, 10)
     };
 }
 
