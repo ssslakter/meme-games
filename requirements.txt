@@ -26,6 +26,7 @@ fastcore==1.8.4
     #   apswutils
     #   fastlite
     #   meme-games (pyproject.toml)
+    #   monsterui
     #   python-fasthtml
 fastlite==0.2.0
     # via python-fasthtml
@@ -45,6 +46,12 @@ idna==3.10
     #   httpx
 itsdangerous==2.2.0
     # via python-fasthtml
+lxml==6.0.0
+    # via monsterui
+mistletoe==1.4.0
+    # via monsterui
+monsterui==1.0.21
+    # via meme-games (pyproject.toml)
 oauthlib==3.3.1
     # via python-fasthtml
 packaging==25.0
@@ -54,7 +61,9 @@ python-dateutil==2.9.0.post0
 python-dotenv==1.1.1
     # via uvicorn
 python-fasthtml==0.12.20
-    # via meme-games (pyproject.toml)
+    # via
+    #   meme-games (pyproject.toml)
+    #   monsterui
 python-multipart==0.0.20
     # via python-fasthtml
 pyyaml==6.0.2
