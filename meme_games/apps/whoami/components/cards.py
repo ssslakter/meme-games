@@ -1,0 +1,77 @@
+from meme_games.core import *
+from meme_games.domain import *
+from ...shared import *
+from ..domain import *
+from .notes import *
+
+def PlayerLabelText(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
+    label_text_classes = 'text-center text-xl font-[Impact] bg-transparent border-none w-full h-full scrollbar-hide resize'
+    style = f'width: {owner.label_tfm.width}px; height: {owner.label_tfm.height}px;' if owner.label_tfm else ''
+    if r.uid != owner.uid:
+        return Textarea(
+            owner.label_text, placeholder='enter label', ws_send=True, name='label',
+            _="on wsMessage(label) set me.value to label",
+            data_label_text=owner.uid,
+            hx_vals={'owner_uid': owner.uid, "type": "label_text"},
+            style=style, value=owner.label_text, cls=label_text_classes,
+            hx_trigger="input changed delay:100ms")
+    else:
+        label_hidden_classes = 'absolute text-4xl left-0 top-0 flex items-center justify-center bottom-0 right-0 text-gray-500 pointer-events-none'
+        return (
+            Textarea(readonly=True, style=style, cls=label_text_classes),
+            Div('?' if owner.label_text else '', cls=label_hidden_classes, data_label_text=owner.uid))
+
+
+def PlayerLabelFT(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
+    fields = ['x', 'y', 'width', 'height', 'owner_uid']
+    event_details = ', '.join([f"{field}: event.detail.transform.{field}" for field in fields])
+    if owner.label_tfm:
+        style = f'left: {owner.label_tfm.x}px; top: {owner.label_tfm.y}px;'
+    else:
+        style = 'left: calc(50%-var(--label-width)/2);'
+    style += 'background-color: rgba(255, 239, 201, 1);'
+    return Div(PlayerLabelText(r, owner),
+               Div(hx_trigger='moved', ws_send=True, hx_vals=f'js:{{{event_details}, type: "label_position"}}'),
+               style=style,
+               data_label=owner.uid,
+               cls='absolute z-30 top-0 p-1 cursor-move',
+               _=f'''
+                init call initLabel(me)
+                on mousedown call onLabelMouseDown(event)
+                on mousemove from document call onDocumentMouseMove(event)
+                on mouseup from document call onDocumentMouseUp('{owner.uid}')
+                on wsMessage call onLabelWsMessage(event)
+               '''.strip()
+    )
+
+
+def PlayerCard(reciever: WhoAmIPlayer | User, p: WhoAmIPlayer, lobby: Lobby):
+    if not p.is_player: return
+    controls_classes = 'absolute top-0 right-0 z-10 hidden group-hover:block cursor-pointer p-1 bg-white/60 dark:bg-gray-900/60'
+    notes_classes = 'absolute top-0 left-0 h-full w-full z-10 p-2 hidden peer-hover:block'
+    
+    if reciever == p:
+        edit = I('edit', cls=f'{controls_classes} material-icons',
+                 _='on click set x to next <form input/> then x.click()')
+    else: 
+        edit = (
+            I('description', cls=f'{controls_classes} material-icons peer'),
+            Notes(reciever, p, cls=notes_classes))
+
+    return Card(
+        Form(Input(type='file', name='file', accept="image/*"), style='display: none;',
+            hx_trigger='change', hx_post=edit_avatar.to(), hx_swap='none'),
+        Avatar(p.user),
+        footer=Div(UserName(reciever, p.user, is_connected=p.is_connected), " ✪" if lobby.host == p else None),
+        footer_cls="p-0 backdrop-blur-sm text-xl justify-center flex rounded-lg",
+        data_user=p.uid,
+        body_cls='flex-1 relative overflow-hidden p-0',
+        cls="w-[var(--card-width)] h-[var(--card-height)] flex flex-col rounded-lg shadow-lg border"
+    )(PlayerLabelFT(reciever, p), edit)
+
+
+def NewPlayerCard():
+    from ..routes import play
+    card_classes = 'opacity-50 cursor-pointer group'
+    icon_classes = 'text-[120px] text-gray-400 transition-all duration-300 ease-in-out group-hover:scale-[1.2] group-hover:text-black dark:group-hover:text-white'
+    return Panel(Div('+', cls=icon_classes), cls=card_classes, hx_post=play, hx_swap='outerHTML')

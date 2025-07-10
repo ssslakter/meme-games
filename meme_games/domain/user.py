@@ -69,5 +69,5 @@ def user_beforeware(manager: UserManager, skip=None):
 # %% ../../notebooks/user.ipynb 6
 def UserName(r: User, u: User, is_connected=True, cls='username', **kwargs):
     """Renders the user's name as a styled HTML span."""
-    cls += ' muted' if not is_connected else ''
+    cls += ' opacity-50' if not is_connected else ''
     return Span(B(u.name) if r==u else u.name, data_username = u.uid, cls=cls, **kwargs)

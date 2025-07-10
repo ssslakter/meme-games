@@ -1,8 +1,0 @@
--- def createYTplayer(videoId, playerId) 
---     set events to {'onStateChange': forwardYTEvent, 'onReady': forwardYTEvent}
---     return new YT.Player(playerId, {videoId: videoId, events: events})
--- end
-def forwardYTvent(event)
-    log event
-    -- trigger eventName 
-end

@@ -49,4 +49,4 @@ def MainPage(*args, background_url: str = None, **kwargs):
         Navbar(),
         Background(background_url),
         Div(*args, **kwargs),
-    cls="relative isolate h-screen")
+    cls="relative isolate min-h-screen")

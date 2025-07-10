@@ -20,7 +20,13 @@ bwares = [user_beforeware(DI.get(UserManager), skip = static_re),
           ]
 hdrs = [
     Statics(ext='_hs', static_path='static'),
-    Statics(ext='js', static_path='static', wc='scripts/**/*.js'),
+    Script(src='/static/scripts/imports/_hyperscript.min.js'),
+    Script(src='/static/scripts/imports/live2d/live2dcubismcore.min.js'),
+    Script(src='/static/scripts/imports/live2d/live2d.min.js'),
+    Script(src='/static/scripts/imports/live2d/pixi.min.js'),
+    Script(src='/static/scripts/imports/live2d/index.min.js'),
+    Statics(ext='js', static_path='static', wc='scripts/common/**/*.js'),
+    Statics(ext='js', static_path='static', wc='scripts/whoami/**/*.js'),
     Link(rel="stylesheet", href="https://fonts.googleapis.com/icon?family=Material+Icons"),
     Statics(ext='css', static_path='static', wc='styles/**/*.css'),
     Theme.blue.headers()

@@ -15,8 +15,6 @@ BASE_SETTING_ROW_CLS = "space-x-2 p-2 bg-white/60 rounded-md dark:bg-gray-800/60
 SETTING_ROW_CLS = f"{BASE_SETTING_ROW_CLS} hover:bg-green-300 cursor-pointer dark:hover:bg-gray-700"
 
 BASE_THEME_BTN_CLS = "inline-flex items-center px-3 py-1.5 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:z-10 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
-BACKGROUND_CLS = "absolute inset-0 z-[-1] bg-black bg-cover bg-center bg-no-repeat filter blur-sm brightness-50"
-
 
 def Avatar(u: User):
     filename = u.filename
@@ -44,11 +42,9 @@ def LockLobby(l: Lobby):
     return Setting(*args, hx_post=lock_lobby.to(), hx_swap=None)(hx_swap_oob='outerHTML', id='lock-lobby')
 
 def Background(url: str = None): 
-    bg_style = f'background-image: url({url})' if url else ''
     return Div(
         id='background',
-        cls=BACKGROUND_CLS,
-        style=bg_style,
+        cls=f"fixed inset-0 z-[-1] bg-[url('{url or '/media/background.jpg'}')] bg-cover bg-center bg-fixed filter blur-sm brightness-50",
         hx_swap_oob='true'
     )
 

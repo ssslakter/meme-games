@@ -1,10 +1,3 @@
-function isJson(data) {
-    try { JSON.parse(data) }
-    catch (error) { return false }
-    return true
-}
-
-
 function sendWSEvent(event) {
     let message = event.detail.message
     if (!isJson(message)) return
