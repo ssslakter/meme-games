@@ -1,73 +1,95 @@
 import urllib
 from meme_games.core import *
 from meme_games.domain import *
-
-ext2ft = {
-        'js': lambda fname: Script(src=f'/{fname}'),
-        '_hs': lambda fname: Script(src=f'/{fname}', type='text/hyperscript'),
-        'css': lambda fname: Link(rel="stylesheet", href=f'/{fname}'),
-    }
-
-def Statics(ext: str ='css', static_path: str|Path = 'static', wc: str = None):
-    '''Returns a list of static files from a directory'''
-    static_path = Path(static_path)
-    wc = wc or f"*.{ext}"
-    return [ext2ft[ext](f.relative_to(static_path.parent).as_posix()) 
-            for f in static_path.rglob(wc)]
+from .general import *
 
 
 rt = APIRouter()
 
-
 lobby_service = DI.get(LobbyService)
 user_manager = DI.get(UserManager)
 
-def Timer(time: dt.timedelta = dt.timedelta(hours=1)):
-    return Span(data_delta=time.total_seconds() * 1000, cls='timer',
-                _='init immediately set @target to (Date.now()+@data-delta as Number) as Date')
 
+# --- Class Constants ---
+BASE_SETTING_ROW_CLS = "space-x-2 p-2 bg-white/60 rounded-md dark:bg-gray-800/60"
+SETTING_ROW_CLS = f"{BASE_SETTING_ROW_CLS} hover:bg-green-300 cursor-pointer dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
 
 def Avatar(u: User):
     filename = u.filename
     filename = ('/user-content/' + filename) if filename else '/media/default-avatar.jpg'
-    return Div(style=f'background-image: url({filename})', cls='avatar', data_avatar=u.uid)
+    return Div(style=f'background-image: url({filename})', cls="w-full h-full bg-cover bg-center bg-no-repeat dark:brightness-75", data_avatar=u.uid)
 
 
 def Setting(icon: str, title: str = None, hx_swap='none', **kwargs):
-    return Div(
-        I(icon, title=title, cls="material-icons", hx_swap=hx_swap, **kwargs),
-        cls='controls')
+    return DivLAligned(
+        UkIcon(icon, cls="text-3xl"),
+        P(title, cls="text-lg"),
+        cls=SETTING_ROW_CLS,
+        hx_swap=hx_swap,
+        **kwargs
+    )
 
 
-def NameSetting(): return Setting('edit', title='Edit name', hx_put=edit_name.to(), hx_prompt='Enter your name')
+def NameSetting(): return Setting('pencil', title='Edit name', hx_put=edit_name.to(), hx_prompt='Enter your name')
 
-def AvatarRemoval(): return Setting('delete', title='Remove avatar', hx_delete=reset_avatar.to(),
+def AvatarRemoval(): return Setting('trash', title='Remove avatar', hx_delete=reset_avatar.to(),
                                     hx_confirm="Confirm that you want to remove your avatar?")
 
 def LockLobby(l: Lobby): 
-    args = ('lock_open', 'Lock lobby') if not l.locked else ('lock', 'Unlock lobby')
-    return Setting(*args, hx_post=lock_lobby.to(), hx_swap=None)(hx_swap_oob='innerHTML', id='lock-lobby')
-
-def Background(url: str = None): 
-    return Div(id='background', cls='background', style=f'background-image: url({url})' if url else None, hx_swap_oob='true')
-
+    args = ('lock-open', 'Lock lobby') if not l.locked else ('lock', 'Unlock lobby')
+    return Setting(*args, hx_post=lock_lobby.to(), hx_swap=None)(hx_swap_oob='outerHTML', id='lock-lobby')
 
 def SetBackground(l: Lobby):
     return Setting('image', title='Background', hx_post=change_background.to(), hx_prompt='Enter the URL of the background image')
 
+
 def Settings(reciever: User|LobbyMember, lobby: Lobby):
-    return Div(
-        I('settings', cls="material-icons controls"),
+    card_header_content = DivLAligned(
+        UkIcon('cog', width=25, height=25),
+        H4('Settings', cls="text-xl font-bold ml-2")
+    )
+
+    settings_items = [
         NameSetting(),
         AvatarRemoval(),
         SetBackground(lobby),
-        *(HostSettings(lobby) if isinstance(reciever, LobbyMember) and reciever.is_host else []),
-        cls='controls-block'
+    ]
+    if isinstance(reciever, LobbyMember) and reciever.is_host:
+        settings_items.extend(HostSettings(lobby))
+    
+    return Card(
+        *settings_items,
+        header=card_header_content,
+        cls = 'space-y-2'
     )
-
+    
 
 def HostSettings(lobby: Lobby):
     return tuple(f(lobby) for f in (LockLobby,))
+
+
+def SettingsPopover(reciever: User|LobbyMember, lobby: Lobby):
+    button = Panel(
+        UkIcon('cog', width=45, height=45),
+        _ = "on mouseenter or focus remove .hidden from #settings-panel-wrapper then add .hidden to me",
+        cls="cursor-pointer rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500",
+        hoverable=True,
+        tabindex="0",
+        id="settings-popover-button"
+    )
+
+    settings_card = Settings(reciever, lobby)
+    panel_wrapper = Div(
+        settings_card,
+        cls="absolute bottom-0 right-0 p-4 mt-2 max-w-3xl w-80 z-10 hidden",
+        id="settings-panel-wrapper"
+    )
+
+    return Div(
+        button,
+        panel_wrapper,
+        cls="fixed bottom-0 right-0 p-4 z-50"
+    )
 
 
 #-----------------------------------#
@@ -88,7 +110,7 @@ async def edit_name(req: Request, hdrs: HtmxHeaders):
     await notify_all(lobby, update)
 
 
-async def modify_avatar(req: Request, file: UploadFile = None):
+async def modify_avatar(req: Request, file: Optional[UploadFile] = None):
     '''Update user avatar and if in lobby sync it'''
     u: User = req.state.user
     if file: await u.set_picture(file)

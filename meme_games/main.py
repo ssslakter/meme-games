@@ -18,13 +18,36 @@ middlware_cls = partial(ConditionalSessionMiddleware, skip=static_re)
 bwares = [user_beforeware(DI.get(UserManager), skip = static_re),
           lobby_beforeware(DI.get(LobbyService))
           ]
+
+style = Style(
+    '''
+    :root {
+        --uk-global-font-size: 1.3rem;
+    }
+    html {
+        font-family: "Times New Roman", Times, serif !important;
+    }
+    .animated {
+        transition: left 0.5s ease, top 0.5s ease;
+    }
+    .animated textarea {
+        transition: width 0.5s ease, height 0.5s ease;
+    }
+    '''
+)
+
 hdrs = [
     Statics(ext='_hs', static_path='static'),
-    Script(src="/static/_hyperscript.min.js"),
-    Statics(ext='js', static_path='static', wc='live2d/*.js'),
-    Statics(ext='js', static_path='static', wc='scripts/*.js'),
+    Script(src='/static/scripts/imports/_hyperscript.min.js'),
+    Script(src='/static/scripts/imports/live2d/live2dcubismcore.min.js'),
+    Script(src='/static/scripts/imports/live2d/live2d.min.js'),
+    Script(src='/static/scripts/imports/live2d/pixi.min.js'),
+    Script(src='/static/scripts/imports/live2d/index.min.js'),
+    Statics(ext='js', static_path='static', wc='scripts/common/**/*.js'),
+    Statics(ext='js', static_path='static', wc='scripts/whoami/**/*.js'),
     Link(rel="stylesheet", href="https://fonts.googleapis.com/icon?family=Material+Icons"),
-    Statics(ext='css', static_path='static'),
+    Theme.blue.headers(),
+    style
 ]
 
 yt_hdrs = [
@@ -36,16 +59,16 @@ bodykw = {'hx-boost': 'true'}
 
 exception_handlers = {404: not_found}
 
-app: FastHTML
-app, _ = fast_app(pico=False, before=bwares, hdrs=hdrs+yt_hdrs,
+app = FastHTML(before=bwares, hdrs=hdrs+yt_hdrs,
                    exts='ws',
-                   bodykw={**bodykw,'sess_cls': middlware_cls},
+                   sess_cls=middlware_cls,
                    key_fname='data/.sesskey',
-                   exception_handlers=exception_handlers)
+                   exception_handlers=exception_handlers,
+                   bodykw=bodykw)
 
 setup_toasts(app, duration=1.5)
 
-for rt in [shared_rt, whoami_rt, video_rt, word_packs_rt, codenames_rt, ws_rt]:
+for rt in [settings_rt, whoami_rt, video_rt, word_packs_rt, codenames_rt, ws_rt]:
     rt.to_app(app)
 
 

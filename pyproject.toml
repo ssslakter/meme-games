@@ -12,7 +12,7 @@ license = { text = "MIT" }
 dependencies = [
     "python-fasthtml",
     "fastcore"
-    ]
+    , "monsterui>=1.0.21,<2"]
 
 [project.optional-dependencies]
 "dev" = ["nbdev", "pip-tools", "pre-commit"]
@@ -33,6 +33,7 @@ default = { solve-group = "default" }
 dev = { features = ["dev"], solve-group = "default" }
 
 [tool.pixi.tasks]
+app = "python run.py"
 
 [dependency-groups]
 dev = ["ipykernel>=6.29.5,<7"]
