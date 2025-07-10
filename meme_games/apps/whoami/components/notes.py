@@ -2,9 +2,9 @@ from ...shared import *
 from ..domain import *
 from .basic import *
 
-def Notes(reciever: WhoAmIPlayer | User, author: WhoAmIPlayer, **kwargs):
+def Notes(reciever: WhoAmIPlayer | User, author: WhoAmIPlayer, cls=(), **kwargs):
     from ..routes import notes
-    # notes_base_classes = 'w-[var(--card-width)] h-[var(--card-height)] text-2xl p-2 scrollbar-hide outline-none'
+    textarea_classes = 'w-[300px] h-[300px] resize overflow-auto p-1 rounded-lg block'
     notes_kwargs = (dict(hx_post=notes,
                          hx_trigger="input changed delay:500ms, load",
                          hx_swap='none',
@@ -14,8 +14,9 @@ def Notes(reciever: WhoAmIPlayer | User, author: WhoAmIPlayer, **kwargs):
                               data_notes=author.uid)
                     )
 
-    return PlayerCardBase(Textarea(author.notes, name='text'), **notes_kwargs, **kwargs)
+    return Panel(TextArea(author.notes, name='text', cls=textarea_classes, **notes_kwargs), cls=('z-50', stringify(cls)), **kwargs)
 
 
 def NotesBlock(r: WhoAmIPlayer | User):
-    return Div(Notes(r, r) if is_player(r) else None, id='notes-block', hx_swap_oob='true')
+    return Div(Notes(r, r, cls='draggable-panel fixed left-1/2 top-1/2 -translate-x-1/2 p-4') if is_player(r) else None, 
+               id='notes-block', hx_swap_oob='true', cls='m-5')

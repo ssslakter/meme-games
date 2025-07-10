@@ -57,12 +57,9 @@ function applyTransform(el, old, newParams) {
         el.style.left = `${newParams.x}px`;
         el.style.top = `${newParams.y}px`;
     }
-
     if (txt && (old.width !== newParams.width || old.height !== newParams.height)) {
-        const deltaWidth = el.offsetWidth - txt.offsetWidth;
-        const deltaHeight = el.offsetHeight - txt.offsetHeight;
-        txt.style.width = `${newParams.width - deltaWidth}px`;
-        txt.style.height = `${newParams.height - deltaHeight}px`;
+        txt.style.width = `${newParams.width}px`;
+        txt.style.height = `${newParams.height}px`;
     }
 
     setTimeout(() => {

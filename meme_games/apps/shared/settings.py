@@ -12,7 +12,7 @@ user_manager = DI.get(UserManager)
 
 # --- Class Constants ---
 BASE_SETTING_ROW_CLS = "space-x-2 p-2 bg-white/60 rounded-md dark:bg-gray-800/60"
-SETTING_ROW_CLS = f"{BASE_SETTING_ROW_CLS} hover:bg-green-300 cursor-pointer dark:hover:bg-gray-700"
+SETTING_ROW_CLS = f"{BASE_SETTING_ROW_CLS} hover:bg-green-300 cursor-pointer dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
 
 def Avatar(u: User):
     filename = u.filename
@@ -38,14 +38,6 @@ def AvatarRemoval(): return Setting('trash', title='Remove avatar', hx_delete=re
 def LockLobby(l: Lobby): 
     args = ('lock-open', 'Lock lobby') if not l.locked else ('lock', 'Unlock lobby')
     return Setting(*args, hx_post=lock_lobby.to(), hx_swap=None)(hx_swap_oob='outerHTML', id='lock-lobby')
-
-def Background(url: str = None): 
-    return Div(
-        id='background',
-        cls=f"fixed inset-0 z-[-1] bg-[url('{url or '/media/background.jpg'}')] bg-cover bg-center bg-fixed filter blur-sm brightness-90 dark:brightness-50",
-        hx_swap_oob='true'
-    )
-
 
 def SetBackground(l: Lobby):
     return Setting('image', title='Background', hx_post=change_background.to(), hx_prompt='Enter the URL of the background image')
@@ -79,22 +71,24 @@ def HostSettings(lobby: Lobby):
 def SettingsPopover(reciever: User|LobbyMember, lobby: Lobby):
     button = Panel(
         UkIcon('cog', width=45, height=45),
-        _ = "on mouseenter toggle .hidden on the next <div/> then toggle .hidden on me",
-        cls="cursor-pointer rounded-full",
-        hoverable=True
+        _ = "on mouseenter or focus remove .hidden from #settings-panel-wrapper then add .hidden to me",
+        cls="cursor-pointer rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500",
+        hoverable=True,
+        tabindex="0",
+        id="settings-popover-button"
     )
 
     settings_card = Settings(reciever, lobby)
     panel_wrapper = Div(
         settings_card,
-        cls="fixed bottom-0 right-0 p-4 mt-2 max-w-3xl w-80 z-10 hidden",
-        _ = "on mouseleave toggle .hidden on me then toggle .hidden on the previous <div/>",
+        cls="absolute bottom-0 right-0 p-4 mt-2 max-w-3xl w-80 z-10 hidden",
+        id="settings-panel-wrapper"
     )
 
     return Div(
         button,
         panel_wrapper,
-        cls="fixed bottom-0 right-0 p-4"
+        cls="fixed bottom-0 right-0 p-4 z-50"
     )
 
 

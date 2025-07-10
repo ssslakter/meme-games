@@ -5,6 +5,15 @@ function initLabel(element) {
     element.isDragging = false;
 }
 
+function getCorrectedTextareaDimensions(labelEl, textareaEl, newParams) {
+    const deltaWidth = labelEl.offsetWidth - textareaEl.offsetWidth;
+    const deltaHeight = labelEl.offsetHeight - textareaEl.offsetHeight;
+    return {
+        width: newParams.width - deltaWidth,
+        height: newParams.height - deltaHeight
+    };
+}
+
 function onLabelMouseDown(event) {
     const label = event.currentTarget;
     draggedLabel = label;
@@ -47,6 +56,14 @@ function onDocumentMouseUp(event) {
         
         const params = getTransformParams(draggedLabel, draggedLabel.parentElement, transform);
         params.new.owner_uid = ownerUID;
+
+        const textarea = draggedLabel.querySelector('textarea');
+        const deltaWidth = draggedLabel.offsetWidth - textarea.offsetWidth;
+        const deltaHeight = draggedLabel.offsetHeight - textarea.offsetHeight;
+        if (textarea) {
+            params.new.width = params.new.width - deltaWidth;
+            params.new.height = params.new.height - deltaHeight;
+        }
 
         const triggerEl = htmx.findAll(draggedLabel, "div");
         if (triggerEl) {

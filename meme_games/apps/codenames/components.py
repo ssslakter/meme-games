@@ -35,15 +35,14 @@ def MainBlock(reciever: CodenamesPlayer | User, lobby: Lobby):
 #------------- Routes ------------#
 #---------------------------------#
 
-@rt
-def index():
-    return Div(
-        H1("Game Lobby"),
-        # ... other components for the lobby (like a player list) ...
-        Div(cls="mt-8 max-w-md")( # Constrain the width for a "small box" feel
-            LobbySettings()
-        )
-    )
+# @rt
+# def index():
+#     return Div(
+#         H1("Game Lobby"),
+#         # ... other components for the lobby (like a player list) ...
+#         Div(cls="mt-8 max-w-md")( # Constrain the width for a "small box" feel
+#         )
+#     )
 
 @rt('/{lobby_id}', methods=['get'])
 def index(req: Request, lobby_id: str = None):
@@ -54,6 +53,8 @@ def index(req: Request, lobby_id: str = None):
     m = lobby.get_member(u.uid)
     req.session['lobby_id'] = lobby.id
     req.bodykw['cls'] = 'codenames'
+    # TODO: comment when done
+    return Redirect('/work-in-progress')
     return Title(f"Codenames lobby: {lobby.id}"), MainBlock(m or u, lobby)
 
 def redirect(lobby_id: str): return Redirect(index.to(lobby_id=lobby_id))

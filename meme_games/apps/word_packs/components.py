@@ -26,7 +26,7 @@ def WordPackEditor(wp: WordPack = None, empty: bool = False, **kwargs):
         Form(hx_post=save.to(), hx_target="#wordpacks")(
             Input(type="hidden", name="id", value=wp.id if wp else ""),
             Input(type="text", name="name", value=wp.name if wp else "", required=True),
-            Textarea(wp.words_ if wp else "", type="text", name="words", rows=10),
+            TextArea(wp.words_ if wp else "", type="text", name="words", rows=10),
             Div(
                 Button("Save", type="submit", value="Save", cls="secondary"),
                 Button(
@@ -69,8 +69,9 @@ def MainBlock():
                     Packs(),
                 ),
                 WordPackEditor(empty=True),
-                ThemeSwitcher(),
-            )
+            ),
+            no_image=True,
+            cls='pt-10'
         ),
     )
 

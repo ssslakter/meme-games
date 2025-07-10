@@ -20,3 +20,18 @@ def Card(*c, # Components that go in the body (Main content of the card such as 
     '''Generic card component.'''
     cls = (PANEL_CLS, stringify(cls), 'rounded-lg')
     return mui.Card(*c, header=header, footer=footer, body_cls=body_cls, header_cls=header_cls, footer_cls=footer_cls, cls=cls, **kwargs)
+
+
+def Background(url: str = None, no_image: bool = False): 
+    bg_cls = ''
+    # classes = "absolute top-0 left-0 -z-10 h-full w-full bg-black bg-cover bg-center bg-no-repeat blur-[5px] brightness-50"
+    if not no_image: bg_cls = f"bg-[url('{url or '/media/background.jpg'}')]"
+    return Div(
+        Div(cls="absolute inset-0 backdrop-blur-sm dark:bg-black/30"),
+        cls=f"fixed inset-0 z-[-1] bg-cover bg-center bg-fixed filter {bg_cls}",
+        hx_swap_oob='true'
+    )
+
+
+# def TextArea(*args, cls=(), **kwargs):
+#     return mui.TextArea(*args, cls=cls, **kwargs)

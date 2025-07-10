@@ -4,28 +4,21 @@ from .cards import *
 from .notes import *
 
 
-def Background(url: str):
-    """
-    Creates a background div with the given image url and styles it with tailwind classes.
-    """
-    url = url or "/media/background.jpg"
-    classes = "absolute top-0 left-0 -z-10 h-full w-full bg-black bg-cover bg-center bg-no-repeat blur-[5px] brightness-50"
-    return Div(style=f"background-image: url('{url}')", cls=classes)
-
-
 def Spectators(reciever: WhoAmIPlayer | User, lobby: Lobby):
     from ..routes import spectate
 
     panel_classes = "bg-white/60 dark:bg-gray-900/60"
     spectator_classes = (
         "fixed right-0 top-1/2 -translate-y-1/2 "
-        "flex flex-col p-2 gap-1 rounded-l-lg shadow-lg"
+        "flex flex-col p-2 gap-1 rounded-l-lg shadow-lg "
+        "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
     )
     spectate_controls = dict(
         hx_post=spectate,
         hx_swap="beforeend",
         hx_target="#players",
         cls=f"{panel_classes} {spectator_classes} cursor-pointer",
+        tabindex="0",
     )
 
     inner_div_classes = "flex flex-col gap-1"
@@ -62,11 +55,13 @@ def Game(reciever: WhoAmIPlayer | User, lobby: Lobby):
 
 def MainBlock(reciever: WhoAmIPlayer | User, lobby: Lobby):
     from ..routes import ws_url
+    from ..monitor import monitor
 
     return MainPage(
-        Spectators(reciever, lobby),
         Game(reciever, lobby),
         SettingsPopover(reciever, lobby),
+        Spectators(reciever, lobby),
+        navbar_args=[A("Monitor", href=monitor.to())],
         hx_ext="ws",
         ws_connect=ws_url,
         background_url=lobby.background_url,
