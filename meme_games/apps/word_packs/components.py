@@ -2,14 +2,30 @@ from meme_games.core import *
 from .domain import *
 from ..shared import *
 
-rt = APIRouter("/word_packs")
 
 logger = logging.getLogger(__name__)
 
 wordpack_manager = DI.get(WordPackManager)
 
+def ListCard(title, *content):
+    "A card with list of something."
+    return Div(cls = "col-span-2")(
+        Card(H3(title), Div("Something", cls='h-64 uk-background-muted'))
+    )
+    
+def SideBar():
+    return Form(
+        H3("Wordpack options"),
+        LabelInput("Search"),
+        Div(FormLabel("Upload from text file"),
+            UploadZone(DivCentered(Span("Upload Zone"), UkIcon("upload"), cls=''), name='file', accept='text/plain')),
+        LabelSelect(map(Option, ['ru', 'en']), label='Language'),
+        cls = 'row-span-2 space-y-5'
+    )
+
 
 def WordPackRef(wp: WordPack):
+    from .routes import editor
     return Button(wp.name, hx_get=editor.to(id=wp.id), hx_target="#editor", style="width: 30%;", id=wp.id)
 
 
@@ -19,6 +35,7 @@ def Packs():
     )
 
 def WordPackEditor(wp: WordPack = None, empty: bool = False, **kwargs):
+    from .routes import save, delete
     if empty: 
         return Div(id="editor", **kwargs)
     return Div(id="editor", **kwargs)(
@@ -45,69 +62,16 @@ def WordPackEditor(wp: WordPack = None, empty: bool = False, **kwargs):
     )
 
 
-def MainBlock():
-    return (
-        Title("Word packs"),
-        MainPage(
-            Div(
-                id="main-block",
-                style="display: flex; flex-direction: row; padding: 10px; justify-content: space-around;",
-            )(
-                Div(
-                    Div(
-                        Form(hx_post=upload.to(), hx_target="#wordpacks")(
-                            Input(type="file", name="file", accept="text/plain"),
-                            Button(
-                                "Upload", type="submit", value="Upload", cls="secondary"
-                            ),
-                        ),
-                        Button(
-                            "New", hx_get=new.to(), hx_target="#editor", cls="secondary"
-                        ),
-                        style="display: flex; flex-direction: row; gap: 10px; align-items: flex-start;",
-                    ),
-                    Packs(),
-                ),
-                WordPackEditor(empty=True),
+def Page():
+    from .routes import upload, new
+    return MainPage(no_image=True)(
+        Container(
+            Grid(
+                SideBar(),
+                ListCard("Wordpacks", Packs()),
+                ListCard("Editor", WordPackEditor(empty=True)),
+                cols=5
             ),
-            no_image=True,
-            cls='pt-10'
-        ),
+            cls="pt-14"
+        )
     )
-
-
-# ---------------------------------#
-# ------------- Routes ------------#
-# ---------------------------------#
-
-
-@rt("/upload", methods=["post"])
-async def upload(file: UploadFile):
-    text = await file.read()
-    wordpack_manager.insert(WordPack(name=file.filename.split(".")[0], words_=text.decode("utf-8")))
-    return Packs()
-
-@rt("/delete", methods=["post"])
-def delete(id: str):
-    wordpack_manager.delete(id)
-    return WordPackEditor(), Div(hx_swap_oob=f"outerHTML:li:has(#{id})")
-
-@rt
-def save(name: str, words: str, id: str = None):
-    id = id or random_id()
-    wp = wordpack_manager.upsert(WordPack(id=id, name=name, words_=words))
-    return Packs(), WordPackEditor(empty=True, hx_swap_oob='true')
-
-@rt
-def new():
-    return WordPackEditor()
-
-@rt
-def index(): return MainBlock()
-
-register_page("Word Packs", index.to())
-
-@rt
-def editor(id: str):
-    pack = wordpack_manager.get_by_id(id)
-    return WordPackEditor(pack)

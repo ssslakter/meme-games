@@ -14,7 +14,7 @@ def Notes(reciever: WhoAmIPlayer | User, author: WhoAmIPlayer, cls=(), **kwargs)
                               data_notes=author.uid)
                     )
 
-    return Panel(TextArea(author.notes, name='text', cls=textarea_classes, **notes_kwargs), cls=('z-50', stringify(cls)), **kwargs)
+    return mui.Card(TextArea(author.notes, name='text', cls=textarea_classes, **notes_kwargs), cls=('z-50', stringify(cls)), **kwargs)
 
 
 def NotesBlock(r: WhoAmIPlayer | User):

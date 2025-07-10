@@ -7,23 +7,7 @@ from .notes import *
 def Spectators(reciever: WhoAmIPlayer | User, lobby: Lobby):
     from ..routes import spectate
 
-    panel_classes = "bg-white/60 dark:bg-gray-900/60"
-    spectator_classes = (
-        "fixed right-0 top-1/2 -translate-y-1/2 "
-        "flex flex-col p-2 gap-1 rounded-l-lg shadow-lg "
-        "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-    )
-    spectate_controls = dict(
-        hx_post=spectate,
-        hx_swap="beforeend",
-        hx_target="#players",
-        cls=f"{panel_classes} {spectator_classes} cursor-pointer",
-        tabindex="0",
-    )
-
-    inner_div_classes = "flex flex-col gap-1"
-
-    return Panel(
+    return Card(
         "Spectators: ",
         Div(
             *[
@@ -32,10 +16,14 @@ def Spectators(reciever: WhoAmIPlayer | User, lobby: Lobby):
                 if not p.is_player
             ],
             id="spectators",
-            cls=inner_div_classes,
+            cls="flex flex-col gap-1",
         ),
-        rounded='0',
-        **spectate_controls,
+        body_cls='p-2',
+        hx_post=spectate,
+        hx_swap="beforeend",
+        hx_target="#players",
+        tabindex="0",
+        cls=f"fixed right-0 top-1/3 -translate-y-1/2 rounded-r-none p-2 cursor-pointer"
     )
 
 

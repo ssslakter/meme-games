@@ -1,5 +1,6 @@
 from meme_games.core import *
-from ..shared.settings import *
+from .settings import *
+from .general import *
 
 # will contain name and url for each page
 PAGES_REGISTRY = {}
@@ -28,9 +29,7 @@ def ThemeSwitcher():
         "on click add .dark to <html/> then call setThemeMode(true) then call me.blur()",
         "-ml-px rounded-r-md",
     )
-    return Div(
-        light_btn, dark_btn, cls="ml-auto isolate inline-flex rounded-md shadow-sm"
-    )
+    return Div(light_btn, dark_btn)
 
 
 def Navbar(*args, **kwargs):

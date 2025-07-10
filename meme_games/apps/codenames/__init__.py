@@ -1,2 +1,2 @@
 from .domain import *
-from .components import rt as codenames_rt
+from .routes import rt as codenames_rt

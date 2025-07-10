@@ -24,9 +24,7 @@ style = Style(
     :root {
         --uk-global-font-size: 1.3rem;
     }
-    html {
-        font-family: "Times New Roman", Times, serif !important;
-    }
+
     .animated {
         transition: left 0.5s ease, top 0.5s ease;
     }
@@ -46,7 +44,8 @@ hdrs = [
     Statics(ext='js', static_path='static', wc='scripts/common/**/*.js'),
     Statics(ext='js', static_path='static', wc='scripts/whoami/**/*.js'),
     Link(rel="stylesheet", href="https://fonts.googleapis.com/icon?family=Material+Icons"),
-    Theme.blue.headers(),
+    Theme.yellow.headers(radii=ThemeRadii.lg, shadows=ThemeShadows.lg),
+    franken_globals,
     style
 ]
 
@@ -55,7 +54,6 @@ yt_hdrs = [
     # Script(src="/static/youtube.js"),
 ]
 
-bodykw = {'hx-boost': 'true'}
 
 exception_handlers = {404: not_found}
 
@@ -64,7 +62,8 @@ app = FastHTML(before=bwares, hdrs=hdrs+yt_hdrs,
                    sess_cls=middlware_cls,
                    key_fname='data/.sesskey',
                    exception_handlers=exception_handlers,
-                   bodykw=bodykw)
+                   htmlkw={'class': 'uk-custom-theme'},
+                   bodykw={'hx-boost': 'true'})
 
 setup_toasts(app, duration=1.5)
 
