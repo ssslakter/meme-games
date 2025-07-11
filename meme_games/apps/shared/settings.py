@@ -4,6 +4,9 @@ from meme_games.domain import *
 from .general import *
 
 
+__all__ = ['Settings', 'Avatar', 'SettingsPopover', 'edit_avatar', 'edit_name', 'reset_avatar', 'lock_lobby', 'change_background']
+
+
 rt = APIRouter()
 
 lobby_service = DI.get(LobbyService)
@@ -15,8 +18,8 @@ BASE_SETTING_ROW_CLS = "space-x-2 p-2 bg-white/60 rounded-md dark:bg-gray-800/60
 SETTING_ROW_CLS = f"{BASE_SETTING_ROW_CLS} hover:bg-green-300 cursor-pointer dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
 
 def Avatar(u: User):
-    filename = u.filename
-    filename = ('/user-content/' + filename) if filename else '/media/default-avatar.jpg'
+    filename = u.avatar
+    filename = ('/user-content/' + filename) if filename else '/static/images/default-avatar.jpg'
     return Div(style=f'background-image: url({filename})', cls="w-full h-full bg-cover bg-center bg-no-repeat dark:brightness-75", data_avatar=u.uid)
 
 
@@ -69,11 +72,10 @@ def HostSettings(lobby: Lobby):
 
 
 def SettingsPopover(reciever: User|LobbyMember, lobby: Lobby):
-    button = Panel(
+    button = Card(
         UkIcon('cog', width=45, height=45),
         _ = "on mouseenter or focus remove .hidden from #settings-panel-wrapper then add .hidden to me",
         cls="cursor-pointer rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500",
-        hoverable=True,
         tabindex="0",
         id="settings-popover-button"
     )
@@ -82,6 +84,7 @@ def SettingsPopover(reciever: User|LobbyMember, lobby: Lobby):
     panel_wrapper = Div(
         settings_card,
         cls="absolute bottom-0 right-0 p-4 mt-2 max-w-3xl w-80 z-10 hidden",
+        _ = "on mouseleave or blur add .hidden to me then remove .hidden from #settings-popover-button",
         id="settings-panel-wrapper"
     )
 

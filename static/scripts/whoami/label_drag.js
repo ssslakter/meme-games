@@ -16,6 +16,7 @@ function getCorrectedTextareaDimensions(labelEl, textareaEl, newParams) {
 
 function onLabelMouseDown(event) {
     const label = event.currentTarget;
+    label.style.cursor = 'grabbing';
     draggedLabel = label;
     if (label.isClicked) return;
     label.isClicked = true;
@@ -45,6 +46,7 @@ function onDocumentMouseMove(event) {
 
 function onDocumentMouseUp(event) {
     if (!draggedLabel) return;
+    draggedLabel.style.cursor = 'grab';
     let ownerUID = htmx.find(draggedLabel.parentElement, 'div[data-label]').getAttribute('data-label');
     if (draggedLabel.isClicked) {
         draggedLabel.isDragging = false;

@@ -11,8 +11,8 @@ requires-python=">=3.12"
 license = { text = "MIT" }
 dependencies = [
     "python-fasthtml",
-    "fastcore"
-    , "monsterui>=1.0.21,<2"]
+    "fastcore",
+    "monsterui>=1.0.21,<2"]
 
 [project.optional-dependencies]
 "dev" = ["nbdev", "pip-tools", "pre-commit"]

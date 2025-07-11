@@ -57,7 +57,7 @@ def PlayerLabelFT(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
         ),
         style=style,
         data_label=owner.uid,
-        cls="absolute z-5 top-0 p-3 cursor-move shadow-lg border-2 rounded-lg",
+        cls="absolute z-5 top-0 p-3 cursor-grab shadow-lg border-2 rounded-lg",
         _=f"""
                 init call initLabel(me)
                 on mousedown call onLabelMouseDown(event)
@@ -71,8 +71,9 @@ def PlayerLabelFT(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
 def PlayerCard(reciever: WhoAmIPlayer | User, p: WhoAmIPlayer, lobby: Lobby):
     if not p.is_player:
         return
-    controls_classes = "absolute top-0 right-0 z-10 hidden group-hover:block cursor-pointer p-1 bg-white/60 dark:bg-gray-900/60"
-    notes_classes = "absolute top-0 left-0 h-full w-full z-10 p-2 hidden peer-hover:block hover:block"
+    controls_classes = "absolute top-0 right-0 z-10 group-hover:block hidden cursor-pointer p-1 bg-white/60 dark:bg-gray-900/60"
+    notes_classes = f"w-[{CARD_WIDTH}] h-[{CARD_HEIGHT}] absolute top-0 left-0 z-50 hidden p-3"
+
 
     if reciever == p:
         edit = (
@@ -92,20 +93,12 @@ def PlayerCard(reciever: WhoAmIPlayer | User, p: WhoAmIPlayer, lobby: Lobby):
             ),
         )
     else:
-        edit = (
-            UkIcon("file-text", width=30, height=30, cls=f"{controls_classes} peer"),
-            Notes(reciever, p, cls=notes_classes),
-        )
+        edit = UkIcon("file-text", width=30, height=30, cls=f"{controls_classes} peer",
+                      _=f'on mouseover get first <[data-notes="{p.uid}"]/> then remove .hidden from it'
+                      )
 
     return PlayerCardBase(
         edit,
-        Form(
-            Input(type="file", name="file", accept="image/*"),
-            style="display: none;",
-            hx_trigger="change",
-            hx_post=edit_avatar.to(),
-            hx_swap="none",
-        ),
         Avatar(p.user),
         footer=Div(
             UserName(reciever, p.user, is_connected=p.is_connected),
@@ -114,7 +107,10 @@ def PlayerCard(reciever: WhoAmIPlayer | User, p: WhoAmIPlayer, lobby: Lobby):
         footer_cls="p-0 backdrop-blur-sm text-xl justify-center flex rounded-lg",
         data_user=p.uid,
         body_cls="flex-1 relative p-0 overflow-hidden w-full rounded-t-lg",
-    )(PlayerLabelFT(reciever, p))
+    )(PlayerLabelFT(reciever, p), Notes(reciever, p, 
+                                        text_cls='flex-1 box-border',
+                                        cls=notes_classes,
+                                        _='on mouseleave add .hidden to me') if reciever!=p else None)
 
 
 def NewPlayerCard():
