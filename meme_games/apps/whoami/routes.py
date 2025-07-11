@@ -100,8 +100,11 @@ async def notes(req: Request, text: str):
     if not p.is_player: return
     p.set_notes(text)
     lobby_service.update(lobby)
+    # TODO: Remove duplication
+    notes_classes = f"w-[{CARD_WIDTH}] h-[{CARD_HEIGHT}] absolute top-0 left-0 z-50 hidden p-3"
 
-    def update(r, *_): return Notes(r, p)(hx_swap_oob=f"innerHTML:[data-notes='{p.uid}']")
+    def update(r, *_): return Notes(r, p, text_cls='flex-1 box-border',
+                                        cls=notes_classes, _='on mouseleave add .hidden to me')(hx_swap_oob=f"innerHTML:[data-notes='{p.uid}']")
     await notify_all(lobby, update, but=p)
 
 

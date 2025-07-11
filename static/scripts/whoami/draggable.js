@@ -4,7 +4,7 @@ let offsetX, offsetY;
 function makeDraggable(element) {
     if (!element) return;
 
-    element.style.cursor = 'move';
+    element.style.cursor = 'grab';
 
     element.addEventListener('mousedown', (e) => {
         const clickedTextarea = e.target.closest('textarea');
