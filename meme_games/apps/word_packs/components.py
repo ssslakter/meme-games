@@ -70,7 +70,7 @@ def Packs(wordpacks: list[WordPack]):
 
 def WordPackEditor(wp: Optional[WordPack] = None, **kwargs):
     from .routes import save
-    editor = Div(id="editor", hx_swap_oob='true', **kwargs)
+    editor = Div(id="editor", **kwargs)
     if not wp: return editor
     return editor(
         Div(H4("Pack name: "), Span(wp.name, data_pack=wp.id, cls='inline-block'), cls='w-full truncate'),
