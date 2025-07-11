@@ -10,7 +10,7 @@ def Panel(*c, cls=(), rounded='lg', **kwargs) -> FT:
 def Background(url: str = None, no_image: bool = False): 
     bg_cls = ''
     # classes = "absolute top-0 left-0 -z-10 h-full w-full bg-black bg-cover bg-center bg-no-repeat blur-[5px] brightness-50"
-    if not no_image: bg_cls = f"bg-[url('{url or '/media/background.jpg'}')]"
+    if not no_image: bg_cls = f"bg-[url('{url or '/static/images/background.jpg'}')]"
     return Div(
         Div(cls="absolute inset-0 backdrop-blur-sm dark:bg-black/30"),
         cls=f"fixed inset-0 z-[-1] bg-cover bg-center bg-fixed filter {bg_cls}",
@@ -19,13 +19,6 @@ def Background(url: str = None, no_image: bool = False):
 
 franken_globals = Style(
 """
-.uk-custom-theme {
-    --card: 0 0% 90% / 0.7;         
-}
-
-.dark.uk-custom-theme {
-    --card: 20 14.3% 4.1% / 0.7;         
-}
 """
 )
 

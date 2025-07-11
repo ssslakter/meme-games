@@ -99,13 +99,6 @@ def PlayerCard(reciever: WhoAmIPlayer | User, p: WhoAmIPlayer, lobby: Lobby):
 
     return PlayerCardBase(
         edit,
-        Form(
-            Input(type="file", name="file", accept="image/*"),
-            style="display: none;",
-            hx_trigger="change",
-            hx_post=edit_avatar.to(),
-            hx_swap="none",
-        ),
         Avatar(p.user),
         footer=Div(
             UserName(reciever, p.user, is_connected=p.is_connected),

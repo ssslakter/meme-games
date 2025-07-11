@@ -35,6 +35,7 @@ style = Style(
 )
 
 hdrs = [
+    Link(rel="icon", href="/static/images/favicon.ico"),
     Statics(ext='_hs', static_path='static'),
     Script(src='/static/scripts/imports/_hyperscript.min.js'),
     Script(src='/static/scripts/imports/live2d/live2dcubismcore.min.js'),
@@ -67,7 +68,7 @@ app = FastHTML(before=bwares, hdrs=hdrs+yt_hdrs,
 
 setup_toasts(app, duration=1.5)
 
-for rt in [settings_rt, whoami_rt, video_rt, word_packs_rt, codenames_rt, ws_rt]:
+for rt in [settings_rt, whoami_rt, video_rt, word_packs_rt, codenames_rt, ws_rt, user_rt]:
     rt.to_app(app)
 
 

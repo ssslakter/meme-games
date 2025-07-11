@@ -49,7 +49,7 @@ def MainBlock(reciever: WhoAmIPlayer | User, lobby: Lobby):
         Game(reciever, lobby),
         SettingsPopover(reciever, lobby),
         Spectators(reciever, lobby),
-        navbar_args=[A("Monitor", href=monitor.to())],
+        navbar_args=[A("Monitor", href=monitor.to(), cls=AT.text)],
         hx_ext="ws",
         ws_connect=ws_url,
         background_url=lobby.background_url,

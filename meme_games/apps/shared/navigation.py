@@ -12,7 +12,7 @@ def register_page(name: str, url: str):
 
 def _ThemeButton(icon: str, text: str, action: str, cls: str = ""):
     return Button(
-        UkIcon(icon, cls="w-5 h-5 mr-2"), text, _=action, cls=(ButtonT.default, cls)
+        UkIcon(icon, cls="mr-2", width=20, height=20), text, _=action, cls=(ButtonT.default, cls)
     )
 
 
@@ -21,13 +21,13 @@ def ThemeSwitcher():
         "sun",
         "Light",
         "on click remove .dark from <html/> then call setThemeMode(false) then call me.blur()",
-        "rounded-l-md",
+        "rounded-r-none",
     )
     dark_btn = _ThemeButton(
         "moon",
         "Dark",
         "on click add .dark to <html/> then call setThemeMode(true) then call me.blur()",
-        "-ml-px rounded-r-md",
+        "rounded-l-none",
     )
     return Div(light_btn, dark_btn)
 
@@ -35,7 +35,7 @@ def ThemeSwitcher():
 def Navbar(*args, **kwargs):
     inner_navbar = NavBar(
         *args,
-        Button("Select game", cls=(ButtonT.default, "rounded-md")),
+        Button("Select game", cls=ButtonT.primary),
         DropDownNavContainer(
             *[
                 Li(A(name, href=url, _="on click call hideDropdowns()"))
@@ -49,18 +49,14 @@ def Navbar(*args, **kwargs):
 
     handle = Div(
         Div(cls="w-20 h-1 bg-gray-400 rounded-full"),
-        cls="h-4 w-full flex justify-center items-start cursor-pointer",
-    )
-
-    container = Div(
-        inner_navbar,
-        handle,
-        cls="bg-base-100/80 backdrop-blur-sm shadow-lg rounded-b-xl",
+        cls="h-4 w-full flex justify-center items-center cursor-pointer",
     )
 
     return Div(
-        container,
+        inner_navbar,
+        handle,
         cls=(
+            'uk-card rounded-t-none',
             "fixed top-0 left-0 right-0 z-50",
             "transition-transform duration-300 ease-in-out",
             "transform -translate-y-[calc(100%-1rem)] hover:-translate-y-0 focus-within:-translate-y-0",

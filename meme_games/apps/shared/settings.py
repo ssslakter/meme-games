@@ -18,8 +18,8 @@ BASE_SETTING_ROW_CLS = "space-x-2 p-2 bg-white/60 rounded-md dark:bg-gray-800/60
 SETTING_ROW_CLS = f"{BASE_SETTING_ROW_CLS} hover:bg-green-300 cursor-pointer dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
 
 def Avatar(u: User):
-    filename = u.filename
-    filename = ('/user-content/' + filename) if filename else '/media/default-avatar.jpg'
+    filename = u.avatar
+    filename = ('/user-content/' + filename) if filename else '/static/images/default-avatar.jpg'
     return Div(style=f'background-image: url({filename})', cls="w-full h-full bg-cover bg-center bg-no-repeat dark:brightness-75", data_avatar=u.uid)
 
 
