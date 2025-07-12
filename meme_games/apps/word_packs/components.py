@@ -68,27 +68,55 @@ def Packs(wordpacks: list[WordPack]):
         id='packs_list'
     )
 
-def WordPackEditor(wp: Optional[WordPack] = None, **kwargs):
+def WordPackEditor(wp: Optional[WordPack] = None,
+                   readonly: bool = False,
+                   submit_button = Button("Save", cls=ButtonT.primary),
+                   form_kwargs = None,
+                   **kwargs):
     from .routes import save
     editor = Div(id="editor", **kwargs)
     if not wp: return editor
-    return editor(
-        Div(H4("Pack name: "), Span(wp.name, data_pack=wp.id, cls='inline-block'), cls='w-full truncate'),
-        Form(hx_post=save.to(),
-            _='on htmx:afterRequest trigger change on #packs_search')(
+    
+    head = DivFullySpaced(
+        Div(H4("Pack name: ", cls='inline'), Span(wp.name, data_pack=wp.id), cls='w-full truncate'),
+        DivRAligned(H4("Words: ", cls='inline'), Span(len(wp.words)-1, data_pack=wp.id)))
+    
+    return editor(head,
+        Form(**(form_kwargs or dict(hx_post=save)),
+            _='on htmx:afterRequest trigger change on #packs_search' if not readonly else None)(
             Input(type="hidden", name="id", value=wp.id),
             Input(type="text", name="name", value=wp.name, required=True, placeholder="pack name",
-            _=f'on input repeat for el in <[data-pack="{wp.id}"]/> set el.innerText to me.value end'),
-            TextArea(wp.words_ , cls='resize-y whitespace-nowrap', name="words", 
-                     placeholder='words', rows=min(max(len(wp.words), 5), 25)),
+            _=f'on input repeat for el in <[data-pack="{wp.id}"]/> set el.innerText to me.value end') if not readonly else None,
+            TextArea(wp.words_ , cls='resize-y whitespace-pre', name="words", 
+                     placeholder='words', rows=min(max(len(wp.words), 5), 25), readonly=readonly),
             Div(
-                Button("Save", cls=ButtonT.primary),
+                submit_button,
                 style="display: flex; flex-direction: row; gap: 10px;",
             ),
             style="display: flex; flex-direction: column; gap: 10px; align-items: flex-start;",
         ),
     )
+    
+def render_pack_select(col, wp: WordPack, route, **kwargs):
+    def _Td(*args, cls='',):
+        return Td(*args, cls=f'!p-0 md:!p-2 cursor-pointer {cls}', hx_get=route.to(id=wp.id), **kwargs)
+    match col:
+        case "Name": return _Td(Div(wp.name, data_pack=wp.id, cls='truncate'))
+        case "Author": return _Td(Div(wp.author.name if wp.author else 'unknown'))
+        case _: raise ValueError(f"Unknown column: {col}")
 
+def PacksSelect(wordpacks: list[WordPack], route_with_id=None, **kwargs):
+    from .routes import editor
+    route_with_id = route_with_id or editor
+    cols2w = dict([("Name", 50), ("Author", 50)])
+    return TableFromDicts(
+        header_data=cols2w.keys(),
+        body_data=[dict.fromkeys(cols2w.keys(), wp) for wp in wordpacks],
+        body_cell_render=partial(render_pack_select, route=route_with_id, **kwargs),
+        header_cell_render=lambda col: Th(col, cls=f'w-[{cols2w[col]}%]'),
+        cls=(TableT.middle, TableT.divider, TableT.hover, TableT.sm, 'table-fixed'),
+        id='packs_select'
+    )
 
 def Page():
     packs = wordpack_manager.get_all()

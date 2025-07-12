@@ -45,7 +45,6 @@ class WhoAmIPlayer(LobbyMember):
         data[cls].update(data.pop(LobbyMember))
         return super(LobbyMember, cls).from_dict(data[cls])
 
-
 WAILobby = Lobby[WhoAmIPlayer]
 
 # %% ../../../notebooks/whoami.ipynb 5

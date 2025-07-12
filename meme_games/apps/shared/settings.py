@@ -1,6 +1,7 @@
 import urllib
 from meme_games.core import *
 from meme_games.domain import *
+from meme_games.apps.user import *
 from .general import *
 
 
@@ -13,40 +14,38 @@ lobby_service = DI.get(LobbyService)
 user_manager = DI.get(UserManager)
 
 
-# --- Class Constants ---
-BASE_SETTING_ROW_CLS = "space-x-2 p-2 bg-white/60 rounded-md dark:bg-gray-800/60"
-SETTING_ROW_CLS = f"{BASE_SETTING_ROW_CLS} hover:bg-green-300 cursor-pointer dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-
-def Avatar(u: User):
-    filename = u.avatar
-    filename = ('/user-content/' + filename) if filename else '/static/images/default-avatar.jpg'
-    return Div(style=f'background-image: url({filename})', cls="w-full h-full bg-cover bg-center bg-no-repeat dark:brightness-75", data_avatar=u.uid)
-
-
 def Setting(icon: str, title: str = None, hx_swap='none', **kwargs):
     return DivLAligned(
         UkIcon(icon, cls="text-3xl"),
         P(title, cls="text-lg"),
-        cls=SETTING_ROW_CLS,
+        cls=('uk-btn cursor-pointer', ButtonT.default),
         hx_swap=hx_swap,
         **kwargs
     )
 
 
-def NameSetting(): return Setting('pencil', title='Edit name', hx_put=edit_name.to(), hx_prompt='Enter your name')
+def NameSetting(): return Setting('pencil', title='Edit name', hx_put=edit_name, hx_prompt='Enter your name')
 
-def AvatarRemoval(): return Setting('trash', title='Remove avatar', hx_delete=reset_avatar.to(),
+def AvatarRemoval(): return Setting('trash', title='Remove avatar', hx_delete=reset_avatar,
                                     hx_confirm="Confirm that you want to remove your avatar?")
+
+def AvatarSet(): 
+    return (Setting('user', title="Edit avatar",  _="on click set x to next <form input/> then x.click()"),
+            Form(Input(type="file", name="file", accept="image/*"),
+                style="display: none;",
+                hx_trigger="change",
+                hx_post=edit_avatar,
+                hx_swap="none"))
 
 def LockLobby(l: Lobby): 
     args = ('lock-open', 'Lock lobby') if not l.locked else ('lock', 'Unlock lobby')
-    return Setting(*args, hx_post=lock_lobby.to(), hx_swap=None)(hx_swap_oob='outerHTML', id='lock-lobby')
+    return Setting(*args, hx_post=lock_lobby, hx_swap=None)(hx_swap_oob='outerHTML', id='lock-lobby')
 
 def SetBackground(l: Lobby):
-    return Setting('image', title='Background', hx_post=change_background.to(), hx_prompt='Enter the URL of the background image')
+    return Setting('image', title='Background', hx_post=change_background, hx_prompt='Enter the URL of the background image')
 
 
-def Settings(reciever: User|LobbyMember, lobby: Lobby):
+def Settings(reciever: User|LobbyMember, lobby: Lobby, *custom_settings):
     card_header_content = DivLAligned(
         UkIcon('cog', width=25, height=25),
         H4('Settings', cls="text-xl font-bold ml-2")
@@ -54,6 +53,7 @@ def Settings(reciever: User|LobbyMember, lobby: Lobby):
 
     settings_items = [
         NameSetting(),
+        AvatarSet(),
         AvatarRemoval(),
         SetBackground(lobby),
     ]
@@ -61,6 +61,7 @@ def Settings(reciever: User|LobbyMember, lobby: Lobby):
         settings_items.extend(HostSettings(lobby))
     
     return Card(
+        *custom_settings,
         *settings_items,
         header=card_header_content,
         cls = 'space-y-2'
@@ -71,7 +72,7 @@ def HostSettings(lobby: Lobby):
     return tuple(f(lobby) for f in (LockLobby,))
 
 
-def SettingsPopover(reciever: User|LobbyMember, lobby: Lobby):
+def SettingsPopover(reciever: User|LobbyMember, lobby: Lobby, *custom_settings):
     button = Card(
         UkIcon('cog', width=45, height=45),
         _ = "on mouseenter or focus remove .hidden from #settings-panel-wrapper then add .hidden to me",
@@ -80,7 +81,7 @@ def SettingsPopover(reciever: User|LobbyMember, lobby: Lobby):
         id="settings-popover-button"
     )
 
-    settings_card = Settings(reciever, lobby)
+    settings_card = Settings(reciever, lobby, *custom_settings)
     panel_wrapper = Div(
         settings_card,
         cls="absolute bottom-0 right-0 p-4 mt-2 max-w-3xl w-80 z-10 hidden",

@@ -3,7 +3,7 @@
 # %% auto 0
 __all__ = ['logger', 'LOBBY_REGISTRY', 'MEMBER_MANAGER_REGISTRY', 'GameData', 'LobbyMember', 'Lobby',
            'register_lobby_member_manager', 'LobbyManager', 'MemberManager', 'LobbyService', 'is_player',
-           'lobby_beforeware', 'Members']
+           'lobby_beforeware']
 
 # %% ../../notebooks/lobby.ipynb 1
 from ..core import *
@@ -110,7 +110,7 @@ LOBBY_REGISTRY = {
 @dataclass
 class Lobby[T: LobbyMember](Model):
     """Represents a game lobby."""
-    _ignore = ('members', 'host')
+    _ignore = ('members', 'host', 'game_state')
     
     id: str = field(default_factory=random_id)
     lobby_type: str = LobbyMember._lobby_type
@@ -119,12 +119,15 @@ class Lobby[T: LobbyMember](Model):
     host: Optional[T] = None
     members: dict[str, T] = field(default_factory=dict)
     last_active: dt.datetime = field(default_factory=dt.datetime.now)
+    game_state: Optional[Any] = None
     
 
     def __post_init__(self):
         if self.host: self.host_uid = self.host.uid
         if isinstance(self.last_active, str): 
             self.last_active = dt.datetime.fromisoformat(self.last_active)
+            
+    def __getattr__(self, name): return getattr(self.game_state, name)
 
     def sorted_members(self):
         '''lobby members sorted by `joined_at` date'''
@@ -307,12 +310,3 @@ def lobby_beforeware(service: LobbyService, skip=None):
         if lobby: req.state.lobby = lobby
         
     return Beforeware(before, skip)
-
-# %% ../../notebooks/lobby.ipynb 17
-def Members(r: User|LobbyMember, lobby: Lobby):
-    """Renders a table of lobby members."""
-    return Table(
-        Tr(Th('Name'), Th('id'), Th('Is connected')),
-        *[Tr(Td(UserName(r.user, member.user)), Td(member.uid), Td(member.is_connected)) for member in lobby.sorted_members()],
-        id='members'
-    )

@@ -1,4 +1,5 @@
 from ...shared import *
+from ...user import *
 from ..domain import *
 from .cards import *
 from .notes import *

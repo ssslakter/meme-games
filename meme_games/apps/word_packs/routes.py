@@ -37,6 +37,7 @@ def editor(id: str):
     pack = wordpack_manager.get_by_id(id)
     return WordPackEditor(pack, hx_swap_oob='true')
 
+
 @rt
 def search(sess, title: str, my_only: Optional[bool] = False):
     packs = wordpack_manager.get_all()

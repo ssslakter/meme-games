@@ -1,4 +1,5 @@
 from ...shared import *
+from meme_games.apps.user import *
 from ..domain import *
 from .notes import *
 from .basic import *
@@ -88,7 +89,7 @@ def PlayerCard(reciever: WhoAmIPlayer | User, p: WhoAmIPlayer, lobby: Lobby):
                 Input(type="file", name="file", accept="image/*"),
                 style="display: none;",
                 hx_trigger="change",
-                hx_post=edit_avatar.to(),
+                hx_post=edit_avatar,
                 hx_swap="none",
             ),
         )
