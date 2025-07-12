@@ -123,7 +123,8 @@ async def modify_avatar(req: Request, file: Optional[UploadFile] = None):
     lobby_service.sync_active_lobbies_user(u)
     lobby = lobby_service.get_lobby(req.session.get("lobby_id"))
     if not lobby: return
-    def update(*_): return Avatar(u)(hx_swap_oob=f"outerHTML:[data-avatar='{u.uid}']")
+    def update(*_): return (Avatar(u)(hx_swap_oob=f"outerHTML:[data-avatar='{u.uid}']"), 
+                            AvatarBig(u)(hx_swap_oob=f"outerHTML:[data-avatar-big='{u.uid}']"))
     await notify_all(lobby, update)
 
 

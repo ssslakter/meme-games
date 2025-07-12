@@ -24,4 +24,4 @@ def Avatar(u: User):
     
 
 def AvatarBig(u: User):
-    return Div(style=f'background-image: url({get_avatar_path(u)})', cls="w-full h-full bg-cover bg-center bg-no-repeat dark:brightness-75", data_avatar=u.uid)
+    return Div(style=f'background-image: url({get_avatar_path(u)})', cls="w-full h-full bg-cover bg-center bg-no-repeat dark:brightness-75", data_avatar_big=u.uid)

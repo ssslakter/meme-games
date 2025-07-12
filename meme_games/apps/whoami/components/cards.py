@@ -100,7 +100,7 @@ def PlayerCard(reciever: WhoAmIPlayer | User, p: WhoAmIPlayer, lobby: Lobby):
 
     return PlayerCardBase(
         edit,
-        Avatar(p.user),
+        AvatarBig(p.user),
         footer=Div(
             UserName(reciever, p.user, is_connected=p.is_connected),
             " ✪" if lobby.host == p else None,
