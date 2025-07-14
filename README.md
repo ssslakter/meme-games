@@ -5,8 +5,7 @@ Random social games to have fun with friends
 1. Run locally
 ```sh
 git clone https://github.com/ssslakter/meme-games
-pixi shell
-python run.py
+pixi run app
 ```
 2. Run with docker compose
 ```sh
