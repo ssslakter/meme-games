@@ -15,7 +15,7 @@ docker compose up -d
 
 ## Contributing
 
-For more info on used stack read [fasthtml](https://docs.fastht.ml/) docs.
+For more info on used stack read [fasthtml](https://fastht.ml/docs) docs.
 
 Part of this project is developed using [nbdev](https://nbdev.fast.ai/).
 
