@@ -142,7 +142,7 @@ class Lobby[T: LobbyMember](Model):
     def create_member(self, user: User, send: FunctionType = None, **kwargs) -> T:
         '''Create a new member for lobby `lobby_type` and add to the lobby'''
         self.last_active = dt.datetime.now()
-        m = LOBBY_REGISTRY[self.lobby_type](user, send=send, **kwargs)
+        m = LOBBY_REGISTRY[self.lobby_type](user=user, send=send, **kwargs)
         self.add_member(m)
         return m
     

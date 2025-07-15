@@ -8,6 +8,7 @@ __all__ = ['init_db', 'DataManager', 'Model', 'mk_aliases', 'cols2dict']
 
 @fc.delegates(fl.Database)
 def init_db(filename_or_conn=':memory:', **kwargs):
+    Path(filename_or_conn).parent.mkdir(parents=True, exist_ok=True)
     db = fl.Database(filename_or_conn, **kwargs)
     return db
 

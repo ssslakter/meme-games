@@ -38,7 +38,8 @@ class User(Model):
 class UserManager(DataManager):
     """Manages user data and database operations."""
     def _set_tables(self): 
-        self.db.create(User, pk='uid', transform=True)
+        self.db.create_table('user', User.columns(), pk='uid', transform=True)
+        self.db.t.user.cls = User
         self.users: fl.Table = self.db.t.user
         return self.users
     
