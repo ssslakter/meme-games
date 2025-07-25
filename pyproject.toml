@@ -34,6 +34,11 @@ dev = { features = ["dev"], solve-group = "default" }
 
 [tool.pixi.tasks]
 app = "python run.py"
+_clean = "nbdev_clean"
+_export = "nbdev_export && rm meme_games/_modidx.py"
+clean = {depends-on = [{ task = '_clean', environment = "dev"}]}
+export = {depends-on = [{ task = '_export', environment = "dev"}]}
+
 
 [dependency-groups]
 dev = ["ipykernel>=6.29.5,<7"]

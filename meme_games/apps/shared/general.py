@@ -1,7 +1,5 @@
 from meme_games.core import *
 
-PANEL_CLS = "border border-gray-400 bg-white/60 dark:border-gray-700 dark:bg-gray-900/60"
-
 def Panel(*c, cls=(), rounded='lg', **kwargs) -> FT:
     '''Generic panel component. Use for divs with background color.'''
     cls = ('', stringify(cls), f'rounded-{rounded}')
@@ -16,11 +14,3 @@ def Background(url: str = None, no_image: bool = False):
         cls=f"fixed inset-0 z-[-1] bg-cover bg-center bg-fixed filter {bg_cls}",
         hx_swap_oob='true'
     )
-
-franken_globals = Style(
-"""
-"""
-)
-
-# def TextArea(*args, cls=(), **kwargs):
-#     return mui.TextArea(*args, cls=cls, **kwargs)

@@ -140,7 +140,7 @@ class Model:
         return cls(**d)
 
 
-def mk_aliases(dt_cls: Model, table: fl.Table):
+def mk_aliases(dt_cls: type[Model], table: fl.Table):
     '''create aliases for columns for SQL queries'''
     return ', '.join(f'{getattr(table.c, coln)} as "{dt_cls.__name__}.{coln}"'
                      for coln, _ in dt_cls.columns().items())

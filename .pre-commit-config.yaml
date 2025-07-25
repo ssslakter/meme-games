@@ -1,6 +1,12 @@
 repos:
-- repo: https://github.com/fastai/nbdev
-  rev: 2.4.2
+- repo: local
   hooks:
-  - id: nbdev_clean
-  - id: nbdev_export
+    - id: clean
+      name: Clean notebooks
+      entry: pixi run clean
+      language: system
+    - id: export
+      name: Export notebooks
+      entry: pixi run export
+      language: system
+      pass_filenames: false

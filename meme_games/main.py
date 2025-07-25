@@ -44,9 +44,7 @@ hdrs = [
     Script(src='/static/scripts/imports/live2d/index.min.js'),
     Statics(ext='js', static_path='static', wc='scripts/common/**/*.js'),
     Statics(ext='js', static_path='static', wc='scripts/whoami/**/*.js'),
-    Link(rel="stylesheet", href="https://fonts.googleapis.com/icon?family=Material+Icons"),
     Theme.yellow.headers(radii=ThemeRadii.lg, shadows=ThemeShadows.lg),
-    franken_globals,
     style
 ]
 
