@@ -14,10 +14,6 @@ dependencies = [
     "fastcore",
     "monsterui>=1.0.21,<2"]
 
-[project.optional-dependencies]
-"dev" = ["nbdev", "pip-tools", "pre-commit"]
-
-
 [tool.setuptools]
 packages = ["meme_games"]
 
@@ -32,6 +28,9 @@ meme-games = { path = ".", editable = true }
 default = { solve-group = "default" }
 dev = { features = ["dev"], solve-group = "default" }
 
+[tool.pixi.feature.dev.activation.env]
+DEV='TRUE'
+
 [tool.pixi.tasks]
 app = "python run.py"
 _clean = "nbdev_clean"
@@ -41,4 +40,4 @@ export = {depends-on = [{ task = '_export', environment = "dev"}]}
 
 
 [dependency-groups]
-dev = ["ipykernel>=6.29.5,<7"]
+dev = ["ipykernel>=6.29.5,<7", "nbdev", "pip-tools", "pre-commit", "pytest"]
