@@ -1148,7 +1148,7 @@ packages:
 - pypi: ./
   name: meme-games
   version: 0.1.0
-  sha256: 90cf0c472cd80ae4929430a61dddb4ee98cf82d7d046b9c5b34828ae540d3e1c
+  sha256: 3b103bc47fd9a5696542c7afef5174bf1b398df1998cdbe24790db4f1d0d105b
   requires_dist:
   - python-fasthtml
   - fastcore

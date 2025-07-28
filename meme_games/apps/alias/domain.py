@@ -55,9 +55,9 @@ class AliasGameState:
 
 AliasLobby = Lobby[AliasPlayer]
 
-class AliasManager(DataManager[AliasPlayer]):
+class AliasManager(DataRepository[AliasPlayer]):
     
-    def __init__(self, member_manager: MemberManager):
+    def __init__(self, member_manager: MemberRepo):
         self.mm = member_manager
         self.members_t = self.mm.members
         super().__init__(self.mm.db)

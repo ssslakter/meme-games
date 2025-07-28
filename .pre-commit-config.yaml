@@ -1,10 +1,6 @@
 repos:
 - repo: local
   hooks:
-    - id: clean
-      name: Clean notebooks
-      entry: pixi run clean
-      language: system
     - id: export
       name: Export notebooks
       entry: pixi run export

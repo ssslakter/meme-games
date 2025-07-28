@@ -48,9 +48,9 @@ class WhoAmIPlayer(LobbyMember):
 WAILobby = Lobby[WhoAmIPlayer]
 
 # %% ../../../notebooks/whoami.ipynb 5
-class WhoAmIManager(DataManager[WhoAmIPlayer]):
+class WhoAmIManager(DataRepository[WhoAmIPlayer]):
     
-    def __init__(self, member_manager: MemberManager):
+    def __init__(self, member_manager: MemberRepo):
         self.mm = member_manager
         self.mem_t = self.mm.members
         super().__init__(self.mm.db)

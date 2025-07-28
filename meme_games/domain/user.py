@@ -35,7 +35,7 @@ class User(Model):
     def __eq__(self, value: 'User'): return self.uid == value.uid
 
 # %% ../../notebooks/user.ipynb 3
-class UserManager(DataManager):
+class UserManager(DataRepository):
     """Manages user data and database operations."""
     def _set_tables(self): 
         self.db.create_table('user', User.columns(), pk='uid', transform=True)

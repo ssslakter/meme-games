@@ -3,7 +3,7 @@ from typing import get_args
 from .imports import *
 
 
-__all__ = ['init_db', 'DataManager', 'Model', 'mk_aliases', 'cols2dict']
+__all__ = ['init_db', 'DataRepository', 'Model', 'mk_aliases', 'cols2dict']
 
 
 @fc.delegates(fl.Database)
@@ -13,7 +13,7 @@ def init_db(filename_or_conn=':memory:', **kwargs):
     return db
 
 
-class DataManager[T: Model]:
+class DataRepository[T: Model]:
     '''Base class to manage database tables for a specific model and its CRUD.
     To use this class, you must subclass it and implement the `_set_tables` method
     to define the table it will manage.

@@ -5,7 +5,7 @@ from meme_games.apps import *
 
 db = init_db('data/data.db')
 DI.register_instance(db)
-for man, member in zip([MemberManager, WhoAmIManager, CodenamesManager, AliasManager],
+for man, member in zip([MemberRepo, WhoAmIManager, CodenamesManager, AliasManager],
                        [LobbyMember, WhoAmIPlayer, CodenamesPlayer, AliasPlayer]):
     register_lobby_member_manager(DI.get(man), member)
 

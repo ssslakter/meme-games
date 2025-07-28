@@ -37,7 +37,7 @@ class WordPack(Model):
         return cls.from_dict(d[cls])
 
 
-class WordPackManager(DataManager[WordPack]):
+class WordPackManager(DataRepository[WordPack]):
     def _set_tables(self):
         self.wordpacks = self.db.t.wordpacks.create(WordPack.columns(), pk='id', transform=True)
         self.users = self.db.t.user
