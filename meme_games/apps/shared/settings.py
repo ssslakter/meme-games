@@ -1,3 +1,4 @@
+from .utils import register_route
 import urllib
 from meme_games.core import *
 from meme_games.domain import *
@@ -9,6 +10,7 @@ __all__ = ['Settings', 'Avatar', 'SettingsPopover', 'edit_avatar', 'edit_name', 
 
 
 rt = APIRouter()
+register_route(rt)
 
 lobby_service = DI.get(LobbyService)
 user_manager = DI.get(UserManager)
@@ -166,5 +168,6 @@ async def leave_lobby(req: Request):
     uid = req.state.user.uid
     if not lobby: return
     lobby.remove_member(uid)
-    def update(*_): return Div(hx_swap_oob=f"outerHTML:[user='{uid}']")
-    return await notify_all(lobby, update)
+    def update(*_): return UserRemover(uid)
+    asyncio.create_task(notify_all(lobby, update))
+    return Redirect('/')

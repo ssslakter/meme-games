@@ -1,6 +1,9 @@
 from meme_games.core import *
 from meme_games.domain import *
 
+def UserRemover(uid: str):
+    data_classes = ['user', 'username', 'avatar', 'avatar-big', 'notes']
+    return tuple(Div(hx_swap_oob=f"outerHTML:[data-{cls}='{uid}']") for cls in data_classes)
 
 def get_avatar_path(u: User):
     filename = u.avatar
