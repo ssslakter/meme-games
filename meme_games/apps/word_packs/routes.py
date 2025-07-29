@@ -1,6 +1,8 @@
+from ..shared.utils import register_route
 from .components import *
 
 rt = APIRouter("/word_packs")
+register_route(rt)
 
 # ---------------------------------#
 # ------------- Routes ------------#

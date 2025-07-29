@@ -1,4 +1,5 @@
 from meme_games.core import *
+from ..domain import game
 from meme_games.apps.word_packs.components import *
 
 def PackSelect():
@@ -12,4 +13,13 @@ def PackSelect():
             ModalCloseButton(),
             cols=5),
             id='pack-select')
+    )
+
+def GameInfo(game_state: game.GameState):
+    wordpack = game_state.config.wordpack
+    return Card(
+        P(
+            "Selected pack:", Span(wordpack.name if wordpack else "No pack selected"),
+        ),
+        header=H4("Game info"),
     )

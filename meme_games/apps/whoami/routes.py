@@ -1,3 +1,4 @@
+from ..shared.utils import register_route
 from meme_games.core import *
 from meme_games.domain import *
 from ..shared import *
@@ -9,7 +10,7 @@ from .components import *
 #---------------------------------#
 
 rt = APIRouter('/whoami')
-
+register_route(rt)
 logger = logging.getLogger(__name__)
 
 lobby_service = DI.get(LobbyService)

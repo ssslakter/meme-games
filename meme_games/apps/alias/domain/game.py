@@ -1,0 +1,96 @@
+from enum import auto
+from itertools import cycle
+from meme_games.domain import * 
+from meme_games.core import *
+from meme_games.apps.word_packs.domain import WordPackRepo
+from .team import *
+from .config import GameConfig
+
+class StateMachine(Enum):
+    def _generate_next_value_(name: str, start, count, last_values): return name.lower()
+    WAITING_FOR_PLAYERS = auto()      # Waiting for all required players to connect
+    VOTING_TO_START = auto()          # Team members voting to start their round
+    ROUND_PLAYING = auto()            # Active round in progress
+    REVIEWING = auto()                # Another team reviewing the just-finished round
+
+@dataclass
+class GuessEntry:
+    word: str
+    points: int
+
+
+@dataclass
+class GameState:
+    config: GameConfig = field(default_factory=GameConfig)
+    state: StateMachine = field(default=StateMachine.WAITING_FOR_PLAYERS)
+    teams: Dict[int, Team] = field(default_factory=dict)
+    active_team: Optional[Team] = None
+    active_player: Optional[AliasPlayer] = None
+    active_word: Optional[str] = None
+    guess_log: List[GuessEntry] = field(default_factory=list)
+
+    def change_config(self, config: GameConfig):
+        self.config = config
+
+    def start_game(self):
+        self.state = StateMachine.VOTING_TO_START
+        self.teams_iterator = cycle(self.teams.values())
+        self.active_team = next(self.teams_iterator)
+        words = self.config.wordpack.words
+        random.shuffle(words)
+        self.words_iterator = cycle(words)
+    
+    def add_vote(self, player: AliasPlayer) -> bool:
+        team = self.team_by_player(player)
+        if not team: return False
+        player.voted = True
+        if not all(m.voted for m in self.active_team.members):
+            return False
+        self.state = StateMachine.ROUND_PLAYING
+        self.active_player = next(self.active_team)
+        self.active_word = next(self.words_iterator)
+        self.reset_votes()
+        return True
+    
+    def guess_word(self, player: AliasPlayer, correct: bool):
+        if self.state != StateMachine.ROUND_PLAYING or player != self.active_player: return
+        self.guess_log.append(GuessEntry(self.active_word, self.config.correct_guess_score 
+                                         if correct else self.config.mistake_penalty))
+        self.active_word = next(self.words_iterator)
+
+    
+    def reset_votes(self):
+        for team in self.teams.values():
+            for player in team.members:
+                player.reset_votes()
+
+    def check_all_voted(self, ignore_active_team: bool = False) -> bool:
+        """Checks if all teams have voted to start the game."""
+        for team in self.teams.values():
+            if ignore_active_team and team.id == self.active_team.id: continue
+            if not all(player.voted for player in team.members):
+                return False
+        self.reset_votes()
+        return True
+
+    
+    def create_team(self) -> Team:
+        team = Team()
+        return self.teams.setdefault(team.id, team)
+        
+    def delete_team(self, id: str): self.teams.pop(id, None)
+        
+    def team_by_player(self, player: AliasPlayer) -> Optional[Team]:
+        return next((t for t in self.teams.values() if player in t), None)
+    
+    def remove_player(self, p: AliasPlayer):
+        team = self.team_by_player(p)
+        if not team: return
+        team.remove_member(p)
+        if not len(team): self.delete_team(team.id)
+
+        
+
+
+AliasLobby = Lobby[AliasPlayer, GameState]
+register_lobby_type(AliasLobby)

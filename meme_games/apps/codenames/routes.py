@@ -1,3 +1,4 @@
+from ..shared.utils import register_route
 from meme_games.core import *
 from meme_games.domain import *
 from .domain import *
@@ -7,12 +8,13 @@ from ..shared.navigation import *
 from ..shared.settings import *
 
 rt = APIRouter('/codenames')
+register_route(rt)
 
 logger = logging.getLogger(__name__)
 
 
 lobby_service = DI.get(LobbyService)
-wordpack_manager = DI.get(WordPackManager)
+wordpack_manager = DI.get(WordPackRepo)
 user_manager = DI.get(UserManager)
 
 

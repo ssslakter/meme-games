@@ -5,7 +5,7 @@ from ..shared import *
 
 logger = logging.getLogger(__name__)
 
-wordpack_manager = DI.get(WordPackManager)
+wordpack_manager = DI.get(WordPackRepo)
 user_manager = DI.get(UserManager)
 
 def ListCard(title, *content, cls='', **kwargs):

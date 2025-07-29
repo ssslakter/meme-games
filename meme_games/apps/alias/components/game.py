@@ -1,11 +1,12 @@
-from ..domain import *
+from ..domain import AliasPlayer, AliasLobby, GameState
 from ...shared import *
 from ...user import *
 from .game_cards import *
 from .settings import *
 
-def Game(reciever: AliasPlayer | User, state: AliasGameState, **kwargs):
+def Game(reciever: AliasPlayer | User, state: GameState, **kwargs):
     return Div(
+        GameInfo(state),
         Grid(*[TeamCard(reciever, team) for team in state.teams.values()],
              NewTeamCard() if not state.team_by_player(reciever) else None,
              cols=5),

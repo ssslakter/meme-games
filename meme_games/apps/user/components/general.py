@@ -13,11 +13,12 @@ def UserName(r: User, u: User, is_connected=True, cls='username', **kwargs):
     return Span(B(u.name) if r==u else u.name, data_username = u.uid, cls=cls, **kwargs)
 
 
-def UserInfo(r: User, user: User, **kwargs):
+def UserInfo(r: User, user: User, is_connected=True, **kwargs):
     return DivLAligned(
             Span(cls=f"relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full bg-secondary")(Avatar(user)),
-            P(UserName(r, user, **kwargs), cls=(TextT.sm, TextT.medium))
+            P(UserName(r, user, is_connected, **kwargs), cls=(TextT.sm, TextT.medium))
             )
+
 
 def Avatar(u: User):
     return Img(cls=f"aspect-square h-10 w-10", alt="Avatar", loading="lazy", src=get_avatar_path(u), data_avatar=u.uid)

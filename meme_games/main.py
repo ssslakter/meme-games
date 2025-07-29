@@ -13,7 +13,7 @@ static_re = [compile_path("/{fname:path}.{ext:static}")[0], compile_path("/{fnam
 middlware_cls = partial(ConditionalSessionMiddleware, skip=static_re)
 
 bwares = [user_beforeware(DI.get(UserManager), skip = static_re),
-          lobby_beforeware(DI.get(LobbyService))
+          lobby_beforeware(DI.get(LobbyService), skip = static_re)
           ]
 
 style = Style(
@@ -56,7 +56,7 @@ app = FastHTML(before=bwares, hdrs=hdrs+yt_hdrs,
 
 setup_toasts(app, duration=400)
 
-for rt in [settings_rt, whoami_rt, video_rt, word_packs_rt, codenames_rt, ws_rt, user_rt, alias_rt]:
+for rt in ROUTES:
     rt.to_app(app)
 
 

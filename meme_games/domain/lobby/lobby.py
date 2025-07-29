@@ -1,7 +1,7 @@
 
 __all__ = ['Lobby', 'LobbyRepo', 'MemberRepo', 'is_player', 'register_lobby_type', 'get_lobby_type_str', 'BasicLobby']
 
-from typing import Type, get_origin, get_args
+from typing import Type, get_args
 from meme_games.core import *
 from ..user import *
 from .member import *
@@ -27,7 +27,7 @@ def get_lobby_type_str[T: LobbyMember, State: Any](target_type: Type['Lobby[T,St
 
 
 @dataclass
-class Lobby[T: LobbyMember, S: Optional[Any] = None](Model):
+class Lobby[T: LobbyMember, S = None](Model):
     '''Represents a game lobby.'''
     _ignore = ('members', 'host', 'game_state')
     
@@ -103,6 +103,10 @@ class Lobby[T: LobbyMember, S: Optional[Any] = None](Model):
         self.host = member_type.convert(self.host)
         return self
     
+    def set_default_game_state(self, state):
+        if not self.game_state:
+            self.game_state = state
+
 
 BasicLobby = Lobby[LobbyMember]
 register_lobby_type(BasicLobby, member_repo=MemberRepo)
@@ -125,7 +129,9 @@ class LobbyRepo(DataRepository[Lobby]):
         '''Retrieves a lobby and its members from the database.'''
         if id not in self.lobbies: return
         lobby = Lobby.from_dict(self.lobbies.get(id))
-        lobby.members = {m.user_uid: m for m in DI.get(MEMBER_REPO_REGISTRY[lobby.current_type]).get_all(id)}
+        lobby.members = {m.user_uid: m for m in 
+                         DI.get(MEMBER_REPO_REGISTRY.get(lobby.current_type, MemberRepo)
+                                ).get_all(id)}
         hosts = [m for m in lobby.members.values() if m.is_host]
         if hosts: lobby.host = hosts[0]
         return lobby

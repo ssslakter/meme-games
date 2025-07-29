@@ -41,8 +41,11 @@ def LockLobby(l: Lobby):
     args = ('lock-open', 'Lock lobby') if not l.locked else ('lock', 'Unlock lobby')
     return Setting(*args, hx_post=lock_lobby, hx_swap=None)(hx_swap_oob='outerHTML', id='lock-lobby')
 
-def SetBackground(l: Lobby):
+def SetBackground():
     return Setting('image', title='Background', hx_post=change_background, hx_prompt='Enter the URL of the background image')
+
+def LeaveLobby():
+    return Setting('sign-out', title='Leave Lobby', hx_post=leave_lobby, hx_target="body", hx_swap="outerHTML")
 
 
 def Settings(reciever: User|LobbyMember, lobby: Lobby, *custom_settings):
@@ -55,7 +58,8 @@ def Settings(reciever: User|LobbyMember, lobby: Lobby, *custom_settings):
         NameSetting(),
         AvatarSet(),
         AvatarRemoval(),
-        SetBackground(lobby),
+        SetBackground(),
+        LeaveLobby(),
     ]
     if isinstance(reciever, LobbyMember) and reciever.is_host:
         settings_items.extend(HostSettings(lobby))
@@ -66,7 +70,7 @@ def Settings(reciever: User|LobbyMember, lobby: Lobby, *custom_settings):
         header=card_header_content,
         cls = 'space-y-2'
     )
-    
+
 
 def HostSettings(lobby: Lobby):
     return tuple(f(lobby) for f in (LockLobby,))
@@ -100,7 +104,7 @@ def SettingsPopover(reciever: User|LobbyMember, lobby: Lobby, *custom_settings):
 #------------- Routes --------------#
 #-----------------------------------#
 
-
+# TODO move to user app
 @rt('/name', methods=['put'])
 async def edit_name(req: Request, hdrs: HtmxHeaders):
     u: User = req.state.user
@@ -150,8 +154,17 @@ async def lock_lobby(req: Request):
 
 @rt('/background', methods=['post'])
 async def change_background(req: Request, hdrs: HtmxHeaders):
-    lobby: Lobby[LobbyMember] = req.state.lobby
+    lobby: BasicLobby = req.state.lobby
     lobby.background_url = urllib.parse.unquote(hdrs.prompt)
     lobby_service.update(lobby)
     def update(*_): return Background(lobby.background_url)
+    return await notify_all(lobby, update)
+
+@rt
+async def leave_lobby(req: Request):
+    lobby: BasicLobby = req.state.lobby
+    uid = req.state.user.uid
+    if not lobby: return
+    lobby.remove_member(uid)
+    def update(*_): return Div(hx_swap_oob=f"outerHTML:[user='{uid}']")
     return await notify_all(lobby, update)
