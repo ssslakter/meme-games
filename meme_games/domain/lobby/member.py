@@ -2,14 +2,13 @@ from meme_games.core import *
 from ..user import *
 
 
-__all__ = ["LobbyMember", "MemberRepo", "LOBBY_REGISTRY"]
+__all__ = ["LobbyMember", "MemberRepo"]
 
 @dataclass
 class LobbyMember(fc.GetAttr, Model):
     """Represents a member in a lobby, usually associated with a websocket connection."""
-    _lobby_type = 'basic'
     _ignore = ('user', 'send', 'ws')
-    _default = 'user'
+    _default= ('user') # forward __getattr__ to user (fc.GetAttr)
 
     user: User = None
     user_uid: str = None
@@ -27,11 +26,6 @@ class LobbyMember(fc.GetAttr, Model):
         if self.user: self.user_uid = self.user.uid
         if isinstance(self.joined_at, str):
             self.joined_at = dt.datetime.fromisoformat(self.joined_at)
-
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
-        assert cls._lobby_type != LobbyMember._lobby_type, f"You must set different `_lobby_type` from '{LobbyMember._lobby_type}'"
-        LOBBY_REGISTRY[cls._lobby_type] = cls
 
     def spectate(self): 
         """Sets the member to be a spectator."""
@@ -85,13 +79,6 @@ class LobbyMember(fc.GetAttr, Model):
         """Updates the user associated with this member."""
         # TODO the same as sync_user
         self.user = u
-
-
-# maps lobby names to memberTypes
-LOBBY_REGISTRY = {
-    LobbyMember._lobby_type: LobbyMember
-}
-
 
 
 class MemberRepo(DataRepository[LobbyMember]):

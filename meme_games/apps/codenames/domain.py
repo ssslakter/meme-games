@@ -48,7 +48,7 @@ class CodenamesPlayer(LobbyMember):
 
 CodenamesLobby = Lobby[CodenamesPlayer]
 
-class CodenamesManager(DataRepository[CodenamesPlayer]):
+class CodenamesRepo(DataRepository[CodenamesPlayer]):
     
     def __init__(self, member_manager: MemberRepo):
         self.mm = member_manager

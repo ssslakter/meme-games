@@ -54,42 +54,4 @@ class AliasGameState:
 
 
 AliasLobby = Lobby[AliasPlayer]
-
-class AliasManager(DataRepository[AliasPlayer]):
-    
-    def __init__(self, member_manager: MemberRepo):
-        self.mm = member_manager
-        self.members_t = self.mm.members
-        super().__init__(self.mm.db)
-    
-    def _set_tables(self):
-        self.players = self.db.t.alias_members.create(**AliasPlayer.columns(), 
-                                                       pk='id', transform=True, if_not_exists=True,
-                                                       foreign_keys=[('id', 'members', 'id')])
-        return self.players
-
-    def upsert(self, obj):
-        self.mm.upsert(obj._asdict(LobbyMember.columns().keys()))
-        return super().upsert(obj._asdict(AliasPlayer.columns().keys()))
-    
-    def upsert_all(self, objs):
-        self.mm.upsert_all([o._asdict(LobbyMember.columns().keys()) for o in objs])
-        return super().upsert_all([o._asdict(AliasPlayer.columns().keys()) for o in objs])
-    
-    def update(self, obj):
-        self.mm.update(obj._asdict(LobbyMember.columns().keys()))
-        return super().update(obj._asdict(AliasPlayer.columns().keys()))
-
-    def insert(self, obj: AliasPlayer):
-        self.mm.insert(obj._asdict(LobbyMember.columns().keys()))
-        return super().insert(obj._asdict(AliasPlayer.columns().keys()))
-    
-    def get_all(self, lobby_id: str) -> list[AliasPlayer]: 
-        qry = f'''select {mk_aliases(AliasPlayer, self.players)},  
-                 {mk_aliases(LobbyMember, self.members_t)},
-                 {mk_aliases(User, self.mm.users)}
-                  from {self.players} \
-                  join {self.members_t} on {self.members_t.c.id} = {self.players.c.id} \
-                  join {self.mm.users} on {self.members_t.c.user_uid} = {self.mm.users.c.uid} \
-                  where {self.members_t.c.lobby_id} = ?'''
-        return list(map(AliasPlayer.from_dict, self.db.q(qry, [lobby_id])))
+register_lobby_type(AliasLobby)

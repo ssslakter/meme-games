@@ -21,7 +21,7 @@ def ws_fn(connected=True, render_fn: Callable = JoinSpectators):
     '''Returns a function that will be called when a user joins the lobby websocket'''
     async def user_joined(sess, send, ws):
         u = user_manager.get_or_create(sess)
-        lobby: WAILobby = lobby_service.get_lobby(sess.get('lobby_id'))
+        lobby = lobby_service.get_lobby(sess.get('lobby_id'), WAILobby)
         if not lobby: return
         if m := lobby.get_member(u.uid):
             if connected: m.connect(send, ws)
@@ -48,7 +48,7 @@ def ws_fn(connected=True, render_fn: Callable = JoinSpectators):
 def index(req: Request, lobby_id: str = None):
     if not lobby_id: return redirect(random_id())
     u: User = req.state.user
-    lobby, was_created = lobby_service.get_or_create(u, lobby_id, WhoAmIPlayer)
+    lobby, was_created = lobby_service.get_or_create(u, lobby_id, WAILobby, persistent=True)
     if was_created: lobby_service.update(lobby)
     m = lobby.get_member(u.uid)
     req.session['lobby_id'] = lobby.id
@@ -109,7 +109,7 @@ async def notes(req: Request, text: str):
 
 
 async def edit_label_text(sess, label: str, owner_uid: str):
-    lobby: WAILobby = lobby_service.get_lobby(sess.get("lobby_id"))
+    lobby = lobby_service.get_lobby(sess.get("lobby_id"), WAILobby)
     p = lobby.get_member(user_manager.get(sess.get('uid')).uid)
     owner = lobby.get_member(owner_uid)
     if not (owner and p and p.is_player) or p == owner: return
@@ -122,7 +122,7 @@ async def edit_label_text(sess, label: str, owner_uid: str):
 
 
 async def edit_label_position(sess, owner_uid: str, **kwargs):
-    lobby: WAILobby = lobby_service.get_lobby(sess.get("lobby_id"))
+    lobby = lobby_service.get_lobby(sess.get("lobby_id"), WAILobby)
     p = lobby.get_member(user_manager.get(sess.get('uid')).uid)
     owner = lobby.get_member(owner_uid)
     if not (p and owner): return
