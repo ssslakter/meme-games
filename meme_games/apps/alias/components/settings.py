@@ -21,5 +21,6 @@ def GameInfo(game_state: game.GameState):
         P(
             "Selected pack:", Span(wordpack.name if wordpack else "No pack selected"),
         ),
+        Button("Start", cls=ButtonT.primary, disabled=not game_state.can_start()),
         header=H4("Game info"),
     )

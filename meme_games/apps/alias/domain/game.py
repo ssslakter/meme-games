@@ -32,6 +32,13 @@ class GameState:
     def change_config(self, config: GameConfig):
         self.config = config
 
+    def can_start(self) -> bool:
+        return (self.state == StateMachine.WAITING_FOR_PLAYERS and
+                self.config.max_teams >= len(self.teams) >= self.config.min_teams and
+                all(len(team) > 1 for team in self.teams.values()) and
+                self.config.wordpack is not None)
+
+
     def start_game(self):
         self.state = StateMachine.VOTING_TO_START
         self.teams_iterator = cycle(self.teams.values())

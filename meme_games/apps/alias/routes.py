@@ -74,7 +74,7 @@ async def new_team(req: Request):
         return NewTeamCard()
     team = game_state.create_team()
     await join_team(req, team.id)
-    
+
 @rt
 async def join_team(req: Request, team_id: str):
     lobby: AliasLobby = req.state.lobby
