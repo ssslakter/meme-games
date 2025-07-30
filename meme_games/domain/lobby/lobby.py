@@ -1,5 +1,5 @@
 
-__all__ = ['Lobby', 'LobbyRepo', 'MemberRepo', 'is_player', 'register_lobby_type', 'get_lobby_type_str', 'BasicLobby']
+__all__ = ['Lobby', 'LobbyRepo', 'MemberRepo', 'is_player', 'is_host', 'register_lobby_type', 'get_lobby_type_str', 'BasicLobby']
 
 from typing import Type, get_args
 from meme_games.core import *
@@ -140,3 +140,5 @@ class LobbyRepo(DataRepository[Lobby]):
 
 
 def is_player(u: LobbyMember|User): return isinstance(u, LobbyMember) and u.is_player
+
+def is_host(u: LobbyMember|User): return isinstance(u, LobbyMember) and u.is_host

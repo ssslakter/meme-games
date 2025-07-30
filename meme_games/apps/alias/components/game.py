@@ -11,6 +11,7 @@ def Game(reciever: AliasPlayer | User, state: GameState, **kwargs):
              NewTeamCard() if not state.team_by_player(reciever) else None,
              cols=5),
         VotePanel(reciever, state),
+        GuessPanel(reciever, state),
         id='game',
         **kwargs
         )
@@ -20,14 +21,15 @@ def Page(reciever: AliasPlayer | User, lobby: AliasLobby):
     return MainPage(
         Game(reciever, lobby.game_state),
         Spectators(reciever, lobby),
-        SettingsPopover(reciever, lobby, PackSelect()),
+        SettingsPopover(reciever, lobby, 
+                        custom_host_settings=PackSelect()),
         hx_ext="ws",
         ws_connect=ws_url,
         no_image=True,
         cls='p-10'
     )
 
-    
+
 def Spectators(reciever: AliasPlayer | User, lobby: Lobby):
     from ..routes import spectate
 

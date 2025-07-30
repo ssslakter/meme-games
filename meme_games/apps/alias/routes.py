@@ -61,7 +61,7 @@ def editor_readonly(id:str):
 @rt
 async def select_pack(req: Request, id: str):
     lobby, _, p = pre_init(req)
-    if not p.is_host: return
+    if not is_host(p): return
     pack = wordpack_manager.get_by_id(id)
     if not pack: return add_toast(req.session, "Wordpack not found", "error")
     lobby.game_state.config.wordpack = pack
@@ -143,6 +143,19 @@ async def vote(req: Request, voted: bool):
         return Game(r, game_state, hx_swap_oob='true')
     await notify_all(lobby, update)
     if not next_state: return VoteButton(p)
+
+
+@rt
+async def guess(req: Request, correct: bool):
+    lobby, game_state, p = pre_init(req)
+    if not (p==game_state.active_player and
+            game_state.state == game.StateMachine.ROUND_PLAYING):
+        return add_toast(req.session, "Cannot guess now", "error")
+    print('guess', correct)
+    game_state.guess_word(p, correct)
+    def update(r: AliasPlayer, *_):
+        return GuessPanel(r, game_state)
+    await notify_all(lobby, update)
 
 
 @ws_rt.ws('/alias', conn=ws_fn(), disconn=ws_fn(connected=False))

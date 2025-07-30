@@ -50,7 +50,11 @@ def LeaveLobby():
     return Setting('sign-out', title='Leave Lobby', hx_post=leave_lobby, hx_target="body", hx_swap="outerHTML")
 
 
-def Settings(reciever: User|LobbyMember, lobby: Lobby, *custom_settings):
+def Settings(reciever: User|LobbyMember, lobby: Lobby, 
+             custom_settings = None,
+             custom_host_settings=None):
+    custom_settings = custom_settings or []
+    custom_host_settings = custom_host_settings or []
     card_header_content = DivLAligned(
         UkIcon('cog', width=25, height=25),
         H4('Settings', cls="text-xl font-bold ml-2")
@@ -63,8 +67,8 @@ def Settings(reciever: User|LobbyMember, lobby: Lobby, *custom_settings):
         SetBackground(),
         LeaveLobby(),
     ]
-    if isinstance(reciever, LobbyMember) and reciever.is_host:
-        settings_items.extend(HostSettings(lobby))
+    if is_host(reciever):
+        settings_items.extend((*HostSettings(lobby), *custom_host_settings))
     
     return Card(
         *custom_settings,
@@ -78,7 +82,9 @@ def HostSettings(lobby: Lobby):
     return tuple(f(lobby) for f in (LockLobby,))
 
 
-def SettingsPopover(reciever: User|LobbyMember, lobby: Lobby, *custom_settings):
+def SettingsPopover(reciever: User|LobbyMember, lobby: Lobby,
+                    custom_settings=None,
+                    custom_host_settings=None):
     button = Card(
         UkIcon('cog', width=45, height=45),
         _ = "on mouseenter or focus remove .hidden from #settings-panel-wrapper then add .hidden to me",
@@ -87,7 +93,7 @@ def SettingsPopover(reciever: User|LobbyMember, lobby: Lobby, *custom_settings):
         id="settings-popover-button"
     )
 
-    settings_card = Settings(reciever, lobby, *custom_settings)
+    settings_card = Settings(reciever, lobby, custom_settings, custom_host_settings)
     panel_wrapper = Div(
         settings_card,
         cls="absolute bottom-0 right-0 p-4 mt-2 max-w-3xl w-80 z-10 hidden",
@@ -146,7 +152,7 @@ async def reset_avatar(req: Request): await modify_avatar(req, None)
 async def lock_lobby(req: Request):
     lobby: Lobby[LobbyMember] = req.state.lobby
     p = lobby.get_member(req.state.user.uid)
-    if not p.is_host: return
+    if not is_host(p): return
     if lobby.locked: lobby.unlock()
     else: lobby.lock()
     lobby_service.update(lobby)
