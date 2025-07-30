@@ -5,6 +5,11 @@ from meme_games.apps.word_packs.components import *
 from .components import *
 
 
+def pre_init(req: Request) -> tuple[Lobby, GameState, AliasPlayer]:
+    lobby: AliasLobby = req.state.lobby
+    return lobby, lobby.game_state, lobby.get_member(req.state.user.uid)
+    
+
 #---------------------------------#
 #------------- Routes ------------#
 #---------------------------------#
@@ -55,8 +60,7 @@ def editor_readonly(id:str):
     
 @rt
 async def select_pack(req: Request, id: str):
-    lobby: AliasLobby = req.state.lobby
-    p = lobby.get_member(req.state.user.uid)
+    lobby, _, p = pre_init(req)
     if not p.is_host: return
     pack = wordpack_manager.get_by_id(id)
     if not pack: return add_toast(req.session, "Wordpack not found", "error")
@@ -65,9 +69,7 @@ async def select_pack(req: Request, id: str):
 
 @rt
 async def new_team(req: Request):
-    lobby: AliasLobby = req.state.lobby
-    game_state: GameState = lobby.game_state
-    p = lobby.get_member(req.state.user.uid)
+    lobby, game_state, p = pre_init(req)
     if any(p in t for t in game_state.teams.values()): return
     if lobby.locked: 
         add_toast(req.session, "Game is locked", "error")
@@ -77,12 +79,10 @@ async def new_team(req: Request):
 
 @rt
 async def join_team(req: Request, team_id: str):
-    lobby: AliasLobby = req.state.lobby
-    game_state: GameState = lobby.game_state
-    p = lobby.get_member(req.state.user.uid)
+    lobby, game_state, p = pre_init(req)  
     team = game_state.teams.get(team_id)
     if not team: return
-    lobby.game_state.remove_player(p)
+    game_state.remove_player(p)
     team.append(p); p.play()
     lobby_service.update(lobby)
     def update(r: AliasPlayer, lobby: AliasLobby):
@@ -94,8 +94,7 @@ async def join_team(req: Request, team_id: str):
 
 @rt
 async def spectate(req: Request):
-    lobby: AliasLobby = req.state.lobby
-    p = lobby.get_member(req.state.user.uid)
+    lobby, _, p = pre_init(req)
     if not p.is_player: return
     if lobby.locked: return add_toast(req.session, "Game is locked", "error")
     p.spectate(); lobby.game_state.remove_player(p)
@@ -120,6 +119,30 @@ def index(req: Request, lobby_id: str = None):
             Page(m or u, lobby))
 
 def redirect(lobby_id: str): return Redirect(index.to(lobby_id=lobby_id))
+
+
+@rt
+async def start_game(req: Request):
+    lobby, game, _ = pre_init(req)
+    if not game.can_start():
+        return add_toast(req.session, "Cannot start game", "error")
+    game.start_game()
+    await notify_all(lobby, lambda r, *_: Game(r, game, hx_swap_oob='true'))
+
+@rt
+async def vote(req: Request, voted: bool):
+    lobby, game_state, p = pre_init(req)
+    if not (p in game_state.active_team and
+        game_state.state in [game.StateMachine.VOTING_TO_START, 
+                             game.StateMachine.REVIEWING]):
+        return add_toast(req.session, "Cannot vote now", "error"), VoteButton(p)
+    if p.voted == voted: return VoteButton(p)
+    next_state = game_state.retract_vote(p) if not voted else game_state.add_vote(p)
+    if next_state: game_state.next_state()
+    def update(r: AliasPlayer, *_):
+        return Game(r, game_state, hx_swap_oob='true')
+    await notify_all(lobby, update)
+    if not next_state: return VoteButton(p)
 
 
 @ws_rt.ws('/alias', conn=ws_fn(), disconn=ws_fn(connected=False))

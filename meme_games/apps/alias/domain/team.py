@@ -29,11 +29,7 @@ class Team:
     def remove_member(self, player): 
         self.members.pop(self.members.index(player))
 
-    def shuffle_members(self):
-        random.shuffle(self.members)
-        self.iterator = itertools.cycle()
-
     def __next__(self):
         if not hasattr(self, 'iterator'):
-            self.shuffle_members()
+            self.iterator = itertools.cycle(self.members)
         return next(self.iterator)

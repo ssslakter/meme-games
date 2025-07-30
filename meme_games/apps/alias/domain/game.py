@@ -37,6 +37,18 @@ class GameState:
                 self.config.max_teams >= len(self.teams) >= self.config.min_teams and
                 all(len(team) > 1 for team in self.teams.values()) and
                 self.config.wordpack is not None)
+    
+    def next_state(self):
+        match self.state:
+            case StateMachine.WAITING_FOR_PLAYERS:
+                if self.can_start(): self.start_game()
+            case StateMachine.VOTING_TO_START:
+                self.state = StateMachine.ROUND_PLAYING
+                self.active_player = next(self.active_team)
+                self.active_word = next(self.words_iterator)
+                self.reset_votes()
+            case StateMachine.ROUND_PLAYING: pass
+            case StateMachine.REVIEWING: pass
 
 
     def start_game(self):
@@ -46,6 +58,9 @@ class GameState:
         words = self.config.wordpack.words
         random.shuffle(words)
         self.words_iterator = cycle(words)
+
+    def retract_vote(self, player: AliasPlayer):
+        player.voted = False
     
     def add_vote(self, player: AliasPlayer) -> bool:
         team = self.team_by_player(player)
@@ -53,10 +68,6 @@ class GameState:
         player.voted = True
         if not all(m.voted for m in self.active_team.members):
             return False
-        self.state = StateMachine.ROUND_PLAYING
-        self.active_player = next(self.active_team)
-        self.active_word = next(self.words_iterator)
-        self.reset_votes()
         return True
     
     def guess_word(self, player: AliasPlayer, correct: bool):

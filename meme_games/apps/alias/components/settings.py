@@ -16,11 +16,13 @@ def PackSelect():
     )
 
 def GameInfo(game_state: game.GameState):
+    from ..routes import start_game
     wordpack = game_state.config.wordpack
     return Card(
         P(
             "Selected pack:", Span(wordpack.name if wordpack else "No pack selected"),
         ),
-        Button("Start", cls=ButtonT.primary, disabled=not game_state.can_start()),
+        Button("Start", cls=ButtonT.primary, hx_post=start_game,
+               disabled=not game_state.can_start()),
         header=H4("Game info"),
     )

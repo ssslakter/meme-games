@@ -10,10 +10,13 @@ def get_avatar_path(u: User):
     filename = ('/user-content/' + filename) if filename else '/static/images/default-avatar.jpg'
     return filename
 
-def UserName(r: User, u: User, is_connected=True, cls='username', **kwargs):
+def UserName(r: User, u: User, is_connected=True, cls='', **kwargs):
     """Renders the user's name as a styled HTML span."""
     cls += ' opacity-50' if not is_connected else ''
     return Span(B(u.name) if r==u else u.name, data_username = u.uid, cls=cls, **kwargs)
+
+def MemberName(r: User, m: LobbyMember, **kwargs):
+    return UserName(r, m.user, is_connected=m.is_connected, **kwargs)
 
 
 def UserInfo(r: User, user: User, is_connected=True, **kwargs):
