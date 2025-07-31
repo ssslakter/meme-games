@@ -6,13 +6,15 @@ class Timer:
     def __init__(self):
         self.pause_, self.stop_ = asyncio.Event(), asyncio.Event()
         
-    def set(self, time: int = 10): self.rem_t = self.total = time
+    def set(self, time: float = 10.0): 
+        self.reset()
+        self.rem_t = self.total = time
 
     def reset(self):
         self.unpause()
         self.stop_.clear()
 
-    async def sleep(self, time: int = None):
+    async def sleep(self, time: float = None):
         '''Blocks caller's execution for `time` seconds, or until timer is stopped.'''
         self.rem_t = self.total or time
         self.reset()

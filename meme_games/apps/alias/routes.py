@@ -148,15 +148,15 @@ async def vote(req: Request, voted: bool):
     if not (p in game_state.active_team and
         game_state.state in [gm.StateMachine.VOTING_TO_START, 
                              gm.StateMachine.REVIEWING]):
-        return add_toast(req.session, "Cannot vote now", "error"), VoteButton(p)
-    if p.voted == voted: return VoteButton(p)
+        return add_toast(req.session, "Cannot vote now", "error"), VoteButton(p, game_state)
+    if p.voted == voted: return VoteButton(p, game_state)
     next_state = game_state.retract_vote(p) if not voted else game_state.add_vote(p)
     if next_state: game_state.next_state()
     def update(r: AliasPlayer, *_):
         return Game(r, game_state, hx_swap_oob='true')
     await notify_all(lobby, update)
-    if next_state and game_state != gm.StateMachine.REVIEWING: asyncio.create_task(set_end_round_timer(lobby))
-    if not next_state: return VoteButton(p)
+    if game_state.state == gm.StateMachine.ROUND_PLAYING: asyncio.create_task(set_end_round_timer(lobby))
+    if not next_state: return VoteButton(p, game_state)
 
 
 @rt
@@ -165,11 +165,20 @@ async def guess(req: Request, correct: bool):
     if not (p==game_state.active_player and
             game_state.state == gm.StateMachine.ROUND_PLAYING):
         return add_toast(req.session, "Cannot guess now", "error")
-    print('guess', correct)
     game_state.guess_word(p, correct)
     def update(r: AliasPlayer, *_):
         return GuessPanel(r, game_state)
     await notify_all(lobby, update)
+
+
+@rt
+async def change_guess_points(req: Request, guess_id: str, points: int):
+    _, game_state, p = pre_init(req)
+    entry = game_state.change_guess_points(guess_id, points)
+    if not entry: return add_toast(req.session, "Guess not found", "error")
+    def update(r: AliasPlayer, *_):
+        return WordEntry(entry, game_state)
+    await notify_all(req.state.lobby, update)
 
 
 @ws_rt.ws('/alias', conn=ws_fn(), disconn=ws_fn(connected=False))

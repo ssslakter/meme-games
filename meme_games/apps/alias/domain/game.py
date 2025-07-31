@@ -52,6 +52,7 @@ class GameState:
             case StateMachine.ROUND_PLAYING:
                 self.state = StateMachine.REVIEWING
             case StateMachine.REVIEWING:
+                self.active_team.points = sum(g.points for g in self.guess_log)
                 self.active_team = next(self.teams_iterator)
                 self.guess_log.clear()
                 self.state = StateMachine.VOTING_TO_START                
@@ -82,6 +83,12 @@ class GameState:
         self.guess_log.append(GuessEntry(self.active_word, self.config.correct_guess_score 
                                          if correct else self.config.mistake_penalty))
         self.active_word = next(self.words_iterator) # TODO maybe if pack is empty, end round? (need to call timer.stop)
+
+    def change_guess_points(self, guess_id: str, points: int) -> Optional[GuessEntry]:
+        guess = next((g for g in self.guess_log if g.id == guess_id), None)
+        if not guess: return
+        guess.points = points
+        return guess
 
     
     def reset_votes(self):

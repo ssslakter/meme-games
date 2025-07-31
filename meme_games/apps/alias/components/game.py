@@ -10,7 +10,7 @@ def Game(reciever: AliasPlayer | User, state: GameState, **kwargs):
         Grid(*[TeamCard(reciever, team) for team in state.teams.values()],
              NewTeamCard() if not state.team_by_player(reciever) else None,
              cols=5),
-        VotePanel(reciever, state),
+        VoteButton(reciever, state),
         GuessPanel(reciever, state),
         id='game',
         **kwargs
