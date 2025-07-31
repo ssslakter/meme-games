@@ -106,7 +106,6 @@ def index(req: Request, lobby_id: str = None):
     lobby.set_default_game_state(GameState())
     if was_created: lobby_service.update(lobby)
     m = lobby.get_member(u.uid)
-    print('set session to', lobby.id)
     req.session['lobby_id'] = lobby.id
     return (Title(f'Alias lobby: {lobby.id}'),
             Page(m or u, lobby))
@@ -141,7 +140,7 @@ async def vote(req: Request, voted: bool):
     if p.voted == voted: return VoteButton(p, game_state)
     if voted: game_state.add_vote(p)
     else: game_state.retract_vote(p)
-    await notify_all(lobby, lambda r, *_: (TeamCard(r, game_state.active_team), GameControls(r, game_state)))
+    await notify_all(lobby, lambda r, *_: (TeamCard(r, game_state.active_team, game_state), GameControls(r, game_state)))
 
 
 @rt
@@ -176,7 +175,7 @@ async def change_guess_points(req: Request, guess_id: str, points: int):
     entry = game_state.change_guess_points(guess_id, points)
     if not entry: return add_toast(req.session, "Guess not found", "error")
     def update(r: AliasPlayer, *_):
-        return WordEntry(entry, game_state)
+        return WordEntry(entry, game_state), TeamCard(r, game_state.active_team, game_state)
     await notify_all(req.state.lobby, update)
 
 

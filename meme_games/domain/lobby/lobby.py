@@ -95,7 +95,7 @@ class Lobby[T: LobbyMember, S = None](Model):
     def cast[T: LobbyMember, S: Any](self, target_type: Type['Lobby[T,S]']) -> 'Lobby[T, S]':
         member_type: Type[T] = get_args(target_type)[0]
         state_type = get_args(target_type)[1]
-        print('casting to', member_type, state_type)
+        logger.info('casting to', member_type, state_type)
         target_type_str = get_lobby_type_str(target_type)
         if self.current_type == target_type_str: return self
         self.current_type = target_type_str

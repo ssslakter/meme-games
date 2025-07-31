@@ -12,7 +12,6 @@ def PlayerLabelText(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
         if owner.label_tfm
         else ""
     )
-    print(style)
     if r.uid != owner.uid:
         return TextArea(
             owner.label_text,

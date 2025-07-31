@@ -13,6 +13,7 @@ class Team:
     id: str = field(default_factory=random_id)
     members: List[AliasPlayer] = field(default_factory=list)
     points: int = 0
+    times_played: int = 0
     
     def __contains__(self, member: AliasPlayer):
         return any(m==member for m in self.members)

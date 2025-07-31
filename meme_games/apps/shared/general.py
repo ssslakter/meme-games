@@ -15,3 +15,7 @@ def Background(url: str = None, no_image: bool = False):
         id='background',
         hx_swap_oob='true'
     )
+
+def ColoredPoints(value: int):
+    v_txt = '+' + str(value) if value >0 else value
+    return Span(v_txt, cls=f"{'bg-red-100' if value < 0 else 'bg-green-100' if value > 0 else 'bg-gray-200'} px-2 py-0.5 rounded")

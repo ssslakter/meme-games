@@ -1,5 +1,5 @@
 from meme_games.core import *
-from meme_games.apps.shared import CircleTimer
+from meme_games.apps.shared import CircleTimer, ColoredPoints
 from ..domain import game as gm
 
 
@@ -24,16 +24,19 @@ def ExplainerPanel(r: gm.AliasPlayer, game: gm.GameState):
 
 def WordEntry(guess: gm.GuessEntry, game: gm.GameState):
     from ..routes import change_guess_points
-    body = [Div(Span(guess.word, cls='text-lg'))]
+    body = Span(guess.word, cls='text-lg break-words text-center')
     if game.state == gm.StateMachine.REVIEWING:
-        btn = lambda delta: Button(hx_post=change_guess_points.to(guess_id=guess.id, points=guess.points+delta), hx_swap='none')
-        cls = 'bg-red-100' if guess.points < 0 else 'bg-green-100' if guess.points > 0 else 'bg-gray-200'
-        body = [btn(-1)('-'), *body,Div(" Score: ", Span(guess.points, cls=cls)), btn(1)('+')]
-    return Div(
-        DivHStacked(*body, data_guess_id=guess.id, 
-        hx_swap_oob=f"outerHTML:[data-guess-id='{guess.id}']",
-        cls='justify-center'),
-        cls='w-full px-2 uk-card w-64')
+        btn = lambda delta: Button(hx_post=change_guess_points.to(guess_id=guess.id, points=guess.points+delta), hx_swap='none', cls=(ButtonT.default, ' flex-shrink-0'))
+        score = Div(
+            " Score: ",
+            ColoredPoints(guess.points),
+            cls='p-1')
+        mid = Div(score, body, cls='flex flex-col items-center justify-between min-w-0')
+        body = Div(btn(-1)('-'), mid, btn(1)('+'), cls='flex w-full items-center justify-between gap-3')
+    else: body = Div(body, cls='flex justify-center items-center')
+    return Div(body, data_guess_id=guess.id, 
+               hx_swap_oob=f"outerHTML:[data-guess-id='{guess.id}']",
+               cls='w-full uk-card w-[25rem]')
 
 
 def RoundLog(guesses: list[gm.GuessEntry], game: gm.GameState):
@@ -44,7 +47,7 @@ def RoundLog(guesses: list[gm.GuessEntry], game: gm.GameState):
 def GuessPanel(game: gm.GameState):
     if game.state not in [gm.StateMachine.ROUND_PLAYING, gm.StateMachine.REVIEWING]: return None
     return DivVStacked(
-        CircleTimer(game.timer.rem_t, total=game.config.time_limit),
+        CircleTimer(game.timer.rem_t, total=game.config.time_limit) if game.state == gm.StateMachine.ROUND_PLAYING else None,
         RoundLog(game.guess_log, game),
         cls='flex-col-reverse',
         id='guess_panel',
@@ -54,5 +57,5 @@ def WordPanel(r: gm.AliasPlayer, game: gm.GameState):
     return Div(
         GuessPanel(game),
         (ExplainerPanel(r, game) if game.state==gm.StateMachine.ROUND_PLAYING else None),
-        cls='fixed bottom-0 left-1/2 transform -translate-x-1/2'
+        cls='fixed bottom-0 left-1/2 transform -translate-x-1/2 max-h-[70%] overflow-y-auto'
         )

@@ -2,12 +2,12 @@ from ..domain import AliasPlayer, AliasLobby, GameState
 from ...shared import *
 from ...shared.spectators import Spectators, register_lobby_spectators_update
 from ...user import *
-from .game_cards import *
+from .team import *
 from .settings import *
 
 def Game(reciever: AliasPlayer | User, state: GameState, **kwargs):
     return Div(
-        Div(*[TeamCard(reciever, team) for team in state.teams.values()],
+        Div(*[TeamCard(reciever, team, state) for team in state.teams.values()],
              NewTeamCard() if not state.team_by_player(reciever) else None,
              cls='gap-4 flex flex-wrap justify-center'),
         WordPanel(reciever, state),

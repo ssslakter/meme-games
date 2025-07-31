@@ -37,6 +37,7 @@ class LobbyService:
         if lobby: return lobby.cast(as_type) if as_type else lobby
         lobby = self.repo.get(id)
         if lobby: self.lobbies[id] = lobby
+        else: return
         return lobby.cast(as_type) if as_type else lobby
 
     def delete_lobby(self, id: str):

@@ -46,7 +46,7 @@ class GameState:
                 self.config.max_teams >= len(self.teams) >= self.config.min_teams and
                 all(len(team) >= self.config.min_team_players for team in self.teams.values()) and
                 self.config.wordpack is not None)
-    
+
     def next_state(self):
         match self.state:
             case StateMachine.WAITING_FOR_PLAYERS:
@@ -59,11 +59,24 @@ class GameState:
                 self.state = StateMachine.REVIEWING
             case StateMachine.REVIEWING:
                 self.active_team.points = sum(g.points for g in self.guess_log)
+                self.active_team.times_played += 1
                 self.active_team = next(self.teams_iterator)
                 self.guess_log.clear()
                 self.state = StateMachine.VOTING_TO_START                
         self.reset_votes()
 
+    def team_points(self, team: Team):
+        extra = sum(g.points for g in self.guess_log)
+        return team.points + extra*(team==self.active_team)
+
+    def check_win_condition(self):
+        return (any(self.team_points(t) >= self.config.max_score for t in self.teams.values()) and 
+                all(t.times_played == self.active_team.times_played for t in self.teams.values()))
+
+    def is_winner(self, team: Team): 
+        if not self.check_win_condition(): return False
+        winner = max(self.teams.values(), key=lambda t: self.team_points(t))
+        return team==winner
 
     def start_game(self):
         self.state = StateMachine.VOTING_TO_START
