@@ -1,2 +1,2 @@
 from .game import *
-from .game_cards import *
+from .team import *

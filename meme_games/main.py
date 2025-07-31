@@ -5,9 +5,6 @@ from meme_games.apps import *
 
 db = init_db('data/data.db')
 DI.register_instance(db)
-for man, member in zip([MemberManager, WhoAmIManager, CodenamesManager, AliasManager],
-                       [LobbyMember, WhoAmIPlayer, CodenamesPlayer, AliasPlayer]):
-    register_lobby_member_manager(DI.get(man), member)
 
 reg_re_param("xtra", "_hs|json|moc|mtn")
 
@@ -16,7 +13,7 @@ static_re = [compile_path("/{fname:path}.{ext:static}")[0], compile_path("/{fnam
 middlware_cls = partial(ConditionalSessionMiddleware, skip=static_re)
 
 bwares = [user_beforeware(DI.get(UserManager), skip = static_re),
-          lobby_beforeware(DI.get(LobbyService))
+          lobby_beforeware(DI.get(LobbyService), skip = static_re)
           ]
 
 style = Style(
@@ -24,19 +21,12 @@ style = Style(
     :root {
         --uk-global-font-size: 1.3rem;
     }
-
-    .animated {
-        transition: left 0.5s ease, top 0.5s ease;
-    }
-    .animated textarea {
-        transition: width 0.5s ease, height 0.5s ease;
-    }
     '''
 )
 
 hdrs = [
+    Script('htmx.config.allowNestedOobSwaps=false;'),
     Link(rel="icon", href="/static/images/favicon.ico"),
-    Statics(ext='_hs', static_path='static'),
     Script(src='/static/scripts/imports/_hyperscript.min.js'),
     Script(src='/static/scripts/imports/live2d/live2dcubismcore.min.js'),
     Script(src='/static/scripts/imports/live2d/live2d.min.js'),
@@ -64,9 +54,9 @@ app = FastHTML(before=bwares, hdrs=hdrs+yt_hdrs,
                    htmlkw={'class': 'uk-custom-theme'},
                    bodykw={'hx-boost': 'true'})
 
-setup_toasts(app, duration=1.5)
+setup_toasts(app, duration=400)
 
-for rt in [settings_rt, whoami_rt, video_rt, word_packs_rt, codenames_rt, ws_rt, user_rt, alias_rt]:
+for rt in ROUTES:
     rt.to_app(app)
 
 

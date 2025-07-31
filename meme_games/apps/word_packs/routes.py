@@ -1,6 +1,8 @@
+from ..shared.utils import register_route
 from .components import *
 
 rt = APIRouter("/word_packs")
+register_route(rt)
 
 # ---------------------------------#
 # ------------- Routes ------------#
@@ -28,7 +30,8 @@ def new_creation():
     return WordPackEditor(WordPack(), hx_swap_oob='true')
 
 @rt
-def index(): return Title("Word packs"),Page()
+def index(pack_id: str = None): 
+    return Title("Word packs"),Page(pack_id)
 
 register_page("Word Packs", index.to())
 

@@ -1,11 +1,11 @@
 from meme_games.core import *
-from .domain import *
+from .domain import WordPackRepo, UserManager, WordPack
 from ..shared import *
 
 
 logger = logging.getLogger(__name__)
 
-wordpack_manager = DI.get(WordPackManager)
+wordpack_manager = DI.get(WordPackRepo)
 user_manager = DI.get(UserManager)
 
 def ListCard(title, *content, cls='', **kwargs):
@@ -79,7 +79,7 @@ def WordPackEditor(wp: Optional[WordPack] = None,
     
     head = DivFullySpaced(
         Div(H4("Pack name: ", cls='inline'), Span(wp.name, data_pack=wp.id), cls='w-full truncate'),
-        DivRAligned(H4("Words: ", cls='inline'), Span(len(wp.words)-1, data_pack=wp.id)))
+        DivRAligned(H4("Words: ", cls='inline'), Span(len(wp.words)-1)))
     
     return editor(head,
         Form(**(form_kwargs or dict(hx_post=save)),
@@ -118,14 +118,15 @@ def PacksSelect(wordpacks: list[WordPack], route_with_id=None, **kwargs):
         id='packs_select'
     )
 
-def Page():
+def Page(wordpack_id: str):
     packs = wordpack_manager.get_all()
+    wpack = wordpack_manager.get_by_id(wordpack_id)
     return MainPage(no_image=True)(
         Container(
             Grid(
                 SideBar(),
                 ListCard("Wordpacks", Packs(packs), cls='max-h-[719px] overflow-y-auto'),
-                ListCard("Editor", WordPackEditor()),
+                ListCard("Editor", WordPackEditor(wpack)),
                 cols_sm=1,
                 cols_md=3,
                 cols_lg=4,

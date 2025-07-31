@@ -1,7 +1,9 @@
+from ..shared.utils import register_route
 from meme_games.core import *
 from ..shared import *
 
 rt = APIRouter('/video')
+register_route(rt)
 
 
 logger = logging.getLogger(__name__)

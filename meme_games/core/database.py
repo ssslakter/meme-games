@@ -3,7 +3,7 @@ from typing import get_args
 from .imports import *
 
 
-__all__ = ['init_db', 'DataManager', 'Model', 'mk_aliases', 'cols2dict']
+__all__ = ['init_db', 'DataRepository', 'Model', 'mk_aliases', 'cols2dict']
 
 
 @fc.delegates(fl.Database)
@@ -13,7 +13,7 @@ def init_db(filename_or_conn=':memory:', **kwargs):
     return db
 
 
-class DataManager[T: Model]:
+class DataRepository[T: Model]:
     '''Base class to manage database tables for a specific model and its CRUD.
     To use this class, you must subclass it and implement the `_set_tables` method
     to define the table it will manage.
@@ -50,10 +50,13 @@ class DataManager[T: Model]:
         self.db = db
         self.table: fl.Table = self._set_tables()
         self.pk = self.table.pks[0] if len(self.table.pks) == 1 else self.table.pks
+        self.__post_init__()
 
     def _set_tables(self):
         '''Used to create the default table for the data-manager'''
         raise NotImplementedError()
+    
+    def __post_init__(self): pass
 
     def insert(self, obj: T): self.table.insert(asdict(obj)); return obj
     def upsert(self, obj: T): self.table.upsert(asdict(obj), pk=self.pk); return obj

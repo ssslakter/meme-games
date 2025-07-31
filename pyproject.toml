@@ -7,16 +7,12 @@ name="meme-games"
 version = "0.1.0"
 description = "A collection of meme games"
 authors = [{ name = "Slava Chaunin", email = "slava.chaunin@gmail.com" }]
-requires-python=">=3.12"
+requires-python=">=3.13"
 license = { text = "MIT" }
 dependencies = [
     "python-fasthtml",
     "fastcore",
     "monsterui>=1.0.21,<2"]
-
-[project.optional-dependencies]
-"dev" = ["nbdev", "pip-tools", "pre-commit"]
-
 
 [tool.setuptools]
 packages = ["meme_games"]
@@ -32,13 +28,14 @@ meme-games = { path = ".", editable = true }
 default = { solve-group = "default" }
 dev = { features = ["dev"], solve-group = "default" }
 
+[tool.pixi.feature.dev.activation.env]
+DEV='TRUE'
+
 [tool.pixi.tasks]
 app = "python run.py"
-_clean = "nbdev_clean"
-_export = "nbdev_export && rm meme_games/_modidx.py"
-clean = {depends-on = [{ task = '_clean', environment = "dev"}]}
+_export = "nbdev_clean && nbdev_export"
 export = {depends-on = [{ task = '_export', environment = "dev"}]}
 
 
 [dependency-groups]
-dev = ["ipykernel>=6.29.5,<7"]
+dev = ["ipykernel>=6.29.5,<7", "nbdev", "pip-tools", "pre-commit", "pytest"]

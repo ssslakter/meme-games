@@ -46,11 +46,10 @@ class CodenamesPlayer(LobbyMember):
         return super(LobbyMember, cls).from_dict(data[cls])
 
 
-CodenamesLobby = Lobby[CodenamesPlayer]
 
-class CodenamesManager(DataManager[CodenamesPlayer]):
+class CodenamesRepo(DataRepository[CodenamesPlayer]):
     
-    def __init__(self, member_manager: MemberManager):
+    def __init__(self, member_manager: MemberRepo):
         self.mm = member_manager
         self.members_t = self.mm.members
         super().__init__(self.mm.db)
@@ -88,5 +87,5 @@ class CodenamesManager(DataManager[CodenamesPlayer]):
         return list(map(CodenamesPlayer.from_dict, self.db.q(qry, [lobby_id])))
 
 
-
-
+CodenamesLobby = Lobby[CodenamesPlayer]
+register_lobby_type(CodenamesLobby, CodenamesRepo)

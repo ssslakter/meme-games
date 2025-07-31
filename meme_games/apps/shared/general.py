@@ -12,5 +12,12 @@ def Background(url: str = None, no_image: bool = False):
     return Div(
         Div(cls="absolute inset-0 backdrop-blur-sm dark:bg-black/30"),
         cls=f"fixed inset-0 z-[-1] bg-cover bg-center bg-fixed filter {bg_cls}",
+        id='background',
         hx_swap_oob='true'
     )
+
+def ColoredPoints(value: int):
+    v_txt = '+' + str(value) if value >0 else value
+    return Span(v_txt, cls=f"""{'bg-red-100 dark:bg-red-500' if value < 0 
+                                else 'bg-green-100 dark:bg-green-500' if value > 0 
+                                else 'bg-gray-200 dark:bg-gray-700'} px-2 py-0.5 rounded""")
