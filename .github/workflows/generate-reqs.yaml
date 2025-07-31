@@ -2,9 +2,10 @@ name: Generate Requirements
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
     paths:
       - 'pyproject.toml'
+  workflow_dispatch:
 
 
 jobs:
