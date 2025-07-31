@@ -164,7 +164,7 @@ async def guess(req: Request, correct: bool):
         return add_toast(req.session, "Cannot guess now", "error")
     game_state.guess_word(p, correct)
     def update(r: AliasPlayer, *_):
-        return GuessPanel(game_state)
+        return RoundLog(game_state.guess_log, game_state)
     await notify_all(lobby, update)
     return CurrentWord(game_state)
 

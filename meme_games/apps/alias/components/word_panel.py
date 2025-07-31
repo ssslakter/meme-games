@@ -40,7 +40,7 @@ def WordEntry(guess: gm.GuessEntry, game: gm.GameState):
 
 
 def RoundLog(guesses: list[gm.GuessEntry], game: gm.GameState):
-    return DivVStacked((WordEntry(guess, game) for guess in guesses), cls='space-y-1')
+    return DivVStacked((WordEntry(guess, game) for guess in guesses), cls='space-y-1', id='guess_log', hx_swap_oob='true')
 
 
 
@@ -49,9 +49,7 @@ def GuessPanel(game: gm.GameState):
     return DivVStacked(
         CircleTimer(game.timer.rem_t, total=game.config.time_limit) if game.state == gm.StateMachine.ROUND_PLAYING else None,
         RoundLog(game.guess_log, game),
-        cls='flex-col-reverse',
-        id='guess_panel',
-        hx_swap_oob='true')
+        cls='flex-col-reverse')
 
 def WordPanel(r: gm.AliasPlayer, game: gm.GameState):
     return Div(
