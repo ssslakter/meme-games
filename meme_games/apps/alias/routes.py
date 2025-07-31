@@ -1,4 +1,5 @@
 from ..shared.utils import register_route
+from ..shared.spectators import JoinSpectators 
 from meme_games.core import *
 from meme_games.domain import *
 from meme_games.apps.word_packs.components import *
@@ -39,9 +40,8 @@ def ws_fn(connected=True, render_fn: Callable = JoinSpectators):
             else: m.disconnect()
 
             def update(r, *_):
-                hx=f"outerHTML:span[data-username='{u.uid}']"
-                if r == u: return ActiveGameState(r, lobby), UserName(r.user, m.user, is_connected=connected, hx_swap_oob=hx)
-                return UserName(r.user, m.user, is_connected=connected, hx_swap_oob=hx)
+                if r == u: return ActiveGameState(r, lobby), MemberName(r.user, m)
+                return MemberName(r.user, m)
         else:
             if not connected: return  # user not found in the lobby and not connecting
             m = lobby.create_member(u, send=send, ws=ws)
@@ -55,13 +55,15 @@ def ws_fn(connected=True, render_fn: Callable = JoinSpectators):
     return user_joined
 
 @rt 
-def editor_readonly(id:str):
+def editor_readonly(req: Request, id:str):
+    _,_, p = pre_init(req)
     pack = wordpack_manager.get_by_id(id)
     return WordPackEditor(pack, readonly=True,
                           form_kwargs=dict(hx_post=select_pack, hx_swap='none'),
-                          submit_button=Button("Select"),
+                          submit_button=Button("Select wordpack" if is_host(p) else "Must be host to select", 
+                                               disabled= not is_host(p)),
                           hx_on__after_request="UIkit.modal('#pack-select').hide()")
-    
+
 @rt
 async def select_pack(req: Request, id: str):
     lobby, _, p = pre_init(req)
@@ -77,7 +79,7 @@ async def new_team(req: Request):
     if any(p in t for t in game_state.teams.values()): return
     if lobby.locked: 
         add_toast(req.session, "Game is locked", "error")
-        return NewTeamCard()
+        return
     team = game_state.create_team()
     await join_team(req, team.id)
 
@@ -96,19 +98,6 @@ async def join_team(req: Request, team_id: str):
     await notify_all(lobby, update)
 
 
-@rt
-async def spectate(req: Request):
-    lobby, _, p = pre_init(req)
-    if not p.is_player: return
-    if lobby.locked: return add_toast(req.session, "Game is locked", "error")
-    p.spectate(); lobby.game_state.remove_player(p)
-    lobby_service.update(lobby)
-
-    def update(r: AliasPlayer, *_):
-        return JoinSpectators(r, p), Game(r, lobby.game_state, hx_swap_oob='true')
-    await notify_all(lobby, update)
-
-
 @rt('/{lobby_id}', methods=['get'])
 def index(req: Request, lobby_id: str = None):
     if not lobby_id: return redirect(random_id())
@@ -119,7 +108,7 @@ def index(req: Request, lobby_id: str = None):
     m = lobby.get_member(u.uid)
     print('set session to', lobby.id)
     req.session['lobby_id'] = lobby.id
-    return (Title(f'Who Am I lobby: {lobby.id}'),
+    return (Title(f'Alias lobby: {lobby.id}'),
             Page(m or u, lobby))
 
 def redirect(lobby_id: str): return Redirect(index.to(lobby_id=lobby_id))
@@ -148,15 +137,24 @@ async def vote(req: Request, voted: bool):
     if not (p in game_state.active_team and
         game_state.state in [gm.StateMachine.VOTING_TO_START, 
                              gm.StateMachine.REVIEWING]):
-        return add_toast(req.session, "Cannot vote now", "error"), VoteButton(p, game_state)
+        raise HTTPException(400, 'cannot vote now')
     if p.voted == voted: return VoteButton(p, game_state)
-    next_state = game_state.retract_vote(p) if not voted else game_state.add_vote(p)
-    if next_state: game_state.next_state()
+    if voted: game_state.add_vote(p)
+    else: game_state.retract_vote(p)
+    await notify_all(lobby, lambda r, *_: (TeamCard(r, game_state.active_team), GameControls(r, game_state)))
+
+
+@rt
+async def start_round(req: Request):
+    lobby, game_state, p = pre_init(req)
+    if not (p == game_state.active_player and game_state.state == gm.StateMachine.VOTING_TO_START):
+        raise HTTPException(400, 'cannot vote now')
+    game_state.next_state()
     def update(r: AliasPlayer, *_):
         return Game(r, game_state, hx_swap_oob='true')
     await notify_all(lobby, update)
-    if game_state.state == gm.StateMachine.ROUND_PLAYING: asyncio.create_task(set_end_round_timer(lobby))
-    if not next_state: return VoteButton(p, game_state)
+    asyncio.create_task(set_end_round_timer(lobby))
+
 
 
 @rt
@@ -167,8 +165,9 @@ async def guess(req: Request, correct: bool):
         return add_toast(req.session, "Cannot guess now", "error")
     game_state.guess_word(p, correct)
     def update(r: AliasPlayer, *_):
-        return GuessPanel(r, game_state)
+        return GuessPanel(game_state)
     await notify_all(lobby, update)
+    return CurrentWord(game_state)
 
 
 @rt

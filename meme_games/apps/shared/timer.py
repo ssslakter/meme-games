@@ -26,6 +26,6 @@ def CircleTimer(time: dt.timedelta | float, **kwargs):
                    stroke_dasharray=f"{circumference:.3f}",
                    stroke_dashoffset=f"{circumference:.3f}"),
             svg.Text("0s", x="50%", y="50%", text_anchor="middle", timer_text=True,
-                  dominant_baseline="middle", cls="text-sm fill-current"),
+                  dominant_baseline="middle", cls="fill-current"),
             viewBox="0 0 100 100", cls="w-20 h-20")
     return Timer(time, renderer=renderer, data_render='circle', **kwargs)

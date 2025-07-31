@@ -13,6 +13,13 @@ class StateMachine(Enum):
     ROUND_PLAYING = auto()            # Active round in progress
     REVIEWING = auto()                # Another team reviewing the just-finished round
 
+    def pretty(self) -> str:
+        # Convert "waiting_for_players" → "Waiting for players"
+        return self.value.replace("_", " ").capitalize()
+
+    def __str__(self) -> str:
+        return self.pretty()
+
 @dataclass
 class GuessEntry:
     word: str
@@ -37,7 +44,7 @@ class GameState:
     def can_start(self) -> bool:
         return (self.state == StateMachine.WAITING_FOR_PLAYERS and
                 self.config.max_teams >= len(self.teams) >= self.config.min_teams and
-                all(len(team) > 1 for team in self.teams.values()) and
+                all(len(team) >= self.config.min_team_players for team in self.teams.values()) and
                 self.config.wordpack is not None)
     
     def next_state(self):
@@ -46,7 +53,6 @@ class GameState:
                 if self.can_start(): self.start_game()
             case StateMachine.VOTING_TO_START:
                 self.state = StateMachine.ROUND_PLAYING
-                self.active_player = next(self.active_team)
                 self.active_word = next(self.words_iterator)
                 self.timer.set(self.config.time_limit)
             case StateMachine.ROUND_PLAYING:
@@ -63,6 +69,7 @@ class GameState:
         self.state = StateMachine.VOTING_TO_START
         self.teams_iterator = cycle(self.teams.values())
         self.active_team = next(self.teams_iterator)
+        self.active_player = next(self.active_team)
         words = self.config.wordpack.words
         random.shuffle(words)
         self.words_iterator = cycle(words)
@@ -96,16 +103,7 @@ class GameState:
             for player in team.members:
                 player.reset_votes()
 
-    def check_all_voted(self) -> bool:
-        """Checks if all teams have voted except the active team."""
-        for team in self.teams.values():
-            if team.id == self.active_team.id: continue
-            if not all(player.voted for player in team.members):
-                return False
-        self.reset_votes()
-        return True
 
-    
     def create_team(self) -> Team:
         team = Team()
         return self.teams.setdefault(team.id, team)
@@ -119,6 +117,7 @@ class GameState:
         team = self.team_by_player(p)
         if not team: return
         team.remove_member(p)
+        p.reset_votes(); p.reset_score()
         if not len(team): self.delete_team(team.id)
 
         

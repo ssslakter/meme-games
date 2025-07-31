@@ -67,6 +67,13 @@ class LobbyService:
         if lobby.persistent:
             self.repo.update(lobby)
 
+    def spectate(self, player: LobbyMember, lobby: Lobby):
+        player.spectate()
+        if lobby.game_state:
+            # TODO add generic type for game state
+            lobby.game_state.remove_player(player)
+        self.update(lobby)
+
 
 DI.register_services([LobbyRepo, MemberRepo, LobbyService])
 

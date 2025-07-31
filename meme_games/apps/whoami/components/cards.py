@@ -6,7 +6,7 @@ from .basic import *
 
 
 def PlayerLabelText(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
-    label_text_classes = "text-center text-xl font-[Impact] border-none w-full h-full shadow-none scrollbar-hide resize text-black"
+    label_text_classes = "text-center border-none w-full h-full shadow-none scrollbar-hide resize text-black"
     style = (
         f"width: {int2px(owner.label_tfm.width)}; height: {int2px(owner.label_tfm.height)};"
         if owner.label_tfm
@@ -102,10 +102,10 @@ def PlayerCard(reciever: WhoAmIPlayer | User, p: WhoAmIPlayer, lobby: Lobby):
         edit,
         AvatarBig(p.user),
         footer=Div(
-            UserName(reciever, p.user, is_connected=p.is_connected),
+            MemberName(reciever, p),
             " ✪" if lobby.host == p else None,
         ),
-        footer_cls="p-0 backdrop-blur-sm text-xl justify-center flex rounded-lg",
+        footer_cls="p-0 backdrop-blur-sm text-xl justify-center flex rounded-lg w-full truncate",
         data_user=p.uid,
         body_cls="flex-1 relative p-0 overflow-hidden w-full rounded-t-lg",
     )(PlayerLabelFT(reciever, p), Notes(reciever, p, 
@@ -122,6 +122,7 @@ def NewPlayerCard():
         "+",
         body_cls=icon_classes,
         cls="group opacity-50 cursor-pointer",
+        id='new-player-card',
         hx_post=play,
         hx_swap="outerHTML",
     )

@@ -25,6 +25,7 @@ style = Style(
 )
 
 hdrs = [
+    Script('htmx.config.allowNestedOobSwaps=false;'),
     Link(rel="icon", href="/static/images/favicon.ico"),
     Script(src='/static/scripts/imports/_hyperscript.min.js'),
     Script(src='/static/scripts/imports/live2d/live2dcubismcore.min.js'),

@@ -33,3 +33,5 @@ class Team:
         if not hasattr(self, 'iterator'):
             self.iterator = itertools.cycle(self.members)
         return next(self.iterator)
+    
+    def all_voted(self): return all(m.voted for m in self.members)

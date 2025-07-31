@@ -46,7 +46,6 @@ class CodenamesPlayer(LobbyMember):
         return super(LobbyMember, cls).from_dict(data[cls])
 
 
-CodenamesLobby = Lobby[CodenamesPlayer]
 
 class CodenamesRepo(DataRepository[CodenamesPlayer]):
     
@@ -88,5 +87,5 @@ class CodenamesRepo(DataRepository[CodenamesPlayer]):
         return list(map(CodenamesPlayer.from_dict, self.db.q(qry, [lobby_id])))
 
 
-
-
+CodenamesLobby = Lobby[CodenamesPlayer]
+register_lobby_type(CodenamesLobby, CodenamesRepo)

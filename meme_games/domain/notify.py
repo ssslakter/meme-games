@@ -13,7 +13,7 @@ async def send(u: LobbyMember, fn, *args, json=False):
     sock = u.ws.send_json if json else u.send
     try: await sock(fn(u, *args))
     except Exception as e:
-        logger.error(e)
+        logger.error(e,exc_info=True)
         u.disconnect()
 
 

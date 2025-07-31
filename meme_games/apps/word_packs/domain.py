@@ -59,6 +59,7 @@ class WordPackRepo(DataRepository[WordPack]):
     
     
     def get_by_id(self, id: str):
+        if id not in self.table: return None
         return WordPack.from_dict(self.table.get(id))
     
 
