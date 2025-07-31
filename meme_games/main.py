@@ -26,7 +26,6 @@ style = Style(
 
 hdrs = [
     Link(rel="icon", href="/static/images/favicon.ico"),
-    Statics(ext='_hs', static_path='static'),
     Script(src='/static/scripts/imports/_hyperscript.min.js'),
     Script(src='/static/scripts/imports/live2d/live2dcubismcore.min.js'),
     Script(src='/static/scripts/imports/live2d/live2d.min.js'),

@@ -22,7 +22,7 @@ def Page(reciever: AliasPlayer | User, lobby: AliasLobby):
         Game(reciever, lobby.game_state),
         Spectators(reciever, lobby),
         SettingsPopover(reciever, lobby, 
-                        custom_host_settings=PackSelect()),
+                        custom_host_settings=PackSelect(lobby.game_state)),
         hx_ext="ws",
         ws_connect=ws_url,
         no_image=True,

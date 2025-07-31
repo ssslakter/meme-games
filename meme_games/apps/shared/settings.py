@@ -165,7 +165,7 @@ async def change_background(req: Request, hdrs: HtmxHeaders):
     lobby: BasicLobby = req.state.lobby
     lobby.background_url = urllib.parse.unquote(hdrs.prompt)
     lobby_service.update(lobby)
-    def update(*_): return Background(lobby.background_url)
+    def update(*_): return Background(lobby.background_url, no_image=not lobby.background_url)
     return await notify_all(lobby, update)
 
 @rt

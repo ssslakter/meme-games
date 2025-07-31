@@ -1,5 +1,5 @@
 from meme_games.core import *
-from .domain import *
+from .domain import WordPackRepo, UserManager, WordPack
 from ..shared import *
 
 

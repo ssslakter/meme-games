@@ -50,10 +50,13 @@ class DataRepository[T: Model]:
         self.db = db
         self.table: fl.Table = self._set_tables()
         self.pk = self.table.pks[0] if len(self.table.pks) == 1 else self.table.pks
+        self.__post_init__()
 
     def _set_tables(self):
         '''Used to create the default table for the data-manager'''
         raise NotImplementedError()
+    
+    def __post_init__(self): pass
 
     def insert(self, obj: T): self.table.insert(asdict(obj)); return obj
     def upsert(self, obj: T): self.table.upsert(asdict(obj), pk=self.pk); return obj

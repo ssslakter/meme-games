@@ -17,6 +17,7 @@ class StateMachine(Enum):
 class GuessEntry:
     word: str
     points: int
+    id: str = field(default_factory=random_id)
 
 
 @dataclass
@@ -28,6 +29,7 @@ class GameState:
     active_player: Optional[AliasPlayer] = None
     active_word: Optional[str] = None
     guess_log: List[GuessEntry] = field(default_factory=list)
+    timer: Timer = field(default_factory=Timer)
 
     def change_config(self, config: GameConfig):
         self.config = config
@@ -46,9 +48,14 @@ class GameState:
                 self.state = StateMachine.ROUND_PLAYING
                 self.active_player = next(self.active_team)
                 self.active_word = next(self.words_iterator)
-                self.reset_votes()
-            case StateMachine.ROUND_PLAYING: pass
-            case StateMachine.REVIEWING: pass
+                self.timer.set(self.config.time_limit)
+            case StateMachine.ROUND_PLAYING:
+                self.state = StateMachine.REVIEWING
+            case StateMachine.REVIEWING:
+                self.active_team = next(self.teams_iterator)
+                self.guess_log.clear()
+                self.state = StateMachine.VOTING_TO_START                
+        self.reset_votes()
 
 
     def start_game(self):
@@ -74,7 +81,7 @@ class GameState:
         if self.state != StateMachine.ROUND_PLAYING or player != self.active_player: return
         self.guess_log.append(GuessEntry(self.active_word, self.config.correct_guess_score 
                                          if correct else self.config.mistake_penalty))
-        self.active_word = next(self.words_iterator)
+        self.active_word = next(self.words_iterator) # TODO maybe if pack is empty, end round? (need to call timer.stop)
 
     
     def reset_votes(self):
@@ -82,10 +89,10 @@ class GameState:
             for player in team.members:
                 player.reset_votes()
 
-    def check_all_voted(self, ignore_active_team: bool = False) -> bool:
-        """Checks if all teams have voted to start the game."""
+    def check_all_voted(self) -> bool:
+        """Checks if all teams have voted except the active team."""
         for team in self.teams.values():
-            if ignore_active_team and team.id == self.active_team.id: continue
+            if team.id == self.active_team.id: continue
             if not all(player.voted for player in team.members):
                 return False
         self.reset_votes()
@@ -108,7 +115,6 @@ class GameState:
         if not len(team): self.delete_team(team.id)
 
         
-
 
 AliasLobby = Lobby[AliasPlayer, GameState]
 register_lobby_type(AliasLobby)

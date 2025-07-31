@@ -5,11 +5,6 @@ from meme_games.apps.word_packs.components import *
 from .components import *
 
 
-def pre_init(req: Request) -> tuple[Lobby, GameState, AliasPlayer]:
-    lobby: AliasLobby = req.state.lobby
-    return lobby, lobby.game_state, lobby.get_member(req.state.user.uid)
-    
-
 #---------------------------------#
 #------------- Routes ------------#
 #---------------------------------#
@@ -21,6 +16,15 @@ logger = logging.getLogger(__name__)
 
 lobby_service = DI.get(LobbyService)
 user_manager = DI.get(UserManager)
+
+
+def pre_init(req: Request) -> tuple[Lobby, GameState, AliasPlayer]:
+    try:
+        lobby: AliasLobby = req.state.lobby
+    except AttributeError as e:
+        logger.error(f"Lobby not found in request state: {req.state}")
+        raise HTTPException(status_code=400, detail="Incorrect client state. Please refresh the page.")
+    return lobby, lobby.game_state, lobby.get_member(req.state.user.uid)
 
 
 
@@ -129,12 +133,21 @@ async def start_game(req: Request):
     game.start_game()
     await notify_all(lobby, lambda r, *_: Game(r, game, hx_swap_oob='true'))
 
+async def set_end_round_timer(lobby: AliasLobby):
+    game_state: GameState = lobby.game_state
+    await game_state.timer.sleep()
+    game_state.next_state()
+    def update(r: AliasPlayer, *_):
+        return Game(r, game_state, hx_swap_oob='true')
+    await notify_all(lobby, update)
+
+
 @rt
 async def vote(req: Request, voted: bool):
     lobby, game_state, p = pre_init(req)
     if not (p in game_state.active_team and
-        game_state.state in [game.StateMachine.VOTING_TO_START, 
-                             game.StateMachine.REVIEWING]):
+        game_state.state in [gm.StateMachine.VOTING_TO_START, 
+                             gm.StateMachine.REVIEWING]):
         return add_toast(req.session, "Cannot vote now", "error"), VoteButton(p)
     if p.voted == voted: return VoteButton(p)
     next_state = game_state.retract_vote(p) if not voted else game_state.add_vote(p)
@@ -142,6 +155,7 @@ async def vote(req: Request, voted: bool):
     def update(r: AliasPlayer, *_):
         return Game(r, game_state, hx_swap_oob='true')
     await notify_all(lobby, update)
+    if next_state and game_state != gm.StateMachine.REVIEWING: asyncio.create_task(set_end_round_timer(lobby))
     if not next_state: return VoteButton(p)
 
 
@@ -149,7 +163,7 @@ async def vote(req: Request, voted: bool):
 async def guess(req: Request, correct: bool):
     lobby, game_state, p = pre_init(req)
     if not (p==game_state.active_player and
-            game_state.state == game.StateMachine.ROUND_PLAYING):
+            game_state.state == gm.StateMachine.ROUND_PLAYING):
         return add_toast(req.session, "Cannot guess now", "error")
     print('guess', correct)
     game_state.guess_word(p, correct)

@@ -1,5 +1,6 @@
 from ...shared import *
 from ..domain import *
+from meme_games.domain import User, is_player
 from .basic import *
 
 def Notes(reciever: WhoAmIPlayer | User, author: WhoAmIPlayer, cls=(), text_cls='', text_kwargs = None, **kwargs):

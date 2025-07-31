@@ -40,6 +40,18 @@ def GuessPanel(r: gm.AliasPlayer, game: gm.GameState):
         hx_swap_oob='true',
     )
 
+
+def WordEntry(guess: gm.GuessEntry, lobby: gm.GameState):
+    body = [Div(Span(guess.word, cls='text-lg'),
+            Span("Score: ", guess.points))]
+    if lobby.state == gm.StateMachine.REVIEWING:
+        body = [Button('-'), *body, Button('+')]
+    return DivHStacked(
+        body,
+        data_id=guess.id,
+    )
+
+
 def RoundLog(guesses: list[gm.GuessEntry]):
     return DivVStacked(Div(guess.word) for guess in guesses)
 

@@ -1,5 +1,5 @@
 from meme_games.core import *
-from meme_games.domain import *
+from meme_games.domain import LobbyService, Lobby
 from ..shared import *
 
 lobby_service = DI.get(LobbyService)

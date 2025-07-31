@@ -12,5 +12,6 @@ def Background(url: str = None, no_image: bool = False):
     return Div(
         Div(cls="absolute inset-0 backdrop-blur-sm dark:bg-black/30"),
         cls=f"fixed inset-0 z-[-1] bg-cover bg-center bg-fixed filter {bg_cls}",
+        id='background',
         hx_swap_oob='true'
     )

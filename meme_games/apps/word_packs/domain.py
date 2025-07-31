@@ -41,17 +41,36 @@ class WordPackRepo(DataRepository[WordPack]):
     def _set_tables(self):
         self.wordpacks = self.db.t.wordpacks.create(WordPack.columns(), pk='id', transform=True)
         self.users = self.db.t.user
-        return self.wordpacks
 
+        self.qry_template = f"""
+        select {mk_aliases(WordPack, self.wordpacks)},
+        {mk_aliases(User, self.users)}
+        from {self.wordpacks} left join {self.users}
+        on {self.wordpacks.c.author_id} = {self.users.c.uid}
+        """
+        return self.wordpacks
+    
+    def __post_init__(self):
+        self.init_defaults()
+        
     def get_all(self, offset: int = 0, limit: int = 100):
-        qry = f"""select {mk_aliases(WordPack, self.table)},
-                  {mk_aliases(User, self.users)}
-                  from {self.table} left join {self.users}
-                  on {self.table.c.author_id} = {self.users.c.uid}
-                  limit {limit} offset {offset}"""
+        qry = f"{self.qry_template} limit {limit} offset {offset}"
         return list(map(WordPack.from_cols, self.db.q(qry)))
     
     
     def get_by_id(self, id: str):
         return WordPack.from_dict(self.table.get(id))
     
+
+    def find(self, name: str) -> Optional[WordPack]:
+        '''Finds a wordpack by its name.'''
+        res = self.db.q(f"{self.qry_template} where {self.table.c.name} like ?", [name])
+        return WordPack.from_cols(res[0]) if res else None
+    
+
+    def init_defaults(self):
+        if self.find('default'): return
+        packs = [
+            WordPack(name='Default', words_='apple\nbanana\ncherry\norange\npear'),
+        ]
+        self.upsert_all(packs)
