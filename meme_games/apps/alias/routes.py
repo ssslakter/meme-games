@@ -170,12 +170,12 @@ async def guess(req: Request, correct: bool):
 
 
 @rt
-async def change_guess_points(req: Request, guess_id: str, points: int):
+async def change_guess_points(req: Request, guess_id: str, delta: int):
     _, game_state, p = pre_init(req)
-    entry = game_state.change_guess_points(guess_id, points)
+    entry = game_state.change_guess_points(guess_id, delta)
     if not entry: return add_toast(req.session, "Guess not found", "error")
     def update(r: AliasPlayer, *_):
-        return WordEntry(entry, game_state), TeamCard(r, game_state.active_team, game_state)
+        return WordEntryScore(entry), TeamCard(r, game_state.active_team, game_state)
     await notify_all(req.state.lobby, update)
 
 

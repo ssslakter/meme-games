@@ -104,10 +104,10 @@ class GameState:
                                          if correct else self.config.mistake_penalty))
         self.active_word = next(self.words_iterator) # TODO maybe if pack is empty, end round? (need to call timer.stop)
 
-    def change_guess_points(self, guess_id: str, points: int) -> Optional[GuessEntry]:
+    def change_guess_points(self, guess_id: str, delta: int) -> Optional[GuessEntry]:
         guess = next((g for g in self.guess_log if g.id == guess_id), None)
         if not guess: return
-        guess.points = points
+        guess.points += delta
         return guess
 
     

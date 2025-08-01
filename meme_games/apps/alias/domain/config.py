@@ -4,7 +4,7 @@ from meme_games.core import *
 @dataclass
 class GameConfig:
     wordpack: Optional[WordPack] = field(default_factory=lambda: DI.get(WordPackRepo).find('default'))
-    time_limit: int = 10  # Time limit for each round in seconds
+    time_limit: int = 40  # Time limit for each round in seconds
     max_score: int = 40  # Maximum score a team can achieve
     max_teams: int = 4    # Maximum number of teams allowed in the game
     min_team_players: int = 1 # Minimum number of members in a team
