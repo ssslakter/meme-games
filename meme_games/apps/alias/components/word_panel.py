@@ -58,6 +58,7 @@ def WordPanel(r: gm.AliasPlayer, game: gm.GameState):
         Div(
             CircleTimer(game.timer.rem_t, total=game.config.time_limit) if game.state == gm.StateMachine.ROUND_PLAYING else None,
             (ExplainerPanel(r, game) if game.state==gm.StateMachine.ROUND_PLAYING else None),
+             VoteButton(r, game) if game.state==gm.StateMachine.REVIEWING else None,
         cls='w-full flex flex-col items-center pt-2'
         ),
         cls='fixed bottom-0 left-1/2 transform -translate-x-1/2 flex flex-col'
