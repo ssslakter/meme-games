@@ -1,7 +1,7 @@
 from meme_games.core import *
 from meme_games.apps.shared import CircleTimer, ColoredPoints
 from ..domain import game as gm
-from ..settings VoteButton
+from .settings import VoteButton
 
 
 def CurrentWord(game: gm.GameState):
