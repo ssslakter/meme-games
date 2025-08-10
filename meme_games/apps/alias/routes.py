@@ -40,7 +40,7 @@ def ws_fn(connected=True, render_fn: Callable = JoinSpectators):
             else: m.disconnect()
 
             def update(r, *_):
-                if r == u: return ActiveGameState(r, lobby), MemberName(r.user, m)
+                if r == u: return Game(r, lobby), MemberName(r.user, m)
                 return MemberName(r.user, m)
         else:
             if not connected: return  # user not found in the lobby and not connecting
@@ -48,7 +48,7 @@ def ws_fn(connected=True, render_fn: Callable = JoinSpectators):
             lobby_service.update(lobby)
 
             def update(r, *_):
-                if r == u: return ActiveGameState(r, lobby), render_fn(r, m)
+                if r == u: return Game(r, lobby), render_fn(r, m)
                 return render_fn(r, m)
         await notify_all(lobby, update)
 
@@ -98,6 +98,14 @@ async def join_team(req: Request, team_id: str):
     await notify_all(lobby, update)
 
 
+@rt
+async def update_settings(req: Request, config: gm.GameConfig):
+    _, game_state, p = pre_init(req)  
+    if game_state.state == gm.StateMachine.ROUND_PLAYING or not is_host(p):
+        return add_toast(req.session, "Cannot change lobby settings", "error")
+    game_state.config = config
+    return add_toast(req.session, "Config updated", 'success')
+
 @rt('/{lobby_id}', methods=['get'])
 def index(req: Request, lobby_id: str = None):
     if not lobby_id: return redirect(random_id())
@@ -140,6 +148,10 @@ async def vote(req: Request, voted: bool):
     if p.voted == voted: return VoteButton(p, game_state)
     if voted: game_state.add_vote(p)
     else: game_state.retract_vote(p)
+    if game_state.state == gm.StateMachine.REVIEWING and game_state.check_all_voted(): 
+        game_state.next_state()
+        await notify_all(lobby, lambda r, *_: Game(r, game_state, hx_swap_oob='true'))
+
     await notify_all(lobby, lambda r, *_: (TeamCard(r, game_state.active_team, game_state), GameControls(r, game_state)))
 
 

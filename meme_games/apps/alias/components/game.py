@@ -21,7 +21,8 @@ def Page(reciever: AliasPlayer | User, lobby: AliasLobby):
     return MainPage(
         Game(reciever, lobby.game_state),
         Spectators(reciever, lobby),
-        SettingsPopover(PackSelect(lobby.game_state)),
+        SettingsPopover(Div(PackSelect(lobby.game_state), ConfigLobby(reciever, lobby.game_state),
+                            cls='w-full')),
         hx_ext="ws",
         ws_connect=ws_url,
         no_image=True,

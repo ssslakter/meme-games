@@ -34,19 +34,16 @@ hdrs = [
     Script(src='/static/scripts/imports/live2d/index.min.js'),
     Statics(ext='js', static_path='static', wc='scripts/common/**/*.js'),
     Statics(ext='js', static_path='static', wc='scripts/whoami/**/*.js'),
+    Statics(ext='js', static_path='static', wc='scripts/video/**/*.js'),
     Theme.yellow.headers(radii=ThemeRadii.lg, shadows=ThemeShadows.lg),
     style
 ]
 
-yt_hdrs = [
-    # Script(src="https://www.youtube.com/iframe_api"),
-    # Script(src="/static/youtube.js"),
-]
 
 
 exception_handlers = {404: not_found}
 
-app = FastHTML(before=bwares, hdrs=hdrs+yt_hdrs,
+app = FastHTML(before=bwares, hdrs=hdrs,
                    exts='ws',
                    sess_cls=middlware_cls,
                    key_fname='data/.sesskey',
@@ -54,7 +51,7 @@ app = FastHTML(before=bwares, hdrs=hdrs+yt_hdrs,
                    htmlkw={'class': 'uk-custom-theme'},
                    bodykw={'hx-boost': 'true'})
 
-setup_toasts(app, duration=400)
+setup_toasts(app, duration=1500)
 
 for rt in ROUTES:
     rt.to_app(app)

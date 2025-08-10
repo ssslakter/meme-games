@@ -58,7 +58,7 @@ class GameState:
             case StateMachine.ROUND_PLAYING:
                 self.state = StateMachine.REVIEWING
             case StateMachine.REVIEWING:
-                self.active_team.points = sum(g.points for g in self.guess_log)
+                self.active_team.points += sum(g.points for g in self.guess_log)
                 self.active_team.times_played += 1
                 self.active_team = next(self.teams_iterator)
                 self.guess_log.clear()
@@ -92,11 +92,10 @@ class GameState:
     
     def add_vote(self, player: AliasPlayer) -> bool:
         team = self.team_by_player(player)
-        if not team: return False
-        player.voted = True
-        if not all(m.voted for m in self.active_team.members):
-            return False
-        return True
+        if team: player.voted = True
+    
+    def check_all_voted(self):
+        return all(m.voted for m in self.active_team.members)
     
     def guess_word(self, player: AliasPlayer, correct: bool):
         if self.state != StateMachine.ROUND_PLAYING or player != self.active_player: return

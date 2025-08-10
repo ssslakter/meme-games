@@ -132,6 +132,6 @@ def Page(wordpack_id: str):
                 cols_lg=4,
                 cols_xl=5,
             ),
-            cls=('pt-14', ContainerT.xl)
+            cls=('pt-10', ContainerT.xl)
         )
     )

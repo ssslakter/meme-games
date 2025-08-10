@@ -1,1 +1,1 @@
-from .components import rt as video_rt
+from .routes import rt as video_rt

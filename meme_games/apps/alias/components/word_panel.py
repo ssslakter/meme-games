@@ -15,8 +15,8 @@ def ExplainerPanel(r: gm.AliasPlayer, game: gm.GameState):
     return Div(
         Div(CurrentWord(game), cls='text-center mb-4'),
         Div(
-            Button(H2("Guessed"), cls=(ButtonT.primary, " px-8 py-3 text-lg"), hx_post=guess.to(correct=True), hx_swap='none'),
-            Button(H2("Skip"), cls="px-8 py-3 text-lg", hx_post=guess.to(correct=False), hx_swap='none'),
+            Button(H2("Guessed"), cls=(ButtonT.primary, " px-8 py-3 text-lg"), hx_post=guess.to(correct='True'), hx_swap='none'),
+            Button(H2("Skip"), cls="px-8 py-3 text-lg", hx_post=guess.to(correct='False'), hx_swap='none'),
             cls='flex justify-center space-x-4'
         ),
         cls='pb-6'

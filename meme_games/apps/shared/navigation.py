@@ -34,7 +34,6 @@ def ThemeSwitcher():
 
 def Navbar(*args, **kwargs):
     inner_navbar = NavBar(
-        *args,
         Button("Select game", cls=ButtonT.primary),
         DropDownNavContainer(
             *[
@@ -42,6 +41,7 @@ def Navbar(*args, **kwargs):
                 for name, url in PAGES_REGISTRY.items()
             ]
         )(cls="min-w-48"),
+        *args,
         ThemeSwitcher(),
         brand=H3("Meme Games"),
         **kwargs,
@@ -64,13 +64,13 @@ def Navbar(*args, **kwargs):
     )
 
 
-def MainPage(*args, navbar_args=(), background_url: str = None, no_image: bool = False, **kwargs):
+def MainPage(*args, navbar_args=(), background_url: str = None, no_image: bool = False, cls='pt-4', **kwargs):
     """
     Main page of the app, contains the navbar and the main content.
     """
     return Div(
         Navbar(*navbar_args),
         Background(background_url, no_image),
-        Div(*args, **kwargs),
+        Div(*args, cls = cls, **kwargs),
         cls="relative isolate min-h-screen",
     )

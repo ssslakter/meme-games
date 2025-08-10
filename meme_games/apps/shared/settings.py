@@ -82,7 +82,8 @@ def Settings(*lobby_settings):
 def SettingsPopover(*lobby_settings):
     button = Card(
         UkIcon('cog', width=45, height=45),
-        _ = "on mouseenter or focus remove .hidden from #settings-panel-wrapper then add .hidden to me",
+        # TODO on mobile the focus is still on the button, not the card
+        _ = "on mouseenter trigger mouseenter on #settings-panel-wrapper",
         cls="cursor-pointer rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500",
         tabindex="0",
         id="settings-popover-button"
@@ -91,15 +92,22 @@ def SettingsPopover(*lobby_settings):
     settings_card = Settings(*lobby_settings)
     panel_wrapper = Div(
         settings_card,
-        cls="absolute bottom-0 right-0 w-[28rem] z-10 hidden",
-        _ = "on mouseleave or blur add .hidden to me then remove .hidden from #settings-popover-button",
+        cls="absolute bottom-0 right-0 w-[28rem] z-10 opacity-0 scale-75 pointer-events-none transition-all duration-200 ease-out",
+        _ = """on mouseenter or focus
+        remove .opacity-0 .scale-75 .pointer-events-none
+        add .opacity-100 .scale-100 .pointer-events-auto
+        settle
+      on mouseleave or blur
+        remove .opacity-100 .scale-100 .pointer-events-auto
+        add .opacity-0 .scale-75 .pointer-events-none
+        settle""",
         id="settings-panel-wrapper"
     )
 
     return Div(
         button,
         panel_wrapper,
-        cls="fixed bottom-0 right-0 p-4 z-50"
+        cls="fixed bottom-0 right-0 p-4 z-50 sm:block hidden"
     )
 
 
