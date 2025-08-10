@@ -60,7 +60,7 @@ python-dateutil==2.9.0.post0
     # via python-fasthtml
 python-dotenv==1.1.1
     # via uvicorn
-python-fasthtml==0.12.20
+python-fasthtml==0.12.24
     # via
     #   meme-games (pyproject.toml)
     #   monsterui
