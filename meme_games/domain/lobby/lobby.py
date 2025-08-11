@@ -32,7 +32,7 @@ class Lobby[T: LobbyMember, S = None](Model):
     _ignore = ('members', 'host', 'game_state')
     
     id: str = field(default_factory=random_id)
-    locked: bool = False
+    locked: bool = False # TODO move locked to game state
     background_url: Optional[str] = None
     host: Optional[T] = None
     members: dict[str, T] = field(default_factory=dict)

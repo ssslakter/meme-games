@@ -10,7 +10,7 @@ def not_found(req: Request, exc):
     model_path = "/media/shizuku/shizuku.model.json"
     return (
         Title("Not Found"),
-        MainPage(
+        LobbyPage(
             H1("404😭! Sorry, this page does not exist.", cls="mt-12 text-center text-white"),
             Div(cls="flex-1"),  # Spacer
             Div(

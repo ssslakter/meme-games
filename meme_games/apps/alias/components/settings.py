@@ -26,6 +26,7 @@ def ConfigLobby(r: gm.AliasPlayer, game_state: gm.GameState):
                  Summary("More settings"),
                  LabelInput('Max score', value=str(game_state.config.max_score), name='max_score'),
                  LabelInput('Max teams', value=str(game_state.config.max_teams), name='max_teams'),
+                 cls='p-2'
                  ),
              Button("Update settings", cls=ButtonT.primary, type='submit'),
              hx_post = update_settings, hx_swap = 'none'

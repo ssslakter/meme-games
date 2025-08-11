@@ -20,7 +20,7 @@ def monitor():
                        Div(Ul(*[Li(LobbyInfo(lobby)) for lobby in lobby_service.lobbies.values()]), cls='space-y-4 p-4'),
                        _='init updateTimer() then setInterval(updateTimer, 500)',
                        cls='bg-white/70 dark:bg-gray-800/70 rounded-lg shadow-xl p-6')
-    return MainPage("Current active lobbies",
+    return LobbyPage("Current active lobbies",
                   lobbies_list if len(lobby_service.lobbies) else Div("No active lobbies", cls='text-center text-gray-500 dark:text-gray-400 text-lg p-6'),
                   no_image=True,
                   cls='pt-10 flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900')

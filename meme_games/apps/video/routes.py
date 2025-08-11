@@ -6,14 +6,14 @@ from .components import *
 
 rt = APIRouter('/video')
 register_route(rt)
-register_page("Videos", rt.prefix)
+register_page("Videos 🚧", rt.prefix)
 
 logger = logging.getLogger(__name__)
 
 
 @rt
 def index():
-    return MainPage(H1("Video"),
+    return LobbyPage(H1("Video"),
                   Div(hx_ext='ws', ws_connect=ws_url,
                       hx_on__ws_after_message = 'getViewerData(event)',
                       hx_on__ws_open='window.ws = event.detail.socketWrapper'),
@@ -23,7 +23,7 @@ def index():
 
 @rt
 def stream():
-    return MainPage(
+    return LobbyPage(
         H1("Streamer page"),
         Div(hx_ext='ws', ws_connect=ws_url,
             hx_on__ws_after_message = 'getWsEvent(event)',

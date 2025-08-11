@@ -1,5 +1,6 @@
 from ..shared.utils import register_route
-from ..shared.spectators import JoinSpectators 
+from ..shared.spectators import SpectatorsList 
+from ..shared.ws_route import ws_fn 
 from meme_games.core import *
 from meme_games.domain import *
 from meme_games.apps.word_packs.components import *
@@ -27,32 +28,6 @@ def pre_init(req: Request) -> tuple[Lobby, GameState, AliasPlayer]:
         raise HTTPException(status_code=400, detail="Incorrect client state. Please refresh the page.")
     return lobby, lobby.game_state, lobby.get_member(req.state.user.uid)
 
-
-
-def ws_fn(connected=True, render_fn: Callable = JoinSpectators):
-    '''Returns a function that will be called when a user joins the lobby websocket'''
-    async def user_joined(sess, send, ws):
-        u = user_manager.get_or_create(sess)
-        lobby = lobby_service.get_lobby(sess.get('lobby_id'))
-        if not lobby: return
-        if m := lobby.get_member(u.uid):
-            if connected: m.connect(send, ws)
-            else: m.disconnect()
-
-            def update(r, *_):
-                if r == u: return Game(r, lobby), MemberName(r.user, m)
-                return MemberName(r.user, m)
-        else:
-            if not connected: return  # user not found in the lobby and not connecting
-            m = lobby.create_member(u, send=send, ws=ws)
-            lobby_service.update(lobby)
-
-            def update(r, *_):
-                if r == u: return Game(r, lobby), render_fn(r, m)
-                return render_fn(r, m)
-        await notify_all(lobby, update)
-
-    return user_joined
 
 @rt 
 def editor_readonly(req: Request, id:str):
@@ -127,6 +102,7 @@ async def start_game(req: Request):
     if not game.can_start():
         return add_toast(req.session, "Cannot start game", "error")
     game.start_game()
+    lobby.lock()
     await notify_all(lobby, lambda r, *_: Game(r, game, hx_swap_oob='true'))
 
 async def set_end_round_timer(lobby: AliasLobby):
@@ -184,6 +160,7 @@ async def guess(req: Request, correct: bool):
 @rt
 async def change_guess_points(req: Request, guess_id: str, delta: int):
     _, game_state, p = pre_init(req)
+    if not is_player(p): return add_toast(req.session, "You cannot change score", "error")
     entry = game_state.change_guess_points(guess_id, delta)
     if not entry: return add_toast(req.session, "Guess not found", "error")
     def update(r: AliasPlayer, *_):
@@ -191,7 +168,12 @@ async def change_guess_points(req: Request, guess_id: str, delta: int):
     await notify_all(req.state.lobby, update)
 
 
-@ws_rt.ws('/alias', conn=ws_fn(), disconn=ws_fn(connected=False))
+def upd(r, lobby, conn_member):
+    if r == conn_member: return Game(r, lobby), SpectatorsList(r, lobby), MemberName(r, conn_member)
+    return SpectatorsList(r, lobby), MemberName(r, conn_member)
+
+
+@ws_rt.ws('/alias', conn=ws_fn(render_fn=upd), disconn=ws_fn(False, upd))
 async def ws(): pass
 
 ws_url = ws_rt.wss[-1][1] # latest added websocket url

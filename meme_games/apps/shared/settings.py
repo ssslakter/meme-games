@@ -16,11 +16,11 @@ lobby_service = DI.get(LobbyService)
 user_manager = DI.get(UserManager)
 
 
-def Setting(icon: str, title: str = None, hx_swap='none', **kwargs):
+def Setting(icon: str, title: str = None, hx_swap='none', cls=('uk-btn cursor-pointer', ButtonT.default), **kwargs):
     return DivLAligned(
         UkIcon(icon, cls="text-3xl"),
         P(title, cls="text-lg pl-2"),
-        cls=('uk-btn cursor-pointer', ButtonT.default),
+        cls=cls,
         hx_swap=hx_swap,
         **kwargs
     )
@@ -39,15 +39,15 @@ def AvatarSet():
                 hx_post=edit_avatar,
                 hx_swap="none"))
 
-def LockLobby(l: Lobby): 
+def LockLobby(l: Lobby, cls=('uk-btn cursor-pointer', ButtonT.default)): 
     args = ('lock-open', 'Lock lobby') if not l.locked else ('lock', 'Unlock lobby')
-    return Setting(*args, hx_post=lock_lobby, hx_swap=None)(hx_swap_oob='outerHTML', id='lock-lobby')
+    return Setting(*args, hx_post=lock_lobby, cls=cls)(hx_swap_oob='outerHTML', id='lock-lobby')
 
 def SetBackground():
     return Setting('image', title='Background', hx_post=change_background, hx_prompt='Enter the URL of the background image')
 
 def LeaveLobby():
-    return Setting('log-out', title='Leave Lobby', hx_post=leave_lobby, hx_target="body", hx_swap="outerHTML")
+    return Setting('log-out', title='Leave Lobby', hx_post=leave_lobby, hx_swap="none")
 
 
 def Settings(*lobby_settings):
@@ -176,6 +176,8 @@ async def leave_lobby(req: Request):
     lobby: BasicLobby = req.state.lobby
     uid = req.state.user.uid
     if not lobby: return
+    if lobby.locked: 
+        return add_toast(req.session, "Can't leave while lobby is locked", "error")
     lobby.remove_member(uid)
     def update(*_): return UserRemover(uid)
     asyncio.create_task(notify_all(lobby, update))

@@ -18,7 +18,7 @@ user_manager = DI.get(UserManager)
 
 @rt
 def index():
-    return MainPage(
+    return LobbyPage(
         no_image=True,
     )
 

@@ -24,7 +24,7 @@ def MainBlock(reciever: WhoAmIPlayer | User, lobby: Lobby):
     from ..routes import ws_url
     from ..monitor import monitor
 
-    return MainPage(
+    return LobbyPage(
         Game(reciever, lobby),
         SettingsPopover(LockLobby(lobby) if is_host(reciever) else None),
         Spectators(reciever, lobby),
@@ -34,7 +34,3 @@ def MainBlock(reciever: WhoAmIPlayer | User, lobby: Lobby):
         background_url=lobby.background_url,
         _="on htmx:wsBeforeMessage call sendWSEvent(event)",
     )
-
-
-def ActiveGameState(r: WhoAmIPlayer | User, lobby: Lobby):
-    return Spectators(r, lobby), Game(r, lobby)

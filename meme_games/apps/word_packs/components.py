@@ -121,7 +121,7 @@ def PacksSelect(wordpacks: list[WordPack], route_with_id=None, **kwargs):
 def Page(wordpack_id: str):
     packs = wordpack_manager.get_all()
     wpack = wordpack_manager.get_by_id(wordpack_id)
-    return MainPage(no_image=True)(
+    return LobbyPage(no_image=True)(
         Container(
             Grid(
                 SideBar(),

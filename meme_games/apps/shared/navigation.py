@@ -43,7 +43,7 @@ def Navbar(*args, **kwargs):
         )(cls="min-w-48"),
         *args,
         ThemeSwitcher(),
-        brand=H3("Meme Games"),
+        brand=A(H3("Meme Games"), href='/'),
         **kwargs,
     )
 
@@ -64,7 +64,7 @@ def Navbar(*args, **kwargs):
     )
 
 
-def MainPage(*args, navbar_args=(), background_url: str = None, no_image: bool = False, cls='pt-4', **kwargs):
+def LobbyPage(*args, navbar_args=(), background_url: str = None, no_image: bool = False, cls='pt-4', **kwargs):
     """
     Main page of the app, contains the navbar and the main content.
     """

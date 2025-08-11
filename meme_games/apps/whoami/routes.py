@@ -1,4 +1,5 @@
-from ..shared.spectators import register_lobby_spectators_update, JoinSpectators
+from ..shared.spectators import register_lobby_spectators_update, SpectatorsList
+from ..shared.ws_route import ws_fn
 from ..shared.utils import register_route
 from meme_games.core import *
 from meme_games.domain import *
@@ -16,33 +17,6 @@ logger = logging.getLogger(__name__)
 
 lobby_service = DI.get(LobbyService)
 user_manager = DI.get(UserManager)
-
-
-
-def ws_fn(connected=True, render_fn: Callable = JoinSpectators):
-    '''Returns a function that will be called when a user joins the lobby websocket'''
-    async def user_joined(sess, send, ws):
-        u = user_manager.get_or_create(sess)
-        lobby = lobby_service.get_lobby(sess.get('lobby_id'), WAILobby)
-        if not lobby: return
-        if m := lobby.get_member(u.uid):
-            if connected: m.connect(send, ws)
-            else: m.disconnect()
-
-            def update(r, *_):
-                if r == u: return ActiveGameState(r, lobby), MemberName(r.user, m)
-                return MemberName(r.user, m)
-        else:
-            if not connected: return  # user not found in the lobby and not connecting
-            m = lobby.create_member(u, send=send, ws=ws)
-            lobby_service.update(lobby)
-
-            def update(r, *_):
-                if r == u: return ActiveGameState(r, lobby), render_fn(r, m)
-                return render_fn(r, m)
-        await notify_all(lobby, update)
-
-    return user_joined
 
 
 @rt('/{lobby_id}', methods=['get'])
@@ -124,7 +98,11 @@ async def edit_label_position(sess, owner_uid: str, **kwargs):
     await notify_all(lobby, update, json=True, but=p)
 
 
-@ws_rt.ws('/whoami', conn=ws_fn(), disconn=ws_fn(connected=False))
+def upd(r, lobby, conn_member):
+    if r == conn_member: return Game(r, lobby), SpectatorsList(r, lobby), MemberName(r, conn_member)
+    return SpectatorsList(r, lobby), MemberName(r, conn_member)
+
+@ws_rt.ws('/whoami', conn=ws_fn(render_fn=upd), disconn=ws_fn(False, upd))
 async def ws(sess, data):
     try:
         msg_type = data.pop('type')

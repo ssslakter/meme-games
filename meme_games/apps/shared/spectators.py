@@ -18,11 +18,8 @@ def prep_data(req: Request) -> tuple[Lobby, LobbyMember]:
     return lobby, lobby.get_member(req.state.user.uid)
 
 
-def Spectators(reciever: LobbyMember | User, lobby: Lobby):
-
-    return Card(
-        "Spectators: ",
-        Div(
+def SpectatorsList(reciever: LobbyMember | User, lobby: Lobby):
+    return Div(
             *[
                 MemberName(reciever, p)
                 for p in lobby.sorted_members()
@@ -30,7 +27,12 @@ def Spectators(reciever: LobbyMember | User, lobby: Lobby):
             ],
             id="spectators",
             cls="flex flex-col gap-1",
-        ),
+        )
+
+def Spectators(reciever: LobbyMember | User, lobby: Lobby):
+    return Card(
+        "Spectators: ",
+        SpectatorsList(reciever, lobby),
         body_cls='p-2',
         hx_post=spectate,
         hx_swap='none',
