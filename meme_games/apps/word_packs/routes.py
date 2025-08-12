@@ -31,7 +31,21 @@ def new_creation():
 
 @rt
 def index(pack_id: str = None): 
-    return Title("Word packs"),Page(pack_id)
+    packs = wordpack_manager.get_all()
+    wpack = wordpack_manager.get_by_id(pack_id)
+    return LobbyPage(title = "Word packs", no_image=True)(
+        Container(
+            Grid(
+                SideBar(),
+                ListCard("Wordpacks", Packs(packs), cls='max-h-[719px] overflow-y-auto'),
+                ListCard("Editor", WordPackEditor(wpack)),
+                cols_sm=1,
+                cols_md=3,
+                cols_lg=4,
+                cols_xl=5,
+            ),
+            cls=('pt-10', ContainerT.xl)
+        ))
 
 register_page("Word Packs", index.to())
 

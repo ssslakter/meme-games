@@ -64,13 +64,16 @@ def Navbar(*args, **kwargs):
     )
 
 
-def LobbyPage(*args, navbar_args=(), background_url: str = None, no_image: bool = False, cls='pt-4', **kwargs):
+def LobbyPage(*args, navbar_args=(), title: str = '',
+              background_url: str = None, no_image: bool = False, cls='pt-4', **kwargs):
     """
     Main page of the app, contains the navbar and the main content.
     """
-    return Div(
+    return (
+        Title(title),
+        Div(
         Navbar(*navbar_args),
         Background(background_url, no_image),
         Div(*args, cls = cls, **kwargs),
         cls="relative isolate min-h-screen",
-    )
+    ))

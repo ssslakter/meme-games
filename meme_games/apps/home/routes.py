@@ -24,8 +24,21 @@ def GameCard(title, desc, href):
 
 @rt
 def index():
-    return Div(
-        Title("Home"),
+    footer = Footer(Div(
+                P("© 2025 Meme games. All rights reserved.",
+                  cls="text-gray-600 dark:text-[color:var(--muted-foreground)]"),
+                Div(
+                    DivHStacked(
+                        UkIcon("github"),
+                        A("Repo",href="https://github.com/ssslakter/meme-games", cls="hover:underline",), cls=""),
+                    cls="flex space-x-4 mt-4 sm:mt-0 text-gray-600 dark:text-[color:var(--muted-foreground)]"
+                ),
+                cls="max-w-5xl mx-auto px-4 py-8 flex flex-col sm:flex-row justify-between items-center text-sm"
+            ),
+             cls="bg-gray-100 dark:bg-[color:var(--secondary)] border-t border-gray-200 dark:border-[color:var(--border)] mt-12"
+        )
+    return (Title("Home"),
+            Div(
         Main(
             Navbar(),
             Section(
@@ -67,21 +80,6 @@ def index():
             # ),
             cls="flex-1"
         ),
-        Footer(
-            Div(
-                P(
-                    "© 2025 Meme games. All rights reserved.",
-                    cls="text-gray-600 dark:text-[color:var(--muted-foreground)]"
-                ),
-                Div(
-            DivHStacked(UkIcon("github"),
-                        A("Repo",href="https://github.com/ssslakter/meme-games",
-                          cls="hover:underline",), cls=""),
-                    cls="flex space-x-4 mt-4 sm:mt-0 text-gray-600 dark:text-[color:var(--muted-foreground)]"
-                ),
-                cls="max-w-5xl mx-auto px-4 py-8 flex flex-col sm:flex-row justify-between items-center text-sm"
-            ),
-             cls="bg-gray-100 dark:bg-[color:var(--secondary)] border-t border-gray-200 dark:border-[color:var(--border)] mt-12"
-        ),
+        footer,
         cls="flex flex-col min-h-screen bg-gray-50 dark:bg-[color:var(--background)]"
-    )
+    ))

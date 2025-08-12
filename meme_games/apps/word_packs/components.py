@@ -117,21 +117,3 @@ def PacksSelect(wordpacks: list[WordPack], route_with_id=None, **kwargs):
         cls=(TableT.middle, TableT.divider, TableT.hover, TableT.sm, 'table-fixed'),
         id='packs_select'
     )
-
-def Page(wordpack_id: str):
-    packs = wordpack_manager.get_all()
-    wpack = wordpack_manager.get_by_id(wordpack_id)
-    return LobbyPage(no_image=True)(
-        Container(
-            Grid(
-                SideBar(),
-                ListCard("Wordpacks", Packs(packs), cls='max-h-[719px] overflow-y-auto'),
-                ListCard("Editor", WordPackEditor(wpack)),
-                cols_sm=1,
-                cols_md=3,
-                cols_lg=4,
-                cols_xl=5,
-            ),
-            cls=('pt-10', ContainerT.xl)
-        )
-    )

@@ -1,1 +1,1 @@
-from .streamer import *
+from .media import *

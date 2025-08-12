@@ -28,6 +28,7 @@ def Page(reciever: AliasPlayer | User, lobby: AliasLobby):
         hx_ext="ws",
         ws_connect=ws_url,
         no_image=True,
+        title = f'Alias lobby: {lobby.id}',
         cls='p-10'
     )
 

@@ -90,8 +90,7 @@ def index(req: Request, lobby_id: str = None):
     if was_created: lobby_service.update(lobby)
     m = lobby.get_member(u.uid)
     req.session['lobby_id'] = lobby.id
-    return (Title(f'Alias lobby: {lobby.id}'),
-            Page(m or u, lobby))
+    return Page(m or u, lobby)
 
 def redirect(lobby_id: str): return Redirect(index.to(lobby_id=lobby_id))
 

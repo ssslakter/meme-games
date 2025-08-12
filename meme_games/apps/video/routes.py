@@ -1,4 +1,7 @@
+from ..shared.ws_route import ws_fn
 from ..shared.utils import register_route
+from ..shared.spectators import *
+from meme_games.domain import *
 from meme_games.apps.shared import register_page
 from meme_games.core import *
 from ..shared import *
@@ -10,36 +13,39 @@ register_page("Videos 🚧", rt.prefix)
 
 logger = logging.getLogger(__name__)
 
-
-@rt
-def index():
-    return LobbyPage(H1("Video"),
-                  Div(hx_ext='ws', ws_connect=ws_url,
-                      hx_on__ws_after_message = 'getViewerData(event)',
-                      hx_on__ws_open='window.ws = event.detail.socketWrapper'),
-                  ViewerBlock(),
-                  no_image=True)
+lobby_service = DI.get(LobbyService)
+user_manager = DI.get(UserManager)
 
 
-@rt
-def stream():
+@rt('/{lobby_id}', methods=['get'])
+def index(req: Request, lobby_id: str = None):
+    if not lobby_id: return redirect(random_id())
+    u: User = req.state.user
+    lobby, was_created = lobby_service.get_or_create(u, lobby_id, BasicLobby, persistent=True)
+    if was_created: lobby_service.update(lobby)
+    req.session['lobby_id'] = lobby.id
+
     return LobbyPage(
-        H1("Streamer page"),
-        Div(hx_ext='ws', ws_connect=ws_url,
-            hx_on__ws_after_message = 'getWsEvent(event)',
-            hx_on__ws_open='window.ws = event.detail.socketWrapper'),
-        StreamerBlock(),
+        H1("Videos"),
+        StreamingMain(),
+        Spectators(u, lobby),
+        SettingsPopover(),
+        title=f"Watch together lobby: {lobby.id}",
         no_image=True)
 
+def redirect(lobby_id: str): return Redirect(index.to(lobby_id=lobby_id))
 
-users: Dict[str, WebSocket] = {}
-def on_conn(ws, send): users[str(id(ws))] = ws
-def on_disconn(ws): users.pop(str(id(ws)), None)
+def upd(r, lobby, conn_member):
+    if r == conn_member: return SpectatorsList(r, lobby), MemberName(r, conn_member)
+    return SpectatorsList(r, lobby), MemberName(r, conn_member)
 
-@ws_rt.ws('/video', conn=on_conn, disconn=on_disconn)
+@ws_rt.ws('/video', conn=ws_fn(render_fn=upd), disconn=ws_fn(False, upd))
 async def ws(ws, sess, data):
-    for u in users.values():
-        if u!= ws:
-            await u.send_json(data)
+    u = user_manager.get(sess['uid'])
+    lobby = lobby_service.get_lobby(sess.get("lobby_id"), BasicLobby)
+    m = lobby.get_member(u.uid)
+    if data['type']=='offer':
+        await notify(m, lambda *_: ScreenShareButton(True))
+    await notify_all(lobby, lambda *_: data, but=m, json=True)
 
 ws_url = ws_rt.wss[-1][1]
