@@ -33,7 +33,7 @@ def new_creation():
 def index(pack_id: str = None): 
     packs = wordpack_manager.get_all()
     wpack = wordpack_manager.get_by_id(pack_id)
-    return LobbyPage(title = "Word packs", no_image=True)(
+    return LobbyPage(
         Container(
             Grid(
                 SideBar(),
@@ -44,8 +44,8 @@ def index(pack_id: str = None):
                 cols_lg=4,
                 cols_xl=5,
             ),
-            cls=('pt-10', ContainerT.xl)
-        ))
+            cls=('pt-10', ContainerT.xl)),
+            title = "Word packs", no_image=True)
 
 register_page("Word Packs", index.to())
 
