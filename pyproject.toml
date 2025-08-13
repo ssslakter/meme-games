@@ -3,23 +3,20 @@ requires = ["setuptools>=42"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name="meme-games"
+name = "meme-games"
 version = "0.1.0"
 description = "A collection of meme games"
 authors = [{ name = "Slava Chaunin", email = "slava.chaunin@gmail.com" }]
-requires-python=">=3.13"
+requires-python = ">=3.13"
 license = { text = "MIT" }
-dependencies = [
-    "python-fasthtml",
-    "fastcore",
-    "monsterui>=1.0.21,<2"]
+dependencies = ["python-fasthtml", "fastcore", "monsterui>=1.0.21,<2"]
 
 [tool.setuptools]
 packages = ["meme_games"]
 
 [tool.pixi.workspace]
 channels = ["conda-forge"]
-platforms = ["win-64", "linux-64"]
+platforms = ["win-64", "linux-64", "osx-arm64"]
 
 [tool.pixi.pypi-dependencies]
 meme-games = { path = ".", editable = true }
@@ -29,12 +26,12 @@ default = { solve-group = "default" }
 dev = { features = ["dev"], solve-group = "default" }
 
 [tool.pixi.feature.dev.activation.env]
-DEV='TRUE'
+DEV = 'TRUE'
 
 [tool.pixi.tasks]
 app = "python run.py"
 _export = "nbdev_clean && nbdev_export"
-export = {depends-on = [{ task = '_export', environment = "dev"}]}
+export = { depends-on = [{ task = '_export', environment = "dev" }] }
 
 
 [dependency-groups]
