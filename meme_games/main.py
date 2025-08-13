@@ -34,7 +34,7 @@ hdrs = [
     Script(src='/static/scripts/imports/live2d/index.min.js'),
     Statics(ext='js', static_path='static', wc='scripts/common/**/*.js'),
     Statics(ext='js', static_path='static', wc='scripts/whoami/**/*.js'),
-    Statics(ext='js', static_path='static', wc='scripts/video/**/*.js'),
+    Statics(ext='js', static_path='static', wc='scripts/video/**/*.js', defer=True),
     Theme.yellow.headers(radii=ThemeRadii.lg, shadows=ThemeShadows.lg),
     style
 ]

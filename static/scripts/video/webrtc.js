@@ -1,46 +1,73 @@
 const configuration = { 'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }] }
 
-// ---- Peer connection ----
 let peerConnection = new RTCPeerConnection(configuration);
+const localSenders = new Map();
+let isNegotiating = false;
+
+const videoEl = htmx.find('#video')
+
+// -------------------------
+// ---- Peer connection ----
+// -------------------------
+
 peerConnection.addEventListener('icecandidate', event => {
-    console.log("ICE Candidate found:", event.candidate);
-    if (event.candidate) {
-        ws.send(JSON.stringify({ 'type': 'new-ice-candidate', 'candidate': event.candidate }));
-    }
+    if (!event.candidate) return;
+    ws.send(JSON.stringify({ 'type': 'new-ice-candidate', 'candidate': event.candidate }));
 });
 
-peerConnection.addEventListener('connectionstatechange', event => {
-    console.log('Connection state changed to:', peerConnection.connectionState);
-    if (peerConnection.connectionState === 'connected') {
-        // Peers connected!
-    }
-});
 
 peerConnection.addEventListener('track', event => {
-    console.log("Track received from remote peer:", event.streams);
-    const remoteVideo = document.getElementById('video');
-    remoteVideo.srcObject = event.streams[0];
+    console.log("Track received from remote peer:", event.track);
+    if (!videoEl.srcObject) {
+        videoEl.srcObject = new MediaStream();
+    }
+    videoEl.srcObject.addTrack(event.track);
 });
 
+peerConnection.onnegotiationneeded = async () => {
+    if (isNegotiating || peerConnection.signalingState !== 'stable') {
+        console.log("Skipping negotiation, already in progress or not in stable state.");
+        return;
+    }
+    try {
+        isNegotiating = true;
+        const offer = await peerConnection.createOffer();
+        console.log('Negotiation needed, creating offer...', offer);
+        await peerConnection.setLocalDescription(offer);
+        ws.send(JSON.stringify(offer));
+    } catch (e) {
+        console.error('Error during negotiation:', e);
+    } finally {
+        isNegotiating = false;
+    }
+};
+
+// -------------------------
 // ---- Signaling logic ----
+// -------------------------
 
 async function makeCall() {
     const offer = await peerConnection.createOffer();
     await peerConnection.setLocalDescription(offer);
+    console.log("sending offer", offer)
     ws.send(JSON.stringify(offer));
 }
 
 async function handleMessage(event) {
-    const message = event.detail.message;
+    const message = event.detail ? event.detail.message : event.data;
     if (!isJson(message)) return
 
     const data = JSON.parse(message);
     switch (data.type) {
         case 'answer':
-            await peerConnection.setRemoteDescription(new RTCSessionDescription(data));
+            // if (peerConnection.signalingState !== 'have-local-offer') return;
+            await peerConnection.setRemoteDescription(data);
             break;
         case 'offer':
-            peerConnection.setRemoteDescription(new RTCSessionDescription(data));
+            console.log("offer", peerConnection.signalingState)
+            // if (peerConnection.signalingState !== 'stable') return;
+            console.log(data)
+            await peerConnection.setRemoteDescription(data);
             const answer = await peerConnection.createAnswer();
             await peerConnection.setLocalDescription(answer);
             ws.send(JSON.stringify(answer));
@@ -52,23 +79,97 @@ async function handleMessage(event) {
                 console.error('Error adding received ice candidate', e);
             }
             break;
-        default:
+        case 'hangup':
+            console.log('Received hangup signal.');
+            stopStream();
             break;
     }
 }
 
-async function startStream() {
-    await captureMedia();
-    await makeCall();
+
+function stopStream() {
+    if (!peerConnection) return;
+
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'hangup' }));
+    }
+    
+    isNegotiating = false;
+
+    localSenders.forEach(({ track, sender }) => {
+        track.stop();
+        if (peerConnection.getSenders().includes(sender)) {
+            peerConnection.removeTrack(sender);
+        }
+    });
+    localSenders.clear();
+
+    peerConnection.close();
+    videoEl.srcObject = null;
+
+    console.log("Call ended and resources cleaned up.");
 }
 
-async function captureMedia() {
-    try {
-        var stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-        document.body.dispatchEvent(new CustomEvent('start-stream', { detail: stream }))
-        stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
 
-    } catch (error) {
-        console.error("Error:", error);
+// ------------------------
+// ---- Media Controls ----
+// ------------------------
+
+const toggleCamera = () => toggleTrack('camera', { video: true });
+const toggleMicrophone = () => toggleTrack('mic', { audio: true });
+const toggleScreenShare = () => toggleTrack('screen', { video: true });
+
+function toggleControl(key) {
+    console.log('toggling', key)
+    const elt = htmx.find('#' + key)
+    const [onBtn, offBtn] = htmx.findAll(elt, "button")
+    htmx.toggleClass(onBtn, "hidden")
+    htmx.toggleClass(offBtn, "hidden")
+}
+
+async function toggleTrack(key, mediaConstraints) {
+
+    if (localSenders.has(key)) {
+        console.log(`Stopping track: ${key}`);
+        const { sender, track } = localSenders.get(key);
+        peerConnection.removeTrack(sender);
+        track.stop();
+        localSenders.delete(key);
+
+        toggleControl(key);
+        if (key === 'mic') return;
+        videoEl.srcObject = null;
+    } else {
+        const videoKeyToStop = key === 'camera' ? 'screen' : 'camera';
+        if (key !== 'mic' && localSenders.has(videoKeyToStop)) {
+            await toggleTrack(videoKeyToStop);
+        }
+
+        console.log(`Starting track: ${key}`);
+        try {
+            const stream = key === 'screen'
+                ? await navigator.mediaDevices.getDisplayMedia(mediaConstraints)
+                : await navigator.mediaDevices.getUserMedia(mediaConstraints);
+            toggleControl(key);
+
+            const track = stream.getTracks()[0];
+            const sender = peerConnection.addTrack(track, stream);
+
+            localSenders.set(key, { sender, track });
+
+            if (key !== 'mic') {
+                videoEl.srcObject = stream;
+            }
+
+            track.onended = () => {
+                toggleControl(key);
+                peerConnection.removeTrack(sender);
+                localSenders.delete(key);
+                videoEl.srcObject = null;
+            };
+
+        } catch (error) {
+            console.error(`Error starting track ${key}:`, error);
+        }
     }
 }

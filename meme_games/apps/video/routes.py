@@ -28,7 +28,7 @@ def index(req: Request, lobby_id: str = None):
     return LobbyPage(
         H1("Videos"),
         StreamingMain(),
-        Spectators(u, lobby),
+        Spectators(u, lobby, cls='right-0 bottom-1/3 -translate-y-1/2'),
         SettingsPopover(),
         title=f"Watch together lobby: {lobby.id}",
         no_image=True)
@@ -44,8 +44,6 @@ async def ws(ws, sess, data):
     u = user_manager.get(sess['uid'])
     lobby = lobby_service.get_lobby(sess.get("lobby_id"), BasicLobby)
     m = lobby.get_member(u.uid)
-    if data['type']=='offer':
-        await notify(m, lambda *_: ScreenShareButton(True))
     await notify_all(lobby, lambda *_: data, but=m, json=True)
 
 ws_url = ws_rt.wss[-1][1]

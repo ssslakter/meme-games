@@ -29,7 +29,7 @@ def SpectatorsList(reciever: LobbyMember | User, lobby: Lobby):
             cls="flex flex-col gap-1",
         )
 
-def Spectators(reciever: LobbyMember | User, lobby: Lobby):
+def Spectators(reciever: LobbyMember | User, lobby: Lobby, cls = 'right-0 top-1/3 -translate-y-1/2'):
     return Card(
         "Spectators: ",
         SpectatorsList(reciever, lobby),
@@ -37,7 +37,7 @@ def Spectators(reciever: LobbyMember | User, lobby: Lobby):
         hx_post=spectate,
         hx_swap='none',
         tabindex="0",
-        cls=f"fixed right-0 top-1/3 -translate-y-1/2 rounded-r-none p-2 cursor-pointer"
+        cls=f"fixed rounded-r-none p-2 cursor-pointer {cls}"
     )
 
 
