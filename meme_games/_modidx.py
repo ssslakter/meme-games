@@ -122,4 +122,5 @@ d = { 'settings': { 'doc_baseurl': '/meme-games',
                                                                                        'meme_games/domain/user.py'),
                                         'meme_games.domain.user.user_beforeware': ( 'user.html#user_beforeware',
                                                                                     'meme_games/domain/user.py')},
-            'meme_games.main': {}}}
+            'meme_games.main': {},
+            'meme_games.metrics': {}}}

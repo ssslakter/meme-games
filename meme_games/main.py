@@ -1,6 +1,8 @@
 from meme_games.core import *
 from meme_games.domain import *
 from starlette.routing import compile_path
+from starlette_prometheus import PrometheusMiddleware
+from .metrics import metrics
 from meme_games.apps import *
 
 db = init_db('data/data.db')
@@ -50,6 +52,9 @@ app = FastHTML(before=bwares, hdrs=hdrs,
                    exception_handlers=exception_handlers,
                    htmlkw={'class': 'uk-custom-theme'},
                    bodykw={'hx-boost': 'true'})
+
+app.add_middleware(PrometheusMiddleware)
+app.route('/metrics')(metrics)
 
 setup_toasts(app, duration=1500)
 
