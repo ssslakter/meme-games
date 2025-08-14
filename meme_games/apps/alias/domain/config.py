@@ -10,4 +10,4 @@ class GameConfig:
     min_team_players: int = 1 # Minimum number of members in a team
     min_teams: int = 1    # Minimum number of teams required to start the game
     correct_guess_score: int = 1
-    mistake_penalty: int = -1
+    mistake_penalty: int = 0

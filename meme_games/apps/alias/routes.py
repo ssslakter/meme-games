@@ -107,7 +107,6 @@ async def start_game(req: Request):
 async def set_end_round_timer(lobby: AliasLobby):
     game_state: GameState = lobby.game_state
     await game_state.timer.sleep()
-    game_state.next_state()
     def update(r: AliasPlayer, *_):
         return Game(r, game_state, hx_swap_oob='true')
     await notify_all(lobby, update)
@@ -150,6 +149,9 @@ async def guess(req: Request, correct: bool):
             game_state.state == gm.StateMachine.ROUND_PLAYING):
         return add_toast(req.session, "Cannot guess now", "error")
     game_state.guess_word(p, correct)
+    if game_state.timer.finished:
+        game_state.next_state()
+        return await notify_all(lobby, lambda r, *_: Game(r, game_state, hx_swap_oob='true'))
     def update(r: AliasPlayer, *_):
         return RoundLog(game_state.guess_log, game_state)
     await notify_all(lobby, update)

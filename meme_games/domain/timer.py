@@ -5,12 +5,14 @@ class Timer:
 
     def __init__(self):
         self.pause_, self.stop_ = asyncio.Event(), asyncio.Event()
+        self.finished = False
         
     def set(self, time: float = 10.0): 
         self.reset()
         self.rem_t = self.total = time
 
     def reset(self):
+        self.finished = False
         self.unpause()
         self.stop_.clear()
 
@@ -29,6 +31,7 @@ class Timer:
                 unpause_t = t.monotonic()
                 finish_t += paused_t - unpause_t
             else: self.rem_t = finish_t - t.monotonic()
+        self.finished = True
 
     @property
     def time(self): 
