@@ -61,6 +61,7 @@ class GameState:
                 self.active_team.points += sum(g.points for g in self.guess_log)
                 self.active_team.times_played += 1
                 self.active_team = next(self.teams_iterator)
+                self.active_player = next(self.active_team)
                 self.guess_log.clear()
                 self.state = StateMachine.VOTING_TO_START                
         self.reset_votes()
