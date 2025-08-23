@@ -53,7 +53,7 @@ app = FastHTML(before=bwares, hdrs=hdrs,
                    htmlkw={'class': 'uk-custom-theme'},
                    bodykw={'hx-boost': 'true'})
 
-app.add_middleware(PrometheusMiddleware)
+app.add_middleware(PrometheusMiddleware, filter_unhandled_paths=True)
 app.route('/metrics')(metrics)
 
 setup_toasts(app, duration=1500)
