@@ -7,8 +7,8 @@ from .lobby import *
 
 class LobbyService:
     """Manages lobby creation, retrieval, and lifecycle."""
-    lobby_lifetime = dt.timedelta(days=5)
-    lobby_limit = 50
+    lobby_lifetime = dt.timedelta(minutes=10)
+    lobby_limit = 100
 
     def __init__(self, lobby_repo: LobbyRepo):
         self.repo = lobby_repo
