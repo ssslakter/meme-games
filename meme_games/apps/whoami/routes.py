@@ -1,6 +1,6 @@
 from ..shared.spectators import register_lobby_spectators_update, SpectatorsList
 from ..shared.ws_route import ws_fn
-from ..shared.utils import register_route
+from ..shared.utils import register_route, get_common_services, create_lobby_redirect, create_ws_spectator_update
 from meme_games.core import *
 from meme_games.domain import *
 from ..shared import *
@@ -15,8 +15,7 @@ rt = APIRouter('/whoami')
 register_route(rt)
 logger = logging.getLogger(__name__)
 
-lobby_service = DI.get(LobbyService)
-user_manager = DI.get(UserManager)
+lobby_service, user_manager = get_common_services()
 
 
 @rt('/{lobby_id}', methods=['get'])
@@ -30,7 +29,7 @@ def index(req: Request, lobby_id: str = None):
     return (Title(f'Who Am I lobby: {lobby.id}'),
             MainBlock(m or u, lobby))
     
-def redirect(lobby_id: str): return Redirect(index.to(lobby_id=lobby_id))
+redirect = create_lobby_redirect(index)
 
 
 @rt
@@ -98,9 +97,7 @@ async def edit_label_position(sess, owner_uid: str, **kwargs):
     await notify_all(lobby, update, json=True, but=p)
 
 
-def upd(r, lobby, conn_member):
-    if r == conn_member: return Game(r, lobby), SpectatorsList(r, lobby), MemberName(r, conn_member)
-    return SpectatorsList(r, lobby), MemberName(r, conn_member)
+upd = create_ws_spectator_update(lambda r, lobby: Game(r, lobby))
 
 @ws_rt.ws('/whoami', conn=ws_fn(render_fn=upd), disconn=ws_fn(False, upd))
 async def ws(sess, data):

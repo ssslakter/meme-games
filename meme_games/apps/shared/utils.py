@@ -24,3 +24,49 @@ def int2px(value: int):
 ROUTES: set[APIRouter] = set()
 def register_route(rt):
     ROUTES.add(rt)
+
+
+def get_common_services():
+    """Get commonly used services from DI container.
+    
+    Returns:
+        tuple: (lobby_service, user_manager)
+    """
+    from meme_games.domain import LobbyService, UserManager
+    from meme_games.core import DI
+    
+    return DI.get(LobbyService), DI.get(UserManager)
+
+
+def create_lobby_redirect(index_route):
+    """Create a redirect helper function for lobby routes.
+    
+    Args:
+        index_route: The index route function to redirect to
+        
+    Returns:
+        function: A redirect function that takes lobby_id and redirects to index
+    """
+    def redirect(lobby_id: str):
+        from meme_games.core import Redirect
+        return Redirect(index_route.to(lobby_id=lobby_id))
+    return redirect
+
+
+def create_ws_spectator_update(game_component=None):
+    """Create a standard websocket update function for spectator lists.
+    
+    Args:
+        game_component: Optional game component function to render for the connected member
+        
+    Returns:
+        function: An update function for websocket connections
+    """
+    def upd(r, lobby, conn_member):
+        from ..shared.spectators import SpectatorsList
+        from ..shared.general import MemberName
+        
+        if game_component and r == conn_member:
+            return game_component(r, lobby), SpectatorsList(r, lobby), MemberName(r, conn_member)
+        return SpectatorsList(r, lobby), MemberName(r, conn_member)
+    return upd

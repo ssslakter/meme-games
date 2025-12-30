@@ -1,4 +1,4 @@
-from ..shared.utils import register_route
+from ..shared.utils import register_route, get_common_services, create_lobby_redirect, create_ws_spectator_update
 from ..shared.spectators import SpectatorsList 
 from ..shared.ws_route import ws_fn 
 from meme_games.core import *
@@ -16,8 +16,7 @@ register_route(rt)
 
 logger = logging.getLogger(__name__)
 
-lobby_service = DI.get(LobbyService)
-user_manager = DI.get(UserManager)
+lobby_service, user_manager = get_common_services()
 
 
 def pre_init(req: Request) -> tuple[Lobby, GameState, AliasPlayer]:
@@ -92,7 +91,7 @@ def index(req: Request, lobby_id: str = None):
     req.session['lobby_id'] = lobby.id
     return Page(m or u, lobby)
 
-def redirect(lobby_id: str): return Redirect(index.to(lobby_id=lobby_id))
+redirect = create_lobby_redirect(index)
 
 
 @rt
@@ -169,9 +168,7 @@ async def change_guess_points(req: Request, guess_id: str, delta: int):
     await notify_all(req.state.lobby, update)
 
 
-def upd(r, lobby, conn_member):
-    if r == conn_member: return Game(r, lobby), SpectatorsList(r, lobby), MemberName(r, conn_member)
-    return SpectatorsList(r, lobby), MemberName(r, conn_member)
+upd = create_ws_spectator_update(lambda r, lobby: Game(r, lobby.game_state, hx_swap_oob='true'))
 
 
 @ws_rt.ws('/alias', conn=ws_fn(render_fn=upd), disconn=ws_fn(False, upd))

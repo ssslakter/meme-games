@@ -1,5 +1,5 @@
 from ..shared.ws_route import ws_fn
-from ..shared.utils import register_route
+from ..shared.utils import register_route, get_common_services, create_lobby_redirect, create_ws_spectator_update
 from ..shared.spectators import *
 from meme_games.domain import *
 from meme_games.apps.shared import register_page
@@ -13,8 +13,7 @@ register_page("Videos 🚧", rt.prefix)
 
 logger = logging.getLogger(__name__)
 
-lobby_service = DI.get(LobbyService)
-user_manager = DI.get(UserManager)
+lobby_service, user_manager = get_common_services()
 
 
 @rt('/{lobby_id}', methods=['get'])
@@ -33,11 +32,9 @@ def index(req: Request, lobby_id: str = None):
         title=f"Watch together lobby: {lobby.id}",
         no_image=True)
 
-def redirect(lobby_id: str): return Redirect(index.to(lobby_id=lobby_id))
+redirect = create_lobby_redirect(index)
 
-def upd(r, lobby, conn_member):
-    if r == conn_member: return SpectatorsList(r, lobby), MemberName(r, conn_member)
-    return SpectatorsList(r, lobby), MemberName(r, conn_member)
+upd = create_ws_spectator_update()
 
 @ws_rt.ws('/video', conn=ws_fn(render_fn=upd), disconn=ws_fn(False, upd))
 async def ws(ws, sess, data):

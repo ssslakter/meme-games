@@ -1,4 +1,4 @@
-from ..shared.utils import register_route
+from ..shared.utils import register_route, get_common_services, create_lobby_redirect
 from meme_games.core import *
 from meme_games.domain import *
 from .domain import *
@@ -13,9 +13,8 @@ register_route(rt)
 logger = logging.getLogger(__name__)
 
 
-lobby_service = DI.get(LobbyService)
+lobby_service, user_manager = get_common_services()
 wordpack_manager = DI.get(WordPackRepo)
-user_manager = DI.get(UserManager)
 
 
 #---------------------------------#
@@ -44,7 +43,7 @@ def index(req: Request, lobby_id: str = None):
     return Redirect('/work-in-progress')
     return Title(f"Codenames lobby: {lobby.id}"), MainBlock(m or u, lobby)
 
-def redirect(lobby_id: str): return Redirect(index.to(lobby_id=lobby_id))
+redirect = create_lobby_redirect(index)
 
 
 @rt

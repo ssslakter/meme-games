@@ -1,4 +1,4 @@
-from ..shared.utils import register_route
+from ..shared.utils import register_route, get_common_services
 from meme_games.core import *
 from meme_games.domain import *
 from ..shared import *
@@ -13,7 +13,7 @@ register_route(rt)
 
 logger = logging.getLogger(__name__)
 
-user_manager = DI.get(UserManager)
+lobby_service, user_manager = get_common_services()
 
 
 @rt
@@ -35,5 +35,5 @@ def edit_name(req: Request, name: str):
     u: User = req.state.user
     u.name = name
     user_manager.update(u)
-    DI.get(LobbyService).sync_active_lobbies_user(u)
+    lobby_service.sync_active_lobbies_user(u)
     return asdict(u)
