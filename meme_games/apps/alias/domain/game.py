@@ -1,4 +1,3 @@
-from enum import auto
 from itertools import cycle
 from meme_games.domain import * 
 from meme_games.core import *

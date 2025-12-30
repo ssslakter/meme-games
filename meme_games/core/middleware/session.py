@@ -1,6 +1,9 @@
 import re
 from starlette.middleware.sessions import SessionMiddleware
 
+__all__ = ['ConditionalSessionMiddleware']
+
+
 class ConditionalSessionMiddleware:
     """Middleware that applies SessionMiddleware conditionally based on the request path."""
     def __init__(self, app, skip: list[str]=None, **kwargs):
@@ -10,8 +13,6 @@ class ConditionalSessionMiddleware:
 
     async def __call__(self, scope, receive, send):
         if scope["type"] == "http" and any(p.match(scope["path"]) for p in self.skip_paths):
-            # Skip the SessionMiddleware for exempt paths
             await self.app(scope, receive, send)
         else:
-            # Use the SessionMiddleware for all other paths
             await self.session_middleware(scope, receive, send)
