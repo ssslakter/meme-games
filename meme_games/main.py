@@ -55,8 +55,8 @@ app = FastHTML(before=bwares, hdrs=hdrs,
 
 app.add_middleware(PrometheusMiddleware, filter_unhandled_paths=True)
 # Rate limiting middleware - order matters: lobby creation limiter is checked first, then global
-app.add_middleware(LobbyCreationRateLimitMiddleware, max_creations=5, window_seconds=60.0)
-app.add_middleware(RateLimitMiddleware, max_requests=50, window_seconds=60.0, skip_paths=static_re)
+app.add_middleware(LobbyCreationRateLimitMiddleware, max_creations=5, window=60.0, patterns=LOBBY_PATTERNS)
+app.add_middleware(RateLimitMiddleware, max_requests=50, window=60.0, skip_paths=static_re)
 app.route('/metrics')(metrics)
 
 setup_toasts(app, duration=1500)
