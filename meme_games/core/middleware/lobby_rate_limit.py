@@ -1,4 +1,3 @@
-"""Rate limiting middleware for lobby/game creation endpoints."""
 import re
 from collections import defaultdict
 from starlette.responses import Response

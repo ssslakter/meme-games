@@ -1,3 +1,4 @@
+from enum import auto, Enum
 import dataclasses
 from dataclasses import field
 import logging

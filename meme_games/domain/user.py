@@ -43,7 +43,7 @@ class UserManager(DataRepository):
         self.users: fl.Table = self.db.t.user
         return self.users
     
-    def create(self, uid: str=None, name: str = 'null'):
+    def create(self, uid: str=None, name: str = 'Guest') -> User:
         u = User(uid or random_id(), name)
         self.users.insert(u)
         return u
@@ -51,7 +51,7 @@ class UserManager(DataRepository):
     def get(self, uid: str) -> User: return self.users.get(uid)
     def update(self, user: User) -> User: return self.users.update(user)
     
-    def get_or_create(self, sess: dict, name: str = 'null') -> User:
+    def get_or_create(self, sess: dict, name: str = 'Guest') -> User:
         """Gets a user from the database or creates a new one based on the session."""
         sess = sess['session'] if 'session' in sess else sess
         uid = sess.setdefault('uid', random_id())
