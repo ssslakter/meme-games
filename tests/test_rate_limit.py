@@ -6,7 +6,8 @@ import time
 from meme_games.core.rate_limit import (
     RateLimitState, 
     RateLimitMiddleware, 
-    LobbyCreationRateLimitMiddleware
+    LobbyCreationRateLimitMiddleware,
+    get_client_ip
 )
 
 
@@ -79,20 +80,18 @@ class TestRateLimitMiddleware:
     """Tests for RateLimitMiddleware class."""
     
     def test_extracts_client_ip_from_scope(self):
-        middleware = RateLimitMiddleware(MockApp())
         scope = {"client": ("192.168.1.1", 12345)}
         
-        ip = middleware._get_client_ip(scope)
+        ip = get_client_ip(scope)
         assert ip == "192.168.1.1"
     
     def test_extracts_client_ip_from_x_forwarded_for(self):
-        middleware = RateLimitMiddleware(MockApp())
         scope = {
             "client": ("127.0.0.1", 12345),
             "headers": [(b"x-forwarded-for", b"10.0.0.1, 192.168.1.1")]
         }
         
-        ip = middleware._get_client_ip(scope)
+        ip = get_client_ip(scope)
         assert ip == "10.0.0.1"
     
     def test_skip_paths(self):

@@ -15,6 +15,25 @@ from starlette.responses import Response
 __all__ = ['RateLimitMiddleware', 'LobbyCreationRateLimitMiddleware']
 
 
+def get_client_ip(scope: dict) -> str:
+    """Extract client IP from ASGI request scope.
+    
+    Checks X-Forwarded-For header first (for proxied requests),
+    then falls back to direct client IP.
+    """
+    headers = dict(scope.get("headers", []))
+    forwarded_for = headers.get(b"x-forwarded-for", b"").decode()
+    if forwarded_for:
+        # Take the first IP in the chain
+        return forwarded_for.split(",")[0].strip()
+    
+    # Fall back to direct client IP
+    client = scope.get("client")
+    if client:
+        return client[0]
+    return "unknown"
+
+
 @dataclass
 class RateLimitState:
     """Tracks rate limit state for a single client."""
@@ -57,21 +76,6 @@ class RateLimitMiddleware:
         self.skip_patterns = [re.compile(p) for p in (skip_paths or [])]
         self._state: dict[str, RateLimitState] = defaultdict(RateLimitState)
     
-    def _get_client_ip(self, scope: dict) -> str:
-        """Extract client IP from request scope."""
-        # Check for X-Forwarded-For header (for proxied requests)
-        headers = dict(scope.get("headers", []))
-        forwarded_for = headers.get(b"x-forwarded-for", b"").decode()
-        if forwarded_for:
-            # Take the first IP in the chain
-            return forwarded_for.split(",")[0].strip()
-        
-        # Fall back to direct client IP
-        client = scope.get("client")
-        if client:
-            return client[0]
-        return "unknown"
-    
     def _should_skip(self, path: str) -> bool:
         """Check if the path should be skipped from rate limiting."""
         return any(p.match(path) for p in self.skip_patterns)
@@ -81,7 +85,7 @@ class RateLimitMiddleware:
             await self.app(scope, receive, send)
             return
         
-        client_ip = self._get_client_ip(scope)
+        client_ip = get_client_ip(scope)
         state = self._state[client_ip]
         
         if state.is_rate_limited(self.max_requests, self.window_seconds):
@@ -133,18 +137,6 @@ class LobbyCreationRateLimitMiddleware:
         self.lobby_patterns = [re.compile(p, re.IGNORECASE) for p in patterns]
         self._state: dict[str, RateLimitState] = defaultdict(RateLimitState)
     
-    def _get_client_ip(self, scope: dict) -> str:
-        """Extract client IP from request scope."""
-        headers = dict(scope.get("headers", []))
-        forwarded_for = headers.get(b"x-forwarded-for", b"").decode()
-        if forwarded_for:
-            return forwarded_for.split(",")[0].strip()
-        
-        client = scope.get("client")
-        if client:
-            return client[0]
-        return "unknown"
-    
     def _is_lobby_creation_route(self, path: str, method: str) -> bool:
         """Check if this route could create a lobby (GET requests to lobby routes)."""
         # Only GET requests trigger lobby creation via get_or_create
@@ -164,7 +156,7 @@ class LobbyCreationRateLimitMiddleware:
             await self.app(scope, receive, send)
             return
         
-        client_ip = self._get_client_ip(scope)
+        client_ip = get_client_ip(scope)
         state = self._state[client_ip]
         
         if state.is_rate_limited(self.max_creations, self.window_seconds):
