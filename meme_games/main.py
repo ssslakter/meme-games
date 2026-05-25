@@ -27,6 +27,7 @@ style = Style(
 )
 
 hdrs = [
+    Meta(name="robots", content="noindex, nofollow"),
     Script('htmx.config.allowNestedOobSwaps=false;'),
     Link(rel="icon", href="/static/images/favicon.ico"),
     Script(src='/static/scripts/imports/_hyperscript.min.js'),
@@ -57,7 +58,13 @@ app.add_middleware(PrometheusMiddleware, filter_unhandled_paths=True)
 # Rate limiting middleware - order matters: lobby creation limiter is checked first, then global
 app.add_middleware(LobbyCreationRateLimitMiddleware, max_creations=5, window=60.0, patterns=LOBBY_PATTERNS)
 app.add_middleware(RateLimitMiddleware, max_requests=50, window=60.0, skip_paths=static_re)
+# Outermost: filter crawlers/unfurlers (and serve robots.txt) before they create lobbies
+app.add_middleware(BotFilterMiddleware, patterns=LOBBY_PATTERNS)
 app.route('/metrics')(metrics)
+
+
+@app.on_event('startup')
+async def _start_lobby_cleanup(): asyncio.create_task(DI.get(LobbyService).run_cleanup_loop())
 
 setup_toasts(app, duration=1500)
 

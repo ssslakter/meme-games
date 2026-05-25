@@ -5,10 +5,15 @@ from .member import *
 from .lobby import *
 
 
+logger = logging.getLogger(__name__)
+
+
 class LobbyService:
     """Manages lobby creation, retrieval, and lifecycle."""
     lobby_lifetime = dt.timedelta(minutes=10)
     lobby_limit = 100
+    cleanup_interval = 60.0       # seconds between stale-lobby sweeps
+    max_lobbies_per_host = 3      # max concurrent lobbies one host may own
 
     def __init__(self, lobby_repo: LobbyRepo):
         self.repo = lobby_repo
@@ -45,6 +50,33 @@ class LobbyService:
         self.lobbies.pop(id)
         self.repo.delete(id)
 
+    def evict_lobby(self, id: str):
+        """Free a lobby's in-memory slot. Persistent lobbies stay in the DB and reload on demand."""
+        self.lobbies.pop(id, None)
+
+    def _is_stale(self, lobby: Lobby) -> bool:
+        """No connected members and idle past the lifetime -> safe to evict."""
+        if any(m.is_connected for m in lobby.members.values()): return False
+        return dt.datetime.now() - lobby.last_active > self.lobby_lifetime
+
+    def _host_lobby_count(self, uid: str) -> int:
+        return sum(l.host is not None and l.host.uid == uid and not self._is_stale(l)
+                   for l in self.lobbies.values())
+
+    def cleanup_lobbies(self) -> int:
+        """Evict stale lobbies; returns how many were freed."""
+        stale = [id for id, l in list(self.lobbies.items()) if self._is_stale(l)]
+        for id in stale: self.evict_lobby(id)
+        if stale: logger.info(f'Evicted {len(stale)} stale lobbies ({len(self.lobbies)} active)')
+        return len(stale)
+
+    async def run_cleanup_loop(self):
+        """Background task: periodically evict stale lobbies."""
+        while True:
+            await asyncio.sleep(self.cleanup_interval)
+            try: self.cleanup_lobbies()
+            except Exception: logger.exception('Lobby cleanup failed')
+
     def get_or_create[T: LobbyMember, S: Any](
             self, 
             host: User = None, 
@@ -57,6 +89,8 @@ class LobbyService:
             return lobby.cast(as_type) if as_type else lobby, False
         if len(self.lobbies) >= self.lobby_limit: raise HTTPException(
             400, 'Too many lobbies, wait until some are finished')
+        if host and self._host_lobby_count(host.uid) >= self.max_lobbies_per_host:
+            raise HTTPException(429, 'You already have several open lobbies. Close one before creating another.')
         return self.create_lobby(host, id, as_type, **create_kwargs), True
 
     def sync_active_lobbies_user(self, u: User):
