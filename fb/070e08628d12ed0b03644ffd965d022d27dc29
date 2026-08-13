@@ -1,0 +1,25 @@
+meme_games/apps/home/routes.py
+  s_4f6be57d5e6f82::t_021b81320ea056 89
+tests/test_user_settings.py
+  s_4f6be57d5e6f82::t_021b81320ea056 20-21
+meme_games/apps/user/routes.py
+  s_4f6be57d5e6f82::t_021b81320ea056 27
+meme_games/apps/shared/navigation.py
+  s_4f6be57d5e6f82::t_021b81320ea056 67
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "fb070e08628d12ed0b03644ffd965d022d27dc29",
+  "prompts": {},
+  "sessions": {
+    "s_4f6be57d5e6f82": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffb09-b037-7570-bb8d-10870f97e2e4",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
