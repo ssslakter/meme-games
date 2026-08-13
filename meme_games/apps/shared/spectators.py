@@ -1,21 +1,25 @@
 from meme_games.core import *
-from typing import Type, get_args
 from meme_games.domain import LobbyMember, User, Lobby, LobbyService
-from meme_games.domain.notify import notify_all, notify
+from meme_games.domain.notify import notify_all
 from meme_games.apps.user.components import MemberName
-from ..shared.utils import register_route
-from .settings import logger
+from ..shared.utils import register_route, lobby_state
 
 
 rt = APIRouter('/lobby')
 register_route(rt)
 
-def prep_data(req: Request) -> tuple[Lobby, LobbyMember]:
-    try: lobby = req.state.lobby
-    except AttributeError as e:
-        logger.error(f"Lobby not found in request state: {req.state}")
-        raise HTTPException(status_code=400, detail="Incorrect client state. Please refresh the page.")
-    return lobby, lobby.get_member(req.state.user.uid)
+
+GAME_VIEWS: dict[str, Callable[[LobbyMember | User, Lobby], Any]] = {}
+
+def register_game_view(game: str, view_fn: Callable[[LobbyMember | User, Lobby], Any]):
+    '''How to re-render `game`'s board for one member. Lobbies without a board
+    (video) simply do not register one.'''
+    GAME_VIEWS[game] = view_fn
+
+
+def GameView(reciever: LobbyMember | User, lobby: Lobby, **kwargs):
+    view = GAME_VIEWS.get(lobby.current_game)
+    return view(reciever, lobby, **kwargs) if view else None
 
 
 def SpectatorsList(reciever: LobbyMember | User, lobby: Lobby):
@@ -41,28 +45,20 @@ def Spectators(reciever: LobbyMember | User, lobby: Lobby, cls = 'right-0 top-1/
     )
 
 
-def JoinSpectators(r: LobbyMember, p: LobbyMember):
-    return Div(MemberName(r.user, p), hx_swap_oob="beforeend:#spectators")
+def LobbyView(reciever: LobbyMember | User, lobby: Lobby):
+    '''Everything that changes when the player/spectator split changes.'''
+    return SpectatorsList(reciever, lobby), GameView(reciever, lobby, hx_swap_oob='true')
+
+
+async def notify_roster_changed(lobby: Lobby):
+    '''Tell everyone the players and spectators changed.'''
+    await notify_all(lobby, lambda r, *_: LobbyView(r, lobby))
 
 
 @rt
 async def spectate(req: Request):
-    lobby, p = prep_data(req)
+    lobby, _, p = lobby_state(req)
     if not p.is_player: return
     if lobby.locked: return add_toast(req.session, "Game is locked", "error")
     DI.get(LobbyService).spectate(p, lobby)
-
-    upd, send = SPECTATORS_NOTIFY_REGISTRY.get(lobby.current_game, (lambda *_: None, None))
-    def update(r: LobbyMember, *_):
-        return JoinSpectators(r, p), upd(r, lobby, p)
-    await notify_all(lobby, update)
-    if send: await notify(p, send, lobby)
-
-
-SPECTATORS_NOTIFY_REGISTRY: dict[str, tuple[Callable, Callable]] = {}
-
-def register_lobby_spectators_update(
-        game: str,
-        update_fn: Callable[[LobbyMember, Lobby, LobbyMember], Any],
-        update_sender: Callable[[LobbyMember, Lobby], Any] = None):
-    SPECTATORS_NOTIFY_REGISTRY[game] = (update_fn, update_sender)
+    await notify_roster_changed(lobby)

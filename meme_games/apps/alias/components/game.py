@@ -1,7 +1,7 @@
 from ..domain import GameState, ALIAS
 from ...shared import *
 from ...shared.settings import LockLobby
-from ...shared.spectators import Spectators, register_lobby_spectators_update
+from ...shared.spectators import Spectators, register_game_view
 from ...user import *
 from .team import *
 from .settings import *
@@ -34,11 +34,4 @@ def Page(reciever: LobbyMember | User, lobby: Lobby):
     )
 
 
-def ActiveGameState(r: LobbyMember | User, lobby: Lobby):
-    return Spectators(r, lobby), Game(r, lobby)
-
-
-register_lobby_spectators_update(
-    ALIAS,
-    lambda r, lobby, _: Game(r, lobby, hx_swap_oob='true')
-    )
+register_game_view(ALIAS, Game)

@@ -1,5 +1,4 @@
 from ..shared.utils import register_route, lobby_state
-from ..shared.spectators import SpectatorsList 
 from ..shared.ws_route import ws_fn 
 from meme_games.core import *
 from meme_games.domain import *
@@ -162,12 +161,7 @@ async def change_guess_points(req: Request, guess_id: str, delta: int):
     await notify_all(req.state.lobby, update)
 
 
-def upd(r, lobby, conn_member):
-    if r == conn_member: return Game(r, lobby), SpectatorsList(r, lobby), MemberName(r, conn_member)
-    return SpectatorsList(r, lobby), MemberName(r, conn_member)
-
-
-@ws_rt.ws('/alias', conn=ws_fn(render_fn=upd), disconn=ws_fn(False, upd))
+@ws_rt.ws('/alias', conn=ws_fn(), disconn=ws_fn(False))
 async def ws(): pass
 
 ws_url = ws_rt.wss[-1][1] # latest added websocket url
