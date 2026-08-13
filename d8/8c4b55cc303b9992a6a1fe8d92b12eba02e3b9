@@ -1,0 +1,105 @@
+meme_games/apps/shared/actions.py
+  s_0ded5a56d630fe::t_8122cb82ab1f9a 1-35
+meme_games/apps/__init__.py
+  s_0ded5a56d630fe::t_3ed7bbdfdc4bf4 7
+meme_games/apps/shared/__init__.py
+  s_0ded5a56d630fe::t_8122cb82ab1f9a 2-3
+meme_games/apps/whoami/agent.py
+  s_0ded5a56d630fe::t_90a6b24e5f93cd 3-4,13
+  s_0ded5a56d630fe::t_c65f09ba9e23f6 1-2,5-12,14-79
+mcp_gateway/README.md
+  s_0ded5a56d630fe::t_4b428548f6c246 28-29
+tests/test_agent_api.py
+  s_0ded5a56d630fe::t_06c6e01ff7bae6 182-187
+  s_0ded5a56d630fe::t_9d6c81ab621dbd 55,57,59,104-106
+  s_0ded5a56d630fe::t_e886b0124b6913 7-8,24-30,149-181,188-190
+  s_0ded5a56d630fe::t_78d46cfc61a123 191-192
+meme_games/apps/whoami/components/settings.py
+  s_0ded5a56d630fe::t_2416bb993f4aac 28-29,31-34
+  s_0ded5a56d630fe::t_4e7b39d1138ffd 30
+  s_0ded5a56d630fe::t_90a6b24e5f93cd 15
+  s_0ded5a56d630fe::t_a60290815fe18d 14,16-25,27,35-36
+README.md
+  s_0ded5a56d630fe::t_4b428548f6c246 48-49
+meme_games/apps/agent_api/routes.py
+  s_0ded5a56d630fe::t_7da88f4041404d 49-50,68-69
+  s_0ded5a56d630fe::t_90a6b24e5f93cd 7-9
+  s_0ded5a56d630fe::t_3ed7bbdfdc4bf4 67
+meme_games/apps/whoami/domain.py
+  s_0ded5a56d630fe::t_4e7b39d1138ffd 2-3,8-10,96-97
+  s_0ded5a56d630fe::t_5352e3f98d066e 127-128
+  s_0ded5a56d630fe::t_92470b8ffcaeb6 1,11-22,58,65-68,72-95,98-125,137-143
+  s_0ded5a56d630fe::t_4df6af04bbebd8 126
+meme_games/apps/whoami/routes.py
+  s_0ded5a56d630fe::t_4e7b39d1138ffd 172
+  s_0ded5a56d630fe::t_820f0b6eb2c77d 178-181
+  s_0ded5a56d630fe::t_90a6b24e5f93cd 58
+  s_0ded5a56d630fe::t_a60290815fe18d 8,22-24,59,61-66,68-73,75-80,84-87,89-94,96-101,111,126-130,160-171,173-177,182-194
+  s_0ded5a56d630fe::t_8b50f25a99213d 60,67,74,81,88,95,102,131
+  s_0ded5a56d630fe::t_2570eeeb122d7f 82-83
+  s_0ded5a56d630fe::t_d969ba0fc0165f 195
+tests/test_whoami.py
+  s_0ded5a56d630fe::t_9ba7759d3ea833 49-63
+  s_0ded5a56d630fe::t_eff3031f1c18fd 8,139-154,187-207
+  s_0ded5a56d630fe::t_06c6e01ff7bae6 132,134
+  s_0ded5a56d630fe::t_5352e3f98d066e 4-5,9-10,112-131,133,135-138,155-186,208-226
+  s_0ded5a56d630fe::t_8b50f25a99213d 6
+static/styles/app.css
+  s_0ded5a56d630fe::t_820f0b6eb2c77d 48-61,63-85
+  s_0ded5a56d630fe::t_9ba7759d3ea833 62
+meme_games/apps/whoami/__init__.py
+  s_0ded5a56d630fe::t_92470b8ffcaeb6 2,4
+  s_0ded5a56d630fe::t_c65f09ba9e23f6 5
+meme_games/apps/whoami/components/cards.py
+  s_0ded5a56d630fe::t_2416bb993f4aac 8-9,15-18,20-24,27,31,46-47
+  s_0ded5a56d630fe::t_4e7b39d1138ffd 19
+meme_games/apps/shared/agent.py
+  s_0ded5a56d630fe::t_8122cb82ab1f9a 1-3,11,14,17-23
+  s_0ded5a56d630fe::t_90a6b24e5f93cd 4-10,12-13,15-16
+meme_games/apps/codenames/actions.py
+  s_0ded5a56d630fe::t_8122cb82ab1f9a 2-3,11,15-16
+meme_games/apps/codenames/agent.py
+  s_0ded5a56d630fe::t_c65f09ba9e23f6 3-10,12-83
+  s_0ded5a56d630fe::t_90a6b24e5f93cd 1-2,11
+meme_games/apps/whoami/actions.py
+  s_0ded5a56d630fe::t_92470b8ffcaeb6 1,4,6,8-9,11-17,19-20,22-27,29-30,32-34,36-37,39-72
+  s_0ded5a56d630fe::t_8122cb82ab1f9a 2-3,7,10
+  s_0ded5a56d630fe::t_2416bb993f4aac 21,31,38
+  s_0ded5a56d630fe::t_4e7b39d1138ffd 5,18,28,35
+meme_games/apps/whoami/components/game.py
+  s_0ded5a56d630fe::t_2416bb993f4aac 15-37,43-44,62
+  s_0ded5a56d630fe::t_9ba7759d3ea833 41
+mcp_gateway/src/meme_games_mcp/server.py
+  s_0ded5a56d630fe::t_3ed7bbdfdc4bf4 81,83,86,88,91,93,96,98,101,103,106,108-120,123-134
+  s_0ded5a56d630fe::t_4e7b39d1138ffd 4,121-122
+mcp_gateway/tests/test_gateway.py
+  s_0ded5a56d630fe::t_9d6c81ab621dbd 47-53,58,64
+meme_games/apps/codenames/__init__.py
+  s_0ded5a56d630fe::t_c65f09ba9e23f6 4
+meme_games/apps/whoami/components/notes.py
+  s_0ded5a56d630fe::t_8d4592970a35fe 50
+  s_0ded5a56d630fe::t_4e7b39d1138ffd 13,38
+  s_0ded5a56d630fe::t_2416bb993f4aac 23-33,42-49,51-52,54,56-57
+  s_0ded5a56d630fe::t_3d53401e9f3d8e 34-37,39-41,53,55
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "d88c4b55cc303b9992a6a1fe8d92b12eba02e3b9",
+  "prompts": {},
+  "humans": {
+    "h_cec284cdd16cba": {
+      "author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_0ded5a56d630fe": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffd32-e084-7e41-84cc-3f5b3e631757",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
