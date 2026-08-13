@@ -18,6 +18,12 @@ def lobby_view(r, lobby, conn_member):
     return (GameView(r, lobby), *common) if r == conn_member else common
 
 
+def lobby_ws(path: str, recv: Callable = noop) -> str:
+    '''Register a lobby websocket at `path` and return its url.'''
+    ws_rt.ws(path, conn=ws_fn(), disconn=ws_fn(False))(recv)
+    return f'{ws_rt.prefix}{path}'
+
+
 def ws_fn(connected=True, render_fn: Callable = lobby_view):
     '''Returns a function that will be called when a user joins the lobby websocket'''
     async def user_joined(sess, send, ws):

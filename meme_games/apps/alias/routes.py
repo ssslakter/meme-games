@@ -1,5 +1,5 @@
 from ..shared.utils import register_route, lobby_state
-from ..shared.ws_route import ws_fn 
+from ..shared.ws_route import lobby_ws 
 from meme_games.core import *
 from meme_games.domain import *
 from meme_games.apps.word_packs.components import *
@@ -16,7 +16,6 @@ register_route(rt)
 logger = logging.getLogger(__name__)
 
 lobby_service = DI.get(LobbyService)
-user_manager = DI.get(UserManager)
 
 
 def pre_init(req: Request) -> tuple[Lobby, GameState, LobbyMember]:
@@ -161,10 +160,7 @@ async def change_guess_points(req: Request, guess_id: str, delta: int):
     await notify_all(req.state.lobby, update)
 
 
-@ws_rt.ws('/alias', conn=ws_fn(), disconn=ws_fn(False))
-async def ws(): pass
-
-ws_url = ws_rt.wss[-1][1] # latest added websocket url
+ws_url = lobby_ws('/alias')
 
 register_game_page(ALIAS, 'Alias', lambda lobby_id: index.to(lobby_id=lobby_id))
 

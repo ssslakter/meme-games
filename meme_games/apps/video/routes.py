@@ -1,4 +1,4 @@
-from ..shared.ws_route import ws_fn
+from ..shared.ws_route import lobby_ws
 from ..shared.utils import register_route
 from ..shared.spectators import *
 from meme_games.domain import *
@@ -17,7 +17,6 @@ register_game_page(VIDEO, "Videos 🚧", lambda lobby_id: index.to(lobby_id=lobb
 logger = logging.getLogger(__name__)
 
 lobby_service = DI.get(LobbyService)
-user_manager = DI.get(UserManager)
 
 
 @rt('/{lobby_id}', methods=['get'])
@@ -38,11 +37,10 @@ def index(req: Request, lobby_id: str = None):
 
 def redirect(lobby_id: str): return Redirect(index.to(lobby_id=lobby_id))
 
-@ws_rt.ws('/video', conn=ws_fn(), disconn=ws_fn(False))
-async def ws(ws, sess, data):
-    u = user_manager.get(sess['uid'])
+async def relay(ws, sess, data):
+    '''Video playback events are echoed to everyone else as-is.'''
     lobby = lobby_service.get_lobby(sess.get("lobby_id"))
-    m = lobby.get_member(u.uid)
-    await notify_all(lobby, lambda *_: data, but=m, json=True)
+    if not lobby: return
+    await notify_all(lobby, lambda *_: data, but=lobby.get_member(sess['uid']), json=True)
 
-ws_url = ws_rt.wss[-1][1]
+ws_url = lobby_ws('/video', relay)

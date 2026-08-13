@@ -1,5 +1,5 @@
 from ..shared.spectators import register_game_view, notify_roster_changed
-from ..shared.ws_route import ws_fn
+from ..shared.ws_route import lobby_ws
 from ..shared.utils import register_route, lobby_state
 from meme_games.core import *
 from meme_games.domain import *
@@ -16,7 +16,6 @@ register_route(rt)
 logger = logging.getLogger(__name__)
 
 lobby_service = DI.get(LobbyService)
-user_manager = DI.get(UserManager)
 
 
 @rt('/{lobby_id}', methods=['get'])
@@ -88,14 +87,13 @@ async def edit_label_position(sess, owner_uid: str, **kwargs):
     await notify_all(lobby, update, json=True, but=p)
 
 
-@ws_rt.ws('/whoami', conn=ws_fn(), disconn=ws_fn(False))
-async def ws(sess, data):
+async def on_message(sess, data):
     try:
         msg_type = data.pop('type')
         if msg_type == 'label_text': await edit_label_text(sess, **data)
         elif msg_type == 'label_position': await edit_label_position(sess, **data)
     except Exception as e: logger.error(e)
 
-ws_url = ws_rt.wss[-1][1] # latest added websocket url
+ws_url = lobby_ws('/whoami', on_message)
 
 register_game_page(WHOAMI, 'Who Am I', lambda lobby_id: index.to(lobby_id=lobby_id))

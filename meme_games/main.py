@@ -1,3 +1,4 @@
+import contextlib
 from meme_games.core import *
 from meme_games.services import db, data_dir
 from meme_games.domain import *
@@ -44,7 +45,16 @@ hdrs = [
 
 exception_handlers = {404: not_found}
 
+
+@contextlib.asynccontextmanager
+async def lifespan(app):
+    task = asyncio.create_task(DI.get(LobbyService).run_cleanup_loop())
+    yield
+    task.cancel()
+
+
 app = FastHTML(before=bwares, hdrs=hdrs,
+                   lifespan=lifespan,
                    exts='ws',
                    sess_cls=middlware_cls,
                    key_fname=str(data_dir/'.sesskey'),
@@ -52,17 +62,11 @@ app = FastHTML(before=bwares, hdrs=hdrs,
                    htmlkw={'class': 'uk-custom-theme'},
                    bodykw={'hx-boost': 'true'})
 
-lobby_service = DI.get(LobbyService)
-
 app.add_middleware(PrometheusMiddleware, filter_unhandled_paths=True)
 # Rate limiting is handled by nginx + crowdsec. This only stops crawlers/unfurlers
 # (and serves robots.txt) before they can create lobbies nobody joins.
 app.add_middleware(BotFilterMiddleware, patterns=LOBBY_PATTERNS)
 app.route('/metrics')(metrics)
-
-
-@app.on_event('startup')
-async def _start_lobby_cleanup(): app.state.lobby_cleanup = asyncio.create_task(lobby_service.run_cleanup_loop())
 
 setup_toasts(app, duration=1500)
 
