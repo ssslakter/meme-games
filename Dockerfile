@@ -26,7 +26,6 @@ COPY ./meme_games /app/meme_games
 COPY ./run.py /app/run.py
 COPY ./media /app/media
 COPY ./static /app/static
-COPY ./settings.ini /app/settings.ini
 
 EXPOSE 8000
 
