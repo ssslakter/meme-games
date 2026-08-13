@@ -1,4 +1,4 @@
-from .utils import register_route
+from .utils import *
 import urllib
 from meme_games.core import *
 from meme_games.domain import *
@@ -6,7 +6,8 @@ from meme_games.apps.user import *
 from .general import *
 
 
-__all__ = ['Settings', 'Avatar', 'SettingsPopover', 'edit_avatar', 'edit_name', 'reset_avatar', 'lock_lobby', 'change_background']
+__all__ = ['Settings', 'Avatar', 'SettingsPopover', 'edit_avatar', 'edit_name', 'reset_avatar',
+           'lock_lobby', 'change_background', 'switch_game', 'SwitchGame', 'GoTo']
 
 
 rt = APIRouter()
@@ -50,9 +51,26 @@ def LeaveLobby():
     return Setting('log-out', title='Leave Lobby', hx_post=leave_lobby, hx_swap="none")
 
 
-def Settings(*lobby_settings):
+def GoTo(url: str):
+    '''Sends a websocket-connected member to `url` - used when the host changes the game.'''
+    return Div(hx_swap_oob="beforeend:body", _=f'init go to url "{url}"')
+
+
+def SwitchGame(lobby: Lobby):
+    '''Host-only: moves the whole lobby to another game, keeping everyone in it.'''
+    others = [(game, name) for game, (name, _) in GAME_PAGES.items() if game != lobby.current_game]
+    if not others: return None
+    return Div(
+        DivLAligned(UkIcon('gamepad-2', cls="text-3xl"), P('Switch game', cls="text-lg pl-2"), cls='py-2'),
+        DivHStacked(*[Button(name, cls=ButtonT.default, hx_post=switch_game.to(game=game), hx_swap='none')
+                      for game, name in others], cls='gap-1 flex flex-wrap'),
+        cls='w-full')
+
+
+def Settings(*lobby_settings, lobby: Lobby = None, member: LobbyMember = None):
     def ico(txt): return UkIcon(txt, width=25, height=25)
-    lobby_settings = lobby_settings or ()
+    lobby_settings = tuple(lobby_settings or ())
+    if lobby and is_host(member): lobby_settings += (SwitchGame(lobby),)
     card_header_content = DivLAligned(
         ico('cog'),
         H4('Settings', cls="text-xl font-bold ml-2")
@@ -79,7 +97,7 @@ def Settings(*lobby_settings):
 
 
 
-def SettingsPopover(*lobby_settings):
+def SettingsPopover(*lobby_settings, lobby: Lobby = None, member: LobbyMember = None):
     button = Card(
         UkIcon('cog', width=45, height=45),
         # TODO on mobile the focus is still on the button, not the card
@@ -89,7 +107,7 @@ def SettingsPopover(*lobby_settings):
         id="settings-popover-button"
     )
 
-    settings_card = Settings(*lobby_settings)
+    settings_card = Settings(*lobby_settings, lobby=lobby, member=member)
     panel_wrapper = Div(
         settings_card,
         cls="absolute bottom-0 right-0 w-[28rem] z-10 opacity-0 scale-75 pointer-events-none transition-all duration-200 ease-out",
@@ -151,9 +169,23 @@ async def edit_avatar(req: Request, file: UploadFile): await modify_avatar(req, 
 async def reset_avatar(req: Request): await modify_avatar(req, None)
 
 
+@rt('/switch_game', methods=['post'])
+async def switch_game(req: Request, game: str):
+    lobby, _, p = lobby_state(req)
+    if not is_host(p): return add_toast(req.session, "Only the host can switch the game", "error")
+    url = game_url(game, lobby.id)
+    if not url: return add_toast(req.session, "Unknown game", "error")
+    lobby.play_game(game)
+    lobby_service.update(lobby)
+    # everyone in the lobby follows the host into the new game
+    def update(*_): return GoTo(url)
+    await notify_all(lobby, update, but=p)
+    return Redirect(url)
+
+
 @rt('/lock', methods=['post'])
 async def lock_lobby(req: Request):
-    lobby: Lobby[LobbyMember] = req.state.lobby
+    lobby: Lobby = req.state.lobby
     p = lobby.get_member(req.state.user.uid)
     if not is_host(p): return
     if lobby.locked: lobby.unlock()
@@ -165,7 +197,7 @@ async def lock_lobby(req: Request):
 
 @rt('/background', methods=['post'])
 async def change_background(req: Request, hdrs: HtmxHeaders):
-    lobby: BasicLobby = req.state.lobby
+    lobby: Lobby = req.state.lobby
     lobby.background_url = urllib.parse.unquote(hdrs.prompt)
     lobby_service.update(lobby)
     def update(*_): return Background(lobby.background_url, no_image=not lobby.background_url)

@@ -12,7 +12,7 @@ register_route(rt)
 
 VIDEO = 'video'
 register_game(VIDEO)
-register_page("Videos 🚧", rt.prefix)
+register_game_page(VIDEO, "Videos 🚧", lambda lobby_id: index.to(lobby_id=lobby_id))
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ def index(req: Request, lobby_id: str = None):
         H1("Videos"),
         StreamingMain(),
         Spectators(u, lobby, cls='right-0 bottom-1/3 -translate-y-1/2'),
-        SettingsPopover(),
+        SettingsPopover(lobby=lobby, member=lobby.get_member(u.uid)),
         title=f"Watch together lobby: {lobby.id}",
         no_image=True)
 

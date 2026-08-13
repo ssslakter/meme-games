@@ -28,7 +28,8 @@ def MainBlock(reciever: LobbyMember | User, lobby: Lobby):
 
     return LobbyPage(
         Game(reciever, lobby),
-        SettingsPopover(LockLobby(lobby) if is_host(reciever) else None),
+        SettingsPopover(LockLobby(lobby) if is_host(reciever) else None,
+                        lobby=lobby, member=reciever),
         Spectators(reciever, lobby),
         navbar_args=[A("Monitor", href=monitor.to(), cls=AT.text)],
         hx_ext="ws",
