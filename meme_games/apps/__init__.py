@@ -1,3 +1,4 @@
+from ..services import db  # composition root first: app modules resolve services at import
 from .codenames import *
 from .shared import *
 from .video import *
