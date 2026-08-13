@@ -1,0 +1,23 @@
+docker-compose.yml
+  s_4f6be57d5e6f82::t_b7d90db6f3f535 3
+README.md
+  s_4f6be57d5e6f82::t_b7d90db6f3f535 44
+.dockerignore
+  s_4f6be57d5e6f82::t_b7d90db6f3f535 81,94
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "89b24e0c9165342083ba73af9e35ee9b88cada79",
+  "prompts": {},
+  "sessions": {
+    "s_4f6be57d5e6f82": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffb09-b037-7570-bb8d-10870f97e2e4",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
