@@ -23,7 +23,7 @@ def pre_init(req: Request): return lobby_state(req, CODENAMES)
 def game_update(reciever: LobbyMember, lobby: Lobby):
     return (Spectators(reciever, lobby, hx_swap_oob='true'),
             Game(reciever, lobby, hx_swap_oob='true'),
-            HostSettings(reciever, lobby))
+            HostSettings(reciever, lobby, oob=True))
 
 
 async def update_all(lobby):
@@ -117,13 +117,25 @@ async def restart_game(req: Request):
 
 
 @rt
+def show_host_settings(req: Request):
+    lobby, _, member = pre_init(req)
+    return HostSettings(member, lobby)
+
+
+@rt
+def show_agent_players(req: Request):
+    lobby, _, member = pre_init(req)
+    if not is_host(member): return add_toast(req.session, 'Only the host can manage agents', 'error')
+    return AgentPlayers(member, lobby)
+
+
+@rt
 async def create_agent_invite(req: Request, name: str):
     lobby, _, member = pre_init(req)
     if not is_host(member): return add_toast(req.session, 'Only the host can invite agents', 'error')
     try: _, token = DI.get(AgentAccessService).create(lobby.id, name)
     except ValueError as error: return rejected(req, error)
-    await lobby_events.publish(lobby, 'settings')
-    return InviteToken(token)
+    return AgentPlayers(member, lobby, token)
 
 
 @rt
@@ -135,7 +147,8 @@ async def revoke_agent(req: Request, access_id: str):
     had_member = lobby.get_member(access.user_uid) is not None
     if had_member: lobby.remove_member(access.user_uid)
     lobby_service.update(lobby)
-    await lobby_events.publish(lobby, 'roster' if had_member else 'settings')
+    if had_member: await lobby_events.publish(lobby, 'roster')
+    return AgentPlayers(member, lobby)
 
 
 ws_url = lobby_ws('/codenames')

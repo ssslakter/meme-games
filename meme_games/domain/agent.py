@@ -54,7 +54,8 @@ class AgentAccessService:
     def create(self, lobby_id: str, name: str) -> tuple[AgentAccess, str]:
         name = ' '.join(name.split())
         if not 1 <= len(name) <= 40: raise ValueError('Agent name must be 1–40 characters')
-        access_id, secret = secrets.token_urlsafe(9), secrets.token_urlsafe(32)
+        # The token uses underscores as delimiters, so its database ID must not.
+        access_id, secret = secrets.token_hex(9), secrets.token_urlsafe(32)
         salt = secrets.token_bytes(16)
         user = self.users.create(name=name, named=True, kind='agent')
         access = AgentAccess(access_id, lobby_id, user.uid, salt.hex(), self._digest(secret, salt), dt.datetime.now())

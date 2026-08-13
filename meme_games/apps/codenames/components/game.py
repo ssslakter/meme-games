@@ -121,14 +121,18 @@ def Board(reciever, state):
         cls='min-w-0 space-y-5')
 
 
-def AgentInvites(reciever, lobby):
-    from ..routes import create_agent_invite, revoke_agent
+def AgentPlayers(reciever, lobby, token=None, oob=False):
+    from ..routes import create_agent_invite, revoke_agent, show_host_settings
     if not is_host(reciever): return None
     service = DI.get(AgentAccessService)
     invited = [access for access in service.repo.for_lobby(lobby.id) if not access.revoked]
     return Div(
-        H5('Agent players'),
+        Div(H5('Agent players'),
+            Button('Back to game settings', hx_get=show_host_settings, hx_target='#codenames-host-controls',
+                   hx_swap='outerHTML', cls=(ButtonT.ghost, 'px-2 py-1 text-xs')),
+            cls='flex items-center justify-between gap-3'),
         P('Create a lobby-scoped MCP credential. The token is shown once.', cls=TextT.muted),
+        InviteToken(token) if token else None,
         Div(*[
             Div(
                 Div(Span(service.users.get(access.user_uid).name, cls='font-medium'),
@@ -142,10 +146,10 @@ def AgentInvites(reciever, lobby):
         Form(
             LabelInput('Agent name', name='name', maxlength=40, required=True, autocomplete='off'),
             Button(UkIcon('bot', cls='mr-2'), 'Create invite', cls=(ButtonT.default, 'w-full')),
-            hx_post=create_agent_invite, hx_target='#agent-invite-result', hx_swap='innerHTML',
+            hx_post=create_agent_invite, hx_target='#codenames-host-controls', hx_swap='outerHTML',
             cls='space-y-3'),
-        Div(id='agent-invite-result'),
-        cls='space-y-4 border-t pt-5', data_ui='agent-invites')
+        id='codenames-host-controls', hx_swap_oob='true' if oob else None,
+        cls='space-y-4', data_ui='agent-invites')
 
 
 def InviteToken(token: str):
@@ -159,8 +163,8 @@ def InviteToken(token: str):
         cls='space-y-2 rounded border border-primary/40 bg-primary/5 p-3', role='status')
 
 
-def HostSettings(reciever, lobby):
-    from ..routes import restart_game, select_pack
+def HostSettings(reciever, lobby, oob=False):
+    from ..routes import restart_game, select_pack, show_agent_players
     if not is_host(reciever): return None
     state = lobby.state
     packs = DI.get(WordPackRepo).get_all()
@@ -175,8 +179,10 @@ def HostSettings(reciever, lobby):
         Button(UkIcon('rotate-ccw', cls='mr-2'), 'Restart game', hx_post=restart_game, hx_swap='none',
                hx_confirm='Restart Codenames and keep the current teams?', cls=(ButtonT.destructive, 'w-full'))
             if state.phase != GamePhase.WAITING else None,
-        AgentInvites(reciever, lobby),
-        id='codenames-host-controls', hx_swap_oob='true',
+        Div(cls='border-t pt-4'),
+        Button(UkIcon('bot', cls='mr-2'), 'Agent players', hx_get=show_agent_players,
+               hx_target='#codenames-host-controls', hx_swap='outerHTML', cls=(ButtonT.default, 'w-full')),
+        id='codenames-host-controls', hx_swap_oob='true' if oob else None,
         cls='space-y-4', data_ui='codenames-host-controls')
 
 
