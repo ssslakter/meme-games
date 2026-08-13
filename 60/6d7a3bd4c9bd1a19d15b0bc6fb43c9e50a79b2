@@ -1,0 +1,38 @@
+meme_games/domain/lobby/service.py
+  s_a99e5cdd39484c::t_c67bf192fc181e 17
+  s_a99e5cdd39484c::t_af998820c95e7c 68,71-74
+meme_games/main.py
+  s_a99e5cdd39484c::t_341fc13693173f 57-58,60-62
+  s_a99e5cdd39484c::t_19d99e63d7331e 70
+meme_games/core/middleware/lobby_rate_limit.py
+  s_a99e5cdd39484c::t_0995b38a0503d5 18-19,25,30-32,34-35
+meme_games/domain/timer.py
+  s_a99e5cdd39484c::t_3a78880df55a2b 25-26
+tests/test_rate_limit.py
+  s_a99e5cdd39484c::t_fcfbe765a94606 142-150
+meme_games/domain/lobby/lobby.py
+  s_a99e5cdd39484c::t_48d6dc1a514948 147-148
+  s_a99e5cdd39484c::t_e5cc4534fa6066 141-146,149-155
+tests/test_lobby_cleanup.py
+  s_a99e5cdd39484c::t_ceef1d26f20a19 1,4-5,7,9,14,20-30,32-37,39-40,43-47,49-51,54-56,59-60,63,68
+  s_a99e5cdd39484c::t_02bcc26272c28e 2
+  s_a99e5cdd39484c::t_19b8aef4d65b96 31,38,41-42
+  s_a99e5cdd39484c::t_856d7fe0d89514 64-65
+  s_a99e5cdd39484c::t_b77745c3eb4ab7 3,6,8,10-13,15-19,48,52-53,57-58,61-62,66-67,69-70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "606d7a3bd4c9bd1a19d15b0bc6fb43c9e50a79b2",
+  "prompts": {},
+  "sessions": {
+    "s_a99e5cdd39484c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4717db9a-ac93-4667-81cd-cf06b91456cd",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
