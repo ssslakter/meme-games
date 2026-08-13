@@ -16,12 +16,7 @@ docker compose up -d
 
 For more info on used stack read [fasthtml](https://fastht.ml/docs) docs.
 
-Part of this project is developed using [nbdev](https://nbdev.fast.ai/).
-
-Run the following commands to install and then enable pre-commit hooks
+Run the tests with
 ```sh
-git clone https://github.com/ssslakter/meme-games
-cd meme-games
-pixi shell -e dev
-pre-commit install
+pixi run test
 ```

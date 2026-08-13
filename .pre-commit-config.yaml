@@ -1,8 +1,0 @@
-repos:
-- repo: local
-  hooks:
-    - id: export
-      name: Export notebooks
-      entry: pixi run export
-      language: system
-      pass_filenames: false

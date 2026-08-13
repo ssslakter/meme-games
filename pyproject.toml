@@ -30,9 +30,10 @@ DEV = 'TRUE'
 
 [tool.pixi.tasks]
 app = "python run.py"
-_export = "nbdev_clean && nbdev_export"
-export = { depends-on = [{ task = '_export', environment = "dev" }] }
+
+[tool.pixi.feature.dev.tasks]
+test = "pytest tests/ -q"
 
 
 [dependency-groups]
-dev = ["ipykernel>=6.29.5,<7", "nbdev", "pip-tools", "pre-commit", "pytest"]
+dev = ["ipykernel>=6.29.5,<7", "pip-tools", "pytest"]
