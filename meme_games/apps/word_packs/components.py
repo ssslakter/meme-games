@@ -10,8 +10,8 @@ user_manager = DI.get(UserManager)
 
 def ListCard(title, *content, cls='', **kwargs):
     "A card with list of something."
-    return Div(cls = "col-span-2 lg:col-span-3 xl:col-span-2")(
-        Card(H3(title), 
+    return Div(cls="mg-content-card col-span-2 lg:col-span-3 xl:col-span-2", data_ui='content-card')(
+        Card(H3(title),
              Div(*content, cls=f'lg:min-h-80 uk-background-muted {cls}', **kwargs)))
     
 def SideBar():
@@ -74,7 +74,9 @@ def WordPackEditor(wp: Optional[WordPack] = None,
                    form_kwargs = None,
                    **kwargs):
     from .routes import save
-    editor = Div(id="editor", **kwargs)
+    editor_cls = kwargs.pop('cls', '')
+    editor = Div(id="editor", cls=stringify(('mg-word-pack-editor', editor_cls)),
+                 data_ui='word-pack-editor', **kwargs)
     if not wp: return editor
     
     head = DivFullySpaced(

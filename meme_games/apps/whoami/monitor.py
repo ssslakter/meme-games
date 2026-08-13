@@ -23,4 +23,5 @@ def monitor():
     return LobbyPage("Current active lobbies",
                   lobbies_list if len(lobby_service.lobbies) else Div("No active lobbies", cls='text-center text-gray-500 dark:text-gray-400 text-lg p-6'),
                   no_image=True,
-                  cls='pt-10 flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900')
+                  cls='pt-10 flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900',
+                  page='monitor')

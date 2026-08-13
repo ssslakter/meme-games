@@ -33,7 +33,7 @@ def index(req: Request, lobby_id: str = None):
         Spectators(u, lobby, cls='right-0 bottom-1/3 -translate-y-1/2'),
         SettingsPopover(lobby=lobby, member=lobby.get_member(u.uid)),
         title=f"Watch together lobby: {lobby.id}",
-        no_image=True)
+        no_image=True, page='video')
 
 def redirect(lobby_id: str): return Redirect(index.to(lobby_id=lobby_id))
 

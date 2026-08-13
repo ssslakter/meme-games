@@ -18,7 +18,8 @@ def ControlButton(
     return Div(
         btn(icon_on, title_on, cls=on_cls + extra),
         btn(icon_off, title_off, cls=off_cls + " hidden".removesuffix(extra)),
-        cls="flex items-center justify-center rounded-full w-12 h-12 uk-card overflow-hidden",
+        cls="mg-control flex items-center justify-center rounded-full w-12 h-12 uk-card overflow-hidden",
+        data_ui='control',
     )
 
 
@@ -52,5 +53,6 @@ def StreamingControls(is_muted=True, is_sharing=False, is_video_on=False):
         MuteButton(is_muted),
         ScreenShareButton(is_sharing),
         VideoButton(is_video_on),
-        cls="fixed bottom-4 left-1/2 -translate-x-1/2 flex gap-4",
+        cls="mg-game-controls mg-streaming-controls fixed bottom-4 left-1/2 -translate-x-1/2 flex gap-4",
+        data_ui='game-controls',
     )

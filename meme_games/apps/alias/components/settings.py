@@ -76,6 +76,7 @@ def GameControls(r: LobbyMember, game_state: gm.GameState):
         ),
         VoteButton(r, game_state),
         ),
-        cls='fixed bottom-0 left-0 w-full p-7 border',
+        cls='mg-game-controls fixed bottom-0 left-0 w-full p-7 border',
+        data_ui='game-controls',
         id='game-controls'
     )

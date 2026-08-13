@@ -18,6 +18,8 @@ def Game(reciever: LobbyMember | User, lobby: Lobby, **kwargs):
         ),
         NotesBlock(reciever, lobby),
         id='game',
+        cls=stringify(('mg-game mg-game-whoami', kwargs.pop('cls', ''))),
+        data_ui='game', data_game='whoami',
         **kwargs
     )
 
@@ -35,5 +37,6 @@ def MainBlock(reciever: LobbyMember | User, lobby: Lobby):
         hx_ext="ws",
         ws_connect=ws_url,
         background_url=lobby.background_url,
+        page='whoami',
         _="on htmx:wsBeforeMessage call sendWSEvent(event)",
     )

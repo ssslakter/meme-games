@@ -15,6 +15,8 @@ def Game(reciever: LobbyMember | User, lobby: Lobby, **kwargs):
         WordPanel(reciever, state),
         GameControls(reciever, state),
         id='game',
+        cls=stringify(('mg-game mg-game-alias', kwargs.pop('cls', ''))),
+        data_ui='game', data_game='alias', data_state=state.state,
         **kwargs
         )
 
@@ -31,7 +33,7 @@ def Page(reciever: LobbyMember | User, lobby: Lobby):
         ws_connect=ws_url,
         no_image=True,
         title = f'Alias lobby: {lobby.id}',
-        cls='p-10'
+        cls='p-10', page='alias'
     )
 
 

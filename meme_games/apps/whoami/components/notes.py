@@ -19,7 +19,7 @@ def Notes(reciever: LobbyMember | User, author: LobbyMember, data: PlayerNotes,
     return Card(TextArea(data.notes, name='text', cls=textarea_classes, **notes_kwargs),
                 cls=('z-50 flex flex-col', stringify(cls)),
                 body_cls='p-0 flex flex-col h-full',
-                data_notes=author.uid,
+                data_notes=author.uid, data_ui='player-notes',
                 **kwargs)
 
 

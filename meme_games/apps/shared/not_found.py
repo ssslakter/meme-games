@@ -25,5 +25,6 @@ def not_found(req: Request, exc):
             ),
             hx_boost="true",
             cls="flex flex-col items-center h-screen",
+            page='not-found',
         ),
     )

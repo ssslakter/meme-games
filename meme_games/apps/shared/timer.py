@@ -13,7 +13,7 @@ def Timer(time: dt.timedelta | float = dt.timedelta(hours=1),
                  timer_text=True, timer=True,
                  data_render=data_render,
                  _='init immediately set @data-target to (Date.now()+@data-remaining as Number) as Date'),
-        _ ='init renderTextTimers()')
+        _='init renderTextTimers()', cls='mg-timer', data_ui='timer')
 
 def CircleTimer(time: dt.timedelta | float, **kwargs):
     circumference = 2 * math.pi * 45

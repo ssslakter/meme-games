@@ -21,10 +21,10 @@ def GameCard(title, desc, href):
         P(desc, cls="text-sm text-gray-600 dark:text-[color:var(--muted-foreground)]"),
         href=href,
         cls=(
-            "p-6 rounded-xl shadow hover:shadow-lg transition "
+            "mg-game-card mg-game-link p-6 rounded-xl shadow hover:shadow-lg transition "
             "bg-white dark:bg-[color:var(--card)] "
             "border border-gray-200 dark:border-[color:var(--border)]"
-        )
+        ), data_ui='game-card'
     )
 
 
@@ -83,8 +83,9 @@ def index():
             #     ),
             #     cls="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 py-8 mt-12 text-center"
             # ),
-            cls="flex-1"
+            cls="mg-page-content flex-1", data_ui='page-content'
         ),
         footer,
-        cls="flex flex-col min-h-screen bg-gray-50 dark:bg-[color:var(--background)]"
+        cls="mg-page flex flex-col min-h-screen bg-gray-50 dark:bg-[color:var(--background)]",
+        data_page='home', data_ui='page'
     ))

@@ -10,11 +10,12 @@ def StreamerBlock():
     return DivVStacked(
         ws, 
         Video(id='video', width=800, autoplay=True, muted=True, playsinline=True, controls=True),
-        cls="border",
+        cls="mg-stream border", data_ui='stream',
     )
 
 def StreamingMain(is_muted=True, is_sharing=False, is_video_on=False):
     return DivCentered(
         StreamerBlock(),
-        StreamingControls(is_muted, is_sharing, is_video_on)
+        StreamingControls(is_muted, is_sharing, is_video_on),
+        cls='mg-game mg-game-video', data_ui='game', data_game='video'
     )

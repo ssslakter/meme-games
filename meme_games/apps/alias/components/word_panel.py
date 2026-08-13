@@ -37,7 +37,8 @@ def WordEntry(guess: gm.GuessEntry, game: gm.GameState):
         mid = Div(score, body, cls='flex flex-col items-center justify-between min-w-0')
         body = Div(btn(-1)('-'), mid, btn(1)('+'), cls='flex w-full items-center justify-between gap-3')
     else: body = Div(body, cls='flex justify-center items-center')
-    return Div(body, cls='w-full uk-card w-[25rem]')
+    return Div(body, cls='mg-game-card mg-word-entry w-full uk-card w-[25rem]',
+               data_ui='word-entry')
 
 
 def RoundLog(guesses: list[gm.GuessEntry], game: gm.GameState):
@@ -62,5 +63,6 @@ def WordPanel(r: LobbyMember, game: gm.GameState):
              VoteButton(r, game) if game.state==gm.StateMachine.REVIEWING else None,
         cls='w-full flex flex-col items-center pt-2'
         ),
-        cls='fixed bottom-0 left-1/2 transform -translate-x-1/2 flex flex-col'
+        cls='mg-game-panel mg-word-panel fixed bottom-0 left-1/2 transform -translate-x-1/2 flex flex-col',
+        data_ui='word-panel'
         )

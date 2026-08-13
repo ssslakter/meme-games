@@ -6,7 +6,7 @@ from meme_games.apps.user import *
 from .general import *
 
 
-__all__ = ['Settings', 'Avatar', 'SettingsPopover', 'edit_avatar', 'edit_name', 'reset_avatar',
+__all__ = ['Settings', 'SettingsPopover',
            'lock_lobby', 'change_background', 'switch_game', 'SwitchGame', 'GoTo']
 
 
@@ -14,7 +14,6 @@ rt = APIRouter()
 register_route(rt)
 
 lobby_service = DI.get(LobbyService)
-user_manager = DI.get(UserManager)
 
 
 def Setting(icon: str, title: str = None, hx_swap='none', cls=('uk-btn cursor-pointer', ButtonT.default), **kwargs):
@@ -26,19 +25,6 @@ def Setting(icon: str, title: str = None, hx_swap='none', cls=('uk-btn cursor-po
         **kwargs
     )
 
-
-def NameSetting(): return Setting('pencil', title='Edit name', hx_put=edit_name, hx_prompt='Enter your name')
-
-def AvatarRemoval(): return Setting('trash', title='Remove avatar', hx_delete=reset_avatar,
-                                    hx_confirm="Confirm that you want to remove your avatar?")
-
-def AvatarSet(): 
-    return (Setting('user', title="Edit avatar",  _="on click set x to next <form input/> then x.click()"),
-            Form(Input(type="file", name="file", accept="image/*"),
-                style="display: none;",
-                hx_trigger="change",
-                hx_post=edit_avatar,
-                hx_swap="none"))
 
 def LockLobby(l: Lobby, cls=('uk-btn cursor-pointer', ButtonT.default)): 
     args = ('lock-open', 'Lock lobby') if not l.locked else ('lock', 'Unlock lobby')
@@ -76,10 +62,7 @@ def Settings(*lobby_settings, lobby: Lobby = None, member: LobbyMember = None):
         H4('Settings', cls="text-xl font-bold ml-2")
     )
 
-    user_settings = [
-        NameSetting(),
-        AvatarSet(),
-        AvatarRemoval(),
+    lobby_actions = [
         SetBackground(),
         LeaveLobby(),
     ]
@@ -89,10 +72,10 @@ def Settings(*lobby_settings, lobby: Lobby = None, member: LobbyMember = None):
     return Card(
         Div(
             container(head('layout-dashboard', "Lobby settings"), lobby_settings) if any(lobby_settings) else None,
-            container(head('user', "User settings"), user_settings),
+            container(head('settings', "Lobby actions"), lobby_actions),
             cls='flex flex-col items-right space-y-4'),
         header=card_header_content,
-        cls = 'space-y-2',
+        cls='mg-lobby-settings space-y-2', data_ui='lobby-settings',
     )
 
 
@@ -125,49 +108,14 @@ def SettingsPopover(*lobby_settings, lobby: Lobby = None, member: LobbyMember = 
     return Div(
         button,
         panel_wrapper,
-        cls="fixed bottom-0 right-0 p-4 z-50 sm:block hidden"
+        cls="mg-settings-popover fixed bottom-0 right-0 p-4 z-50 sm:block hidden",
+        data_ui='settings-popover'
     )
 
 
 #-----------------------------------#
 #------------- Routes --------------#
 #-----------------------------------#
-
-# TODO move to user app
-@rt('/name', methods=['put'])
-async def edit_name(req: Request, hdrs: HtmxHeaders):
-    u: User = req.state.user
-    name = ' '.join(urllib.parse.unquote(hdrs.prompt).split())
-    u.name = name
-    user_manager.update(u)
-    lobby_service.sync_active_lobbies_user(u)
-    lobby = lobby_service.get_lobby(req.session.get("lobby_id"))
-    if not lobby: return
-    def update(r, *_): return UserName(r, u)
-    await notify_all(lobby, update)
-
-
-async def modify_avatar(req: Request, file: Optional[UploadFile] = None):
-    '''Update user avatar and if in lobby sync it'''
-    u: User = req.state.user
-    if file: await u.set_picture(file)
-    else: u.reset_picture()
-    user_manager.update(u)
-    lobby_service.sync_active_lobbies_user(u)
-    lobby = lobby_service.get_lobby(req.session.get("lobby_id"))
-    if not lobby: return
-    def update(*_): return (Avatar(u)(hx_swap_oob=f"outerHTML:[data-avatar='{u.uid}']"), 
-                            AvatarBig(u)(hx_swap_oob=f"outerHTML:[data-avatar-big='{u.uid}']"))
-    await notify_all(lobby, update)
-
-
-@rt('/avatar', methods=['post'])
-async def edit_avatar(req: Request, file: UploadFile): await modify_avatar(req, file)
-
-
-@rt('/avatar', methods=['delete'])
-async def reset_avatar(req: Request): await modify_avatar(req, None)
-
 
 @rt('/switch_game', methods=['post'])
 async def switch_game(req: Request, game: str):

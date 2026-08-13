@@ -26,7 +26,9 @@ class WordCard:
     is_revealed: bool = False
 
     def __ft__(self):
-        return Card(H4(self.word), style=f'background-color: {self.color.to_css_color()}')
+        return Card(H4(self.word), style=f'background-color: {self.color.to_css_color()}',
+                    cls='mg-game-card mg-word-card', data_ui='word-card',
+                    data_color=self.color.value, data_revealed=str(self.is_revealed).lower())
 
 
 @dataclass

@@ -77,22 +77,7 @@ def PlayerCard(reciever: LobbyMember | User, p: LobbyMember, lobby: Lobby):
     notes_classes = f"w-[{CARD_WIDTH}] h-[{CARD_HEIGHT}] absolute top-0 left-0 z-50 hidden p-3"
 
     if reciever == p:
-        edit = (
-            UkIcon(
-                "pencil",
-                width=30,
-                height=30,
-                cls=controls_classes,
-                _="on click set x to next <form input/> then x.click()",
-            ),
-            Form(
-                Input(type="file", name="file", accept="image/*"),
-                style="display: none;",
-                hx_trigger="change",
-                hx_post=edit_avatar,
-                hx_swap="none",
-            ),
-        )
+        edit = None
     else:
         edit = UkIcon("file-text", width=30, height=30, cls=f"{controls_classes} peer",
                       _=f'on mouseover get first <[data-notes="{p.uid}"]/> then remove .hidden from it'

@@ -45,7 +45,7 @@ def index(pack_id: str = None):
                 cols_xl=5,
             ),
             cls=('pt-10', ContainerT.xl)),
-            title = "Word packs", no_image=True)
+            title="Word packs", no_image=True, page='word-packs')
 
 register_page("Word Packs", index.to())
 

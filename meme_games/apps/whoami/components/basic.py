@@ -6,5 +6,6 @@ CARD_WIDTH, CARD_HEIGHT = int2css(w), int2css(h)
 
 def PlayerCardBase(*args, cls=(), **kwargs):
     return Card(*args, 
-                cls=f"w-[{CARD_WIDTH}] h-[{CARD_HEIGHT}] group {stringify(cls)} flex justify-center items-center flex-col",
+                cls=f"mg-game-card mg-player-card w-[{CARD_WIDTH}] h-[{CARD_HEIGHT}] group {stringify(cls)} flex justify-center items-center flex-col",
+                data_ui='player-card',
                 **kwargs)

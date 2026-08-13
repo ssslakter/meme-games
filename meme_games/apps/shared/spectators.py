@@ -30,7 +30,7 @@ def SpectatorsList(reciever: LobbyMember | User, lobby: Lobby):
                 if not p.is_player
             ],
             id="spectators",
-            cls="flex flex-col gap-1",
+            cls="mg-spectators-list flex flex-col gap-1", data_ui='spectators-list',
         )
 
 def Spectators(reciever: LobbyMember | User, lobby: Lobby, cls = 'right-0 top-1/3 -translate-y-1/2'):
@@ -41,7 +41,8 @@ def Spectators(reciever: LobbyMember | User, lobby: Lobby, cls = 'right-0 top-1/
         hx_post=spectate,
         hx_swap='none',
         tabindex="0",
-        cls=f"fixed rounded-r-none p-2 cursor-pointer {cls}"
+        cls=f"mg-spectators fixed rounded-r-none p-2 cursor-pointer {cls}",
+        data_ui='spectators'
     )
 
 

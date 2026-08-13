@@ -29,6 +29,7 @@ hdrs = [
     Meta(name="robots", content="noindex, nofollow"),
     Script('htmx.config.allowNestedOobSwaps=false;'),
     Link(rel="icon", href="/static/images/favicon.ico"),
+    Theme.yellow.headers(radii=ThemeRadii.lg, shadows=ThemeShadows.lg),
     Script(src='/static/scripts/imports/_hyperscript.min.js'),
     Script(src='/static/scripts/imports/live2d/live2dcubismcore.min.js'),
     Script(src='/static/scripts/imports/live2d/live2d.min.js'),
@@ -37,7 +38,6 @@ hdrs = [
     Statics(ext='js', static_path='static', wc='scripts/common/**/*.js'),
     Statics(ext='js', static_path='static', wc='scripts/whoami/**/*.js'),
     Statics(ext='js', static_path='static', wc='scripts/video/**/*.js', defer=True),
-    Theme.yellow.headers(radii=ThemeRadii.lg, shadows=ThemeShadows.lg),
     style
 ]
 

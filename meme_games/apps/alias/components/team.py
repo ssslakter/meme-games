@@ -39,14 +39,16 @@ def TeamCard(r: User | LobbyMember, team: gm.Team, game: gm.GameState):
         ),
         id="id-" + team.id,
         hx_swap_oob="true",
-        cls=f"{card_cls} {winner_classes}",
+        cls=f"mg-game-card mg-team-card {card_cls} {winner_classes}",
+        data_ui='team-card', data_team=team.id,
     )
 
 
 def NewTeamCard():
     from ..routes import new_team
 
-    return Card(Button("New team", hx_post=new_team, hx_swap="none"), cls=card_cls)
+    return Card(Button("New team", hx_post=new_team, hx_swap="none"),
+                cls=f'mg-game-card mg-new-team-card {card_cls}', data_ui='new-team-card')
 
 
 def WinnerTag():
