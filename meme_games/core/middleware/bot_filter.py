@@ -2,9 +2,16 @@
 import re
 from starlette.responses import Response
 from fasthtml.common import Html, Head, Body, Title, Meta, to_xml
-from .lobby_rate_limit import LOBBY_PATTERNS
 
-__all__ = ['BotFilterMiddleware', 'BOT_UA_PATTERN']
+__all__ = ['BotFilterMiddleware', 'BOT_UA_PATTERN', 'LOBBY_PATTERNS']
+
+# Lobby entry routes - add new game patterns here
+LOBBY_PATTERNS = [
+    r"^/alias/[a-z0-9]+$",
+    r"^/whoami/[a-z0-9]+$",
+    r"^/video/[a-z0-9]+$",
+    r"^/codenames/[a-z0-9]+$",
+]
 
 # Crawlers, search engines, chat-app unfurlers and scripted clients. They hit shared
 # lobby URLs and would otherwise create lobbies nobody joins, filling the limit.

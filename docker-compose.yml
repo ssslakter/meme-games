@@ -3,7 +3,11 @@ services:
     image: ghcr.io/ssslakter/meme-games:main
     pull_policy: always
     ports:
-      - "8000:8000"
+      # only nginx reaches the app; it terminates TLS and runs crowdsec
+      - "127.0.0.1:8000:8000"
+    environment:
+      # nginx's address as the app sees it, so X-Forwarded-For is trusted from it alone
+      - FORWARDED_ALLOW_IPS=${FORWARDED_ALLOW_IPS:-127.0.0.1}
     volumes:
       - ./data:/app/data
       - ./user-content:/app/user-content
