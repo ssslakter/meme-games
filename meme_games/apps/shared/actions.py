@@ -17,6 +17,8 @@ class ActionResult:
     revision: int
 
 
+# TODO: Route Alias mutations through this boundary before adding agent support.
+# TODO: Do the same for Video if it gains server-side gameplay mutations.
 class GameActions:
     """Serialize, persist, and publish game mutations."""
 
