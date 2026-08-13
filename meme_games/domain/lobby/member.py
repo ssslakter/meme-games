@@ -61,7 +61,10 @@ class LobbyMember(fc.GetAttr, Model):
         """Checks if the member is the host."""
         return self.is_host_
 
-    def __eq__(self, other: Union[User, 'LobbyMember']): return self.uid == other.uid
+    def __eq__(self, other: Union[User, 'LobbyMember']):
+        return self.uid == other.uid if isinstance(other, (User, LobbyMember)) else NotImplemented
+
+    def __hash__(self): return hash(self.uid)
 
     @classmethod
     def from_dict(cls, data: dict):
