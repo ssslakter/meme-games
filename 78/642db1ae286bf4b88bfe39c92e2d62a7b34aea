@@ -1,0 +1,88 @@
+meme_games/apps/word_packs/routes.py
+  s_4f6be57d5e6f82::t_a54d795e6f17e7 48
+meme_games/apps/whoami/components/basic.py
+  s_4f6be57d5e6f82::t_a54d795e6f17e7 9-10
+meme_games/apps/video/routes.py
+  s_4f6be57d5e6f82::t_a54d795e6f17e7 36,46
+meme_games/apps/user/components/general.py
+  s_4f6be57d5e6f82::t_d7fd74f331eacf 51,53,57,63-65
+  s_4f6be57d5e6f82::t_dcffa3c8149247 50,52,54,56,58-59,62,66-69,80-83
+  s_4f6be57d5e6f82::t_5be1cec8eafa01 13,17-19,27-29,32-34,37-49,55,60-61,70-79,84-106
+meme_games/apps/shared/not_found.py
+  s_4f6be57d5e6f82::t_9832bd9aa24385 28
+meme_games/apps/shared/navigation.py
+  s_4f6be57d5e6f82::t_5be1cec8eafa01 24,37,41,56,60,65,74-75
+  s_4f6be57d5e6f82::t_dcffa3c8149247 29,38-39,43
+  s_4f6be57d5e6f82::t_6dcee98d1cac0d 42
+meme_games/apps/alias/components/settings.py
+  s_4f6be57d5e6f82::t_a54d795e6f17e7 79-80,82
+meme_games/apps/whoami/components/game.py
+  s_4f6be57d5e6f82::t_a54d795e6f17e7 21-22,40
+meme_games/apps/alias/components/game.py
+  s_4f6be57d5e6f82::t_a54d795e6f17e7 18,36
+  s_4f6be57d5e6f82::t_9832bd9aa24385 19
+meme_games/apps/whoami/components/notes.py
+  s_4f6be57d5e6f82::t_a54d795e6f17e7 22
+meme_games/main.py
+  s_4f6be57d5e6f82::t_d003b02962a277 32
+static/scripts/common/custom_css.js
+  s_4f6be57d5e6f82::t_d003b02962a277 1-24,27-32,36-72,76-80
+  s_4f6be57d5e6f82::t_9832bd9aa24385 33-35,73
+  s_4f6be57d5e6f82::t_02377c40035a9b 25-26,74-75
+meme_games/apps/whoami/components/cards.py
+  s_4f6be57d5e6f82::t_5be1cec8eafa01 80
+meme_games/apps/whoami/monitor.py
+  s_4f6be57d5e6f82::t_9832bd9aa24385 26-27
+meme_games/apps/video/components/media.py
+  s_4f6be57d5e6f82::t_a54d795e6f17e7 13,19-20
+meme_games/apps/shared/general.py
+  s_4f6be57d5e6f82::t_a54d795e6f17e7 5-6,14-15,24
+  s_4f6be57d5e6f82::t_8add70ad1cd8cb 22
+meme_games/apps/alias/components/team.py
+  s_4f6be57d5e6f82::t_9832bd9aa24385 43
+  s_4f6be57d5e6f82::t_a54d795e6f17e7 42,50-51
+meme_games/apps/codenames/domain.py
+  s_4f6be57d5e6f82::t_2c1763c7b055cb 29-31
+meme_games/apps/home/routes.py
+  s_4f6be57d5e6f82::t_9832bd9aa24385 86
+  s_4f6be57d5e6f82::t_a54d795e6f17e7 24,27,89-90
+meme_games/apps/shared/settings.py
+  s_4f6be57d5e6f82::t_5be1cec8eafa01 9,65,75,164
+  s_4f6be57d5e6f82::t_a54d795e6f17e7 78,111-112
+meme_games/apps/shared/spectators.py
+  s_4f6be57d5e6f82::t_a54d795e6f17e7 33,44-45
+meme_games/apps/video/components/controls.py
+  s_4f6be57d5e6f82::t_a54d795e6f17e7 56-57
+  s_4f6be57d5e6f82::t_2c1763c7b055cb 21-22
+meme_games/apps/alias/components/word_panel.py
+  s_4f6be57d5e6f82::t_a54d795e6f17e7 66-67
+  s_4f6be57d5e6f82::t_2c1763c7b055cb 40-41
+meme_games/apps/word_packs/components.py
+  s_4f6be57d5e6f82::t_02377c40035a9b 77-79
+  s_4f6be57d5e6f82::t_a54d795e6f17e7 14
+  s_4f6be57d5e6f82::t_9832bd9aa24385 13
+meme_games/apps/shared/timer.py
+  s_4f6be57d5e6f82::t_a54d795e6f17e7 16,31
+meme_games/apps/user/routes.py
+  s_4f6be57d5e6f82::t_1cb6658eae9b2c 2
+  s_4f6be57d5e6f82::t_dcffa3c8149247 27
+  s_4f6be57d5e6f82::t_5be1cec8eafa01 20,22-26,28,30,34-45,48,50-51,53-70
+tests/test_user_settings.py
+  s_4f6be57d5e6f82::t_d249dddd64ae6b 1-52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "78642db1ae286bf4b88bfe39c92e2d62a7b34aea",
+  "prompts": {},
+  "sessions": {
+    "s_4f6be57d5e6f82": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffb09-b037-7570-bb8d-10870f97e2e4",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
