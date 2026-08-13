@@ -1,4 +1,3 @@
-from typing import Type
 from meme_games.core import *
 from ..user import *
 from .member import *
@@ -22,29 +21,28 @@ class LobbyService:
 
     def __repr__(self): return f'{self.__class__.__name__}(active_lobbies={len(self.lobbies)})'
 
-    def create_lobby[T: LobbyMember, S: Any](
-            self, host: User = None, 
-            lobby_id: Optional[str] = None, 
-            lobby_type: Type[Lobby[T, S]] = BasicLobby,
-            **kwargs) -> Lobby[T, S]:
+    def create_lobby(self, host: User = None, lobby_id: Optional[str] = None,
+                     game: str = BASIC_GAME, **kwargs) -> Lobby:
         """Creates a new lobby and sets the user as the host."""
         lobby_id = lobby_id or random_id()
         ids = list(self.lobbies) + self.repo.ids()
         while lobby_id in ids: lobby_id = random_id()
-        lobby = lobby_type(lobby_id, current_type=get_lobby_type_str(lobby_type), **kwargs)
+        lobby = Lobby(lobby_id, **kwargs)
+        lobby.play_game(game)
         if host: lobby.set_host(lobby.create_member(host))
         self.lobbies[lobby_id] = lobby
         if lobby.persistent: self.repo.insert(lobby)
         return lobby
 
-    def get_lobby[T: LobbyMember, S: Any](self, id: Optional[str] = None, as_type: Optional[Type[Lobby[T, S]]] = None) -> Optional[Lobby[T,S]]:
-        """Gets a lobby from cache or the database."""
+    def get_lobby(self, id: Optional[str] = None, game: Optional[str] = None) -> Optional[Lobby]:
+        """Gets a lobby from cache or the database, optionally switching it to `game`."""
         lobby = self.lobbies.get(id)
-        if lobby: return lobby.cast(as_type) if as_type else lobby
-        lobby = self.repo.get(id)
-        if lobby: self.lobbies[id] = lobby
-        else: return
-        return lobby.cast(as_type) if as_type else lobby
+        if not lobby:
+            lobby = self.repo.get(id)
+            if not lobby: return
+            self.lobbies[id] = lobby
+        if game and lobby.current_game != game: lobby.play_game(game)
+        return lobby
 
     def delete_lobby(self, id: str):
         """Deletes a lobby from cache and the database."""
@@ -80,21 +78,17 @@ class LobbyService:
             try: self.cleanup_lobbies()
             except Exception: logger.exception('Lobby cleanup failed')
 
-    def get_or_create[T: LobbyMember, S: Any](
-            self, 
-            host: User = None, 
-            id: Optional[str] = None,
-            as_type: Optional[Type[Lobby[T, S]]] = None,
-            **create_kwargs) -> tuple[Lobby[T, S], bool]:
-        '''Returns the lobby if it exists, otherwise creates one if id was valid then casts to `as_type`. Returns (lobby, created)'''
+    def get_or_create(self, host: User = None, id: Optional[str] = None,
+                      game: str = BASIC_GAME, **create_kwargs) -> tuple[Lobby, bool]:
+        '''Returns the lobby if it exists, otherwise creates one if id was valid.
+        Either way the lobby ends up playing `game`. Returns (lobby, created)'''
         if not id or not id.isascii(): raise HTTPException(400, 'Invalid lobby id, must be ascii')
-        if lobby := self.get_lobby(id): 
-            return lobby.cast(as_type) if as_type else lobby, False
+        if lobby := self.get_lobby(id, game): return lobby, False
         if len(self.lobbies) >= self.lobby_limit: raise HTTPException(
             400, 'Too many lobbies, wait until some are finished')
         if host and self._host_lobby_count(host.uid) >= self.max_lobbies_per_host:
             raise HTTPException(429, 'You already have several open lobbies. Close one before creating another.')
-        return self.create_lobby(host, id, as_type or BasicLobby, **create_kwargs), True
+        return self.create_lobby(host, id, game, **create_kwargs), True
 
     def sync_active_lobbies_user(self, u: User):
         """Synchronizes user information across all active lobbies they are in."""
@@ -107,9 +101,8 @@ class LobbyService:
 
     def spectate(self, player: LobbyMember, lobby: Lobby):
         player.spectate()
-        if lobby.game_state:
-            # TODO add generic type for game state
-            lobby.game_state.remove_player(player)
+        state = lobby.state
+        if hasattr(state, 'remove_player'): state.remove_player(player.uid)
         self.update(lobby)
 
 

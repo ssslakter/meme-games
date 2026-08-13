@@ -5,16 +5,16 @@ from .notes import *
 from .basic import *
 
 
-def PlayerLabelText(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
+def PlayerLabelText(r: LobbyMember | User, owner: LobbyMember, data: PlayerNotes):
     label_text_classes = "text-center border-none w-full h-full shadow-none scrollbar-hide resize text-black"
     style = (
-        f"width: {int2px(owner.label_tfm.width)}; height: {int2px(owner.label_tfm.height)};"
-        if owner.label_tfm
+        f"width: {int2px(data.label_tfm.width)}; height: {int2px(data.label_tfm.height)};"
+        if data.label_tfm
         else ""
     )
     if r.uid != owner.uid:
         return TextArea(
-            owner.label_text,
+            data.label_text,
             placeholder="enter label",
             ws_send=True,
             name="label",
@@ -22,7 +22,7 @@ def PlayerLabelText(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
             data_label_text=owner.uid,
             hx_vals={"owner_uid": owner.uid, "type": "label_text"},
             style=style,
-            value=owner.label_text,
+            value=data.label_text,
             cls=label_text_classes,
             hx_trigger="input changed delay:100ms",
         )
@@ -31,25 +31,25 @@ def PlayerLabelText(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
         return (
             TextArea(readonly=True, style=style, cls=label_text_classes),
             Div(
-                "?" if owner.label_text else "",
+                "?" if data.label_text else "",
                 cls=label_hidden_classes,
                 data_label_text=owner.uid,
             ),
         )
 
 
-def PlayerLabelFT(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
+def PlayerLabelFT(r: LobbyMember | User, owner: LobbyMember, data: PlayerNotes):
     fields = ["x", "y", "width", "height", "owner_uid"]
     event_details = ", ".join(
         [f"{field}: event.detail.transform.{field}" for field in fields]
     )
-    if owner.label_tfm:
-        style = f"left: {int2px(owner.label_tfm.x)}; top: {int2px(owner.label_tfm.y)};"
+    if data.label_tfm:
+        style = f"left: {int2px(data.label_tfm.x)}; top: {int2px(data.label_tfm.y)};"
     else:
         style = f"left: calc(50%-{LABEL_WIDTH}/2);"
     style += "background-color: rgba(239, 255, 200, 0.6);"
     return Div(
-        PlayerLabelText(r, owner),
+        PlayerLabelText(r, owner, data),
         Div(
             hx_trigger="moved",
             ws_send=True,
@@ -68,12 +68,13 @@ def PlayerLabelFT(r: WhoAmIPlayer | User, owner: WhoAmIPlayer):
     )
 
 
-def PlayerCard(reciever: WhoAmIPlayer | User, p: WhoAmIPlayer, lobby: Lobby):
+def PlayerCard(reciever: LobbyMember | User, p: LobbyMember, lobby: Lobby):
     if not p.is_player:
         return
+    state: WhoAmIState = lobby.state
+    data = state.player(p.uid)
     controls_classes = "absolute top-0 right-0 z-10 group-hover:block hidden cursor-pointer p-1 bg-white/60 dark:bg-gray-900/60"
     notes_classes = f"w-[{CARD_WIDTH}] h-[{CARD_HEIGHT}] absolute top-0 left-0 z-50 hidden p-3"
-
 
     if reciever == p:
         edit = (
@@ -107,7 +108,7 @@ def PlayerCard(reciever: WhoAmIPlayer | User, p: WhoAmIPlayer, lobby: Lobby):
         footer_cls="p-0 backdrop-blur-sm text-xl justify-center flex rounded-lg w-full truncate",
         data_user=p.uid,
         body_cls="flex-1 relative p-0 overflow-hidden w-full rounded-t-lg",
-    )(PlayerLabelFT(reciever, p), Notes(reciever, p, 
+    )(PlayerLabelFT(reciever, p, data), Notes(reciever, p, data,
                                         text_cls='flex-1 box-border',
                                         cls=notes_classes,
                                         _='on mouseleave add .hidden to me') if reciever!=p else None)

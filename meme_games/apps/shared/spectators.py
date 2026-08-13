@@ -52,7 +52,7 @@ async def spectate(req: Request):
     if lobby.locked: return add_toast(req.session, "Game is locked", "error")
     DI.get(LobbyService).spectate(p, lobby)
 
-    upd, send = SPECTATORS_NOTIFY_REGISTRY.get(lobby.current_type, (lambda *_: None, None))
+    upd, send = SPECTATORS_NOTIFY_REGISTRY.get(lobby.current_game, (lambda *_: None, None))
     def update(r: LobbyMember, *_):
         return JoinSpectators(r, p), upd(r, lobby, p)
     await notify_all(lobby, update)
@@ -61,9 +61,8 @@ async def spectate(req: Request):
 
 SPECTATORS_NOTIFY_REGISTRY: dict[str, tuple[Callable, Callable]] = {}
 
-def register_lobby_spectators_update[T: LobbyMember, State: Any](
-        target_type: Type['Lobby[T,State]'],
+def register_lobby_spectators_update(
+        game: str,
         update_fn: Callable[[LobbyMember, Lobby, LobbyMember], Any],
         update_sender: Callable[[LobbyMember, Lobby], Any] = None):
-    name = target_type.__name__.lower() + '_' + get_args(target_type)[0].__name__.lower()
-    SPECTATORS_NOTIFY_REGISTRY[name] = (update_fn, update_sender)
+    SPECTATORS_NOTIFY_REGISTRY[game] = (update_fn, update_sender)

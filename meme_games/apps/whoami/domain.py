@@ -1,8 +1,8 @@
-__all__ = ['WAILobby', 'PlayerLabel', 'WhoAmIPlayer', 'WhoAmIRepo']
+__all__ = ['WHOAMI', 'PlayerLabel', 'PlayerNotes', 'WhoAmIState']
 
-import ast
 from ...core import *
 from ...domain import *
+
 
 @dataclass
 class PlayerLabel:
@@ -13,73 +13,30 @@ class PlayerLabel:
 
 
 @dataclass
-class WhoAmIPlayer(LobbyMember):
-    _lobby_type = 'whoami'
+class PlayerNotes:
+    '''What a player owns in a Who Am I round: the label others gave them, and their own notes.'''
     label_text: str = ''
     label_tfm: Optional[PlayerLabel] = None
     notes: str = ''
-
-    def __post_init__(self):
-        if isinstance(self.label_tfm, str): self.label_tfm = PlayerLabel(**ast.literal_eval(self.label_tfm))
-        return super().__post_init__()
 
     def set_notes(self, notes: str): self.notes = notes
     def set_label(self, label: str): self.label_text = label
     def set_label_transform(self, tfm: dict = None): self.label_tfm = PlayerLabel(**(tfm or {}))
 
-    @classmethod
-    def columns(cls):
-        cols = dict(set(super().columns().items()) - set(LobbyMember.columns().items()))
-        cols.update({'id': str})
-        return cols
+
+@dataclass
+class WhoAmIState:
+    players: dict[str, PlayerNotes] = field(default_factory=dict)
+
+    def player(self, uid: str) -> PlayerNotes: return self.players.setdefault(uid, PlayerNotes())
+
+    def remove_player(self, uid: str): self.players.pop(uid, None)
 
     @classmethod
     def from_dict(cls, data: dict):
-        data = cols2dict(data)
-        data[cls]['user'] = User.from_dict(data.pop(User))
-        data[cls].update(data.pop(LobbyMember))
-        return super(LobbyMember, cls).from_dict(data[cls])
+        return cls(players={uid: PlayerNotes(**{**p, 'label_tfm': PlayerLabel(**p['label_tfm']) if p.get('label_tfm') else None})
+                            for uid, p in data.get('players', {}).items()})
 
 
-class WhoAmIRepo(DataRepository[WhoAmIPlayer]):
-    
-    def __init__(self, member_manager: MemberRepo):
-        self.mm = member_manager
-        self.mem_t = self.mm.members
-        super().__init__(self.mm.db)
-    
-    def _set_tables(self):
-        self.players = self.db.t.whoami_members.create(**WhoAmIPlayer.columns(), 
-                                                       pk='id', transform=True, if_not_exists=True,
-                                                       foreign_keys=[('id', 'members', 'id')])
-        return self.players
-
-    def upsert(self, obj):
-        self.mm.upsert(obj._asdict(LobbyMember.columns().keys()))
-        return super().upsert(obj._asdict(WhoAmIPlayer.columns().keys()))
-    
-    def upsert_all(self, objs):
-        self.mm.upsert_all([o._asdict(LobbyMember.columns().keys()) for o in objs])
-        return super().upsert_all([o._asdict(WhoAmIPlayer.columns().keys()) for o in objs])
-    
-    def update(self, obj):
-        self.mm.update(obj._asdict(LobbyMember.columns().keys()))
-        return super().update(obj._asdict(WhoAmIPlayer.columns().keys()))
-
-    def insert(self, obj: WhoAmIPlayer):
-        self.mm.insert(obj._asdict(LobbyMember.columns().keys()))
-        return super().insert(obj._asdict(WhoAmIPlayer.columns().keys()))
-    
-    def get_all(self, lobby_id: str) -> list[WhoAmIPlayer]: 
-        qry = f'''select {mk_aliases(WhoAmIPlayer, self.players)},  
-                 {mk_aliases(LobbyMember, self.mem_t)},
-                 {mk_aliases(User, self.mm.users)}
-                  from {self.players} \
-                  join {self.mem_t} on {self.mem_t.c.id} = {self.players.c.id} \
-                  join {self.mm.users} on {self.mem_t.c.user_uid} = {self.mm.users.c.uid} \
-                  where {self.mem_t.c.lobby_id} = ?'''
-        return list(map(WhoAmIPlayer.from_dict, self.db.q(qry, [lobby_id])))
-
-WAILobby = Lobby[WhoAmIPlayer]
-lobby.register_lobby_type(WAILobby, member_repo=WhoAmIRepo)
-DI.register_service(WhoAmIRepo)
+WHOAMI = 'whoami'
+register_game(WHOAMI, WhoAmIState, persist=True)

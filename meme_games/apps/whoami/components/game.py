@@ -6,7 +6,7 @@ from ..domain import *
 from .cards import *
 from .notes import *
 
-def Game(reciever: WhoAmIPlayer | User, lobby: Lobby):
+def Game(reciever: LobbyMember | User, lobby: Lobby, **kwargs):
     new_player = [] if is_player(reciever) else [NewPlayerCard()]
     player_classes = "pt-20 flex flex-row justify-center flex-wrap gap-8"
     return Div(
@@ -16,11 +16,13 @@ def Game(reciever: WhoAmIPlayer | User, lobby: Lobby):
             id="players",
             cls=player_classes,
         ),
-        NotesBlock(reciever),
+        NotesBlock(reciever, lobby),
+        id='game',
+        **kwargs
     )
 
 
-def MainBlock(reciever: WhoAmIPlayer | User, lobby: Lobby):
+def MainBlock(reciever: LobbyMember | User, lobby: Lobby):
     from ..routes import ws_url
     from ..monitor import monitor
 

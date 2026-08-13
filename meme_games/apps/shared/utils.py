@@ -24,3 +24,16 @@ def int2px(value: int):
 ROUTES: list[APIRouter] = []
 def register_route(rt):
     if rt not in ROUTES: ROUTES.append(rt)
+
+
+def lobby_state(req, game: str = None):
+    '''The request's lobby, the state of `game`, and the requesting member.
+
+    Raises instead of letting a handler run against a lobby that is playing
+    something else - the session lobby and the route need not agree.'''
+    lobby = getattr(req.state, 'lobby', None)
+    if not lobby:
+        raise HTTPException(400, 'Incorrect client state. Please refresh the page.')
+    if game and lobby.current_game != game:
+        raise HTTPException(409, f'This lobby is playing {lobby.current_game}. Refresh the page.')
+    return lobby, lobby.state, lobby.get_member(req.state.user.uid)

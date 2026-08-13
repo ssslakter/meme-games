@@ -1,4 +1,5 @@
 from meme_games.core import *
+from meme_games.domain import LobbyMember
 from meme_games.apps.shared import CircleTimer, ColoredPoints
 from ..domain import game as gm
 from .settings import VoteButton
@@ -9,7 +10,7 @@ def CurrentWord(game: gm.GameState):
                id='current_word', hx_swap_oob='true')
 
 
-def ExplainerPanel(r: gm.AliasPlayer, game: gm.GameState):
+def ExplainerPanel(r: LobbyMember, game: gm.GameState):
     from ..routes import guess
     if not r == game.active_player: return None
     return Div(
@@ -52,7 +53,7 @@ def GuessPanel(game: gm.GameState):
         cls=f'flex-col-reverse overflow-y-auto {max_h}')
 
 
-def WordPanel(r: gm.AliasPlayer, game: gm.GameState):
+def WordPanel(r: LobbyMember, game: gm.GameState):
     return Div(
         GuessPanel(game),
         Div(

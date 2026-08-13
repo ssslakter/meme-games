@@ -35,7 +35,7 @@ user_manager = DI.get(UserManager)
 def index(req: Request, lobby_id: str = None):
     if not lobby_id: return redirect(random_id())
     u: User = req.state.user
-    lobby, was_created = lobby_service.get_or_create(u, lobby_id, CodenamesLobby)
+    lobby, was_created = lobby_service.get_or_create(u, lobby_id, CODENAMES)
     if was_created: lobby_service.update(lobby)
     m = lobby.get_member(u.uid)
     req.session['lobby_id'] = lobby.id

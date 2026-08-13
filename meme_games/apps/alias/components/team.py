@@ -1,12 +1,13 @@
 from meme_games.core import *
 from meme_games.apps.user import *
+from meme_games.domain import LobbyMember
 from .word_panel import *
 from ..domain import game as gm
 
 card_cls = "w-[20rem]"
 
 
-def TeamCard(r: User | gm.AliasPlayer, team: gm.Team, game: gm.GameState):
+def TeamCard(r: User | LobbyMember, team: gm.Team, game: gm.GameState):
     from ..routes import join_team
 
     winner_classes = (
@@ -20,7 +21,7 @@ def TeamCard(r: User | gm.AliasPlayer, team: gm.Team, game: gm.GameState):
                 UserInfo(r, m.user, m.is_connected),
                 Div(Span(team.points), PotentialScore(team, game)),
                 cls=(
-                    "bg-green-100 rounded-md dark:bg-green-500" if m.voted else "",
+                    "bg-green-100 rounded-md dark:bg-green-500" if game.has_voted(m) else "",
                     "w-full truncate",
                 ),
             )

@@ -1,7 +1,8 @@
 
-__all__ = ['Lobby', 'LobbyRepo', 'MemberRepo', 'is_player', 'is_host', 'register_lobby_type', 'get_lobby_type_str', 'BasicLobby']
+__all__ = ['Lobby', 'LobbyRepo', 'MemberRepo', 'is_player', 'is_host',
+           'GameSpec', 'GAME_REGISTRY', 'register_game', 'BASIC_GAME']
 
-from typing import Type, get_args
+import json
 from meme_games.core import *
 from ..user import *
 from .member import *
@@ -9,106 +10,124 @@ from .member import *
 
 logger = logging.getLogger(__name__)
 
-LOBBY_REGISTRY = {}
-MEMBER_REPO_REGISTRY: dict[str, Type[MemberRepo]] = {}
 
-def register_lobby_type[T: LobbyMember, State: Any](target_type: Type['Lobby[T,State]'], 
-                                                    member_repo: Optional[Type[MemberRepo]] = None):
-    name = target_type.__name__.lower() + '_' + get_args(target_type)[0].__name__.lower()
-    LOBBY_REGISTRY[name] = target_type
-    if member_repo:
-        MEMBER_REPO_REGISTRY[name] = member_repo
+@dataclass
+class GameSpec:
+    '''How a lobby runs one game: what its state looks like and whether it outlives memory.'''
+    name: str
+    state_cls: Optional[type] = None
+    persist: bool = False
 
-def get_lobby_type_str[T: LobbyMember, State: Any](target_type: Type['Lobby[T,State]']) -> str:
-    name = target_type.__name__.lower() + '_' + get_args(target_type)[0].__name__.lower()
-    if name in LOBBY_REGISTRY:
-        return name
-    raise ValueError(f'Lobby type {name} is not registered. Available types: {list(LOBBY_REGISTRY.keys())}')
+    def new_state(self): return self.state_cls() if self.state_cls else None
+
+    def to_dict(self, state) -> dict:
+        return state.to_dict() if hasattr(state, 'to_dict') else asdict(state)
+
+    def from_dict(self, data: dict):
+        if hasattr(self.state_cls, 'from_dict'): return self.state_cls.from_dict(data)
+        return self.state_cls(**data)
+
+
+BASIC_GAME = 'lobby'
+GAME_REGISTRY: dict[str, GameSpec] = {BASIC_GAME: GameSpec(BASIC_GAME)}
+
+
+def register_game(name: str, state_cls: Optional[type] = None, persist: bool = False) -> GameSpec:
+    '''Register a game a lobby can switch to. `persist` keeps its state in the database.'''
+    GAME_REGISTRY[name] = GameSpec(name, state_cls, persist)
+    return GAME_REGISTRY[name]
+
 
 
 @dataclass
-class Lobby[T: LobbyMember, S = None](Model):
-    '''Represents a game lobby.'''
-    _ignore = ('members', 'host', 'game_state')
-    
+class Lobby(Model):
+    '''A room of members that can switch between games, keeping everyone in place.'''
+    _ignore = ('members', 'host', 'states')
+
     id: str = field(default_factory=random_id)
     locked: bool = False # TODO move locked to game state
     background_url: Optional[str] = None
-    host: Optional[T] = None
-    members: dict[str, T] = field(default_factory=dict)
+    host: Optional[LobbyMember] = None
+    members: dict[str, LobbyMember] = field(default_factory=dict)
     last_active: dt.datetime = field(default_factory=dt.datetime.now)
-    current_type: str = 'lobby' # defines current type of the lobby for specific game
-    game_state: Optional[S] = None
+    current_game: str = BASIC_GAME
+    states: dict[str, Any] = field(default_factory=dict)
+    states_json: str = ''
     persistent: bool = False # whether the lobby should be saved in the database
-
 
     def __post_init__(self):
         if isinstance(self.last_active, str):
             self.last_active = dt.datetime.fromisoformat(self.last_active)
-            
-    def __getattr__(self, name): return getattr(self.game_state, name)
+
+    @property
+    def state(self):
+        '''State of the game currently being played, or None for a plain lobby.'''
+        return self.states.get(self.current_game)
+
+    def play_game(self, name: str):
+        '''Switch to `name`, keeping every member and the state of the game they left.'''
+        if name not in GAME_REGISTRY: raise ValueError(f'Unknown game {name}, available: {list(GAME_REGISTRY)}')
+        self.current_game = name
+        if name not in self.states:
+            state = GAME_REGISTRY[name].new_state()
+            if state is not None: self.states[name] = state
+        return self.state
 
     def sorted_members(self):
         '''lobby members sorted by `joined_at` date'''
         for m in sorted(self.members.values(), key=lambda m: m.joined_at): yield m
 
-    def set_host(self, member: T): 
+    def set_host(self, member: LobbyMember):
         '''Sets a member as the lobby host.'''
-        if self.host: self.host.is_host_=False
+        if self.host: self.host.is_host_ = False
         member.is_host_ = True
         self.host = member
 
-    def create_member(self, user: User, send: FunctionType = None, **kwargs) -> T:
-        '''Create a new member for lobby `current_type` and add to the lobby'''
+    def create_member(self, user: User, send: FunctionType = None, **kwargs) -> LobbyMember:
+        '''Create a new member and add it to the lobby'''
         self.last_active = dt.datetime.now()
-        member_type = get_args(LOBBY_REGISTRY[self.current_type])[0]
-        m = member_type(user=user, send=send, **kwargs)
+        m = LobbyMember(user=user, send=send, **kwargs)
         self.add_member(m)
         return m
-    
-    def add_member(self, member: T):
+
+    def add_member(self, member: LobbyMember):
         '''Adds a member to the lobby.'''
         member.lobby_id = self.id
         self.members[member.uid] = member
 
-    def get_member(self, uid: str) -> Optional[T]:
+    def get_member(self, uid: str) -> Optional[LobbyMember]:
         self.last_active = dt.datetime.now()
         return self.members.get(uid)
-    
-    def remove_member(self, uid: str) -> Optional[T]:
-        '''Removes a member from the lobby.'''
+
+    def remove_member(self, uid: str) -> Optional[LobbyMember]:
+        '''Removes a member from the lobby and from every game state.'''
         self.last_active = dt.datetime.now()
+        for state in self.states.values():
+            if hasattr(state, 'remove_player'): state.remove_player(uid)
         return self.members.pop(uid, None)
-    
+
     def lock(self): self.locked = True
     def unlock(self): self.locked = False
 
     @fc.delegates(create_member)
-    def get_or_create_member(self, user: User, **kwargs) -> T:
+    def get_or_create_member(self, user: User, **kwargs) -> LobbyMember:
         '''get member from the lobby or create a new with `create_member`'''
         self.last_active = dt.datetime.now()
         m = self.members.get(user.uid)
         if not m: m = self.create_member(user, **kwargs)
         return m
-    
-    def cast[T: LobbyMember, S: Any](self, target_type: Type['Lobby[T,S]']) -> 'Lobby[T, S]':
-        member_type: Type[T] = get_args(target_type)[0]
-        state_type = get_args(target_type)[1]
-        logger.info('casting to', member_type, state_type)
-        target_type_str = get_lobby_type_str(target_type)
-        if self.current_type == target_type_str: return self
-        self.current_type = target_type_str
-        for k in self.members.keys(): self.members[k] = member_type.convert(self.members[k])
-        self.host = member_type.convert(self.host)
-        return self
-    
-    def set_default_game_state(self, state):
-        if not self.game_state:
-            self.game_state = state
 
+    def dump_states(self) -> str:
+        '''Serialize the states of games that asked to be persisted.'''
+        data = {name: GAME_REGISTRY[name].to_dict(state) for name, state in self.states.items()
+                if GAME_REGISTRY[name].persist}
+        return json.dumps(data) if data else ''
 
-BasicLobby = Lobby[LobbyMember]
-register_lobby_type(BasicLobby, member_repo=MemberRepo)
+    def load_states(self):
+        '''Rebuild persisted game states from `states_json`.'''
+        for name, data in json.loads(self.states_json or '{}').items():
+            spec = GAME_REGISTRY.get(name)
+            if spec and spec.state_cls: self.states[name] = spec.from_dict(data)
 
 
 class LobbyRepo(DataRepository[Lobby]):
@@ -119,20 +138,24 @@ class LobbyRepo(DataRepository[Lobby]):
                                                           transform=True, if_not_exists=True)
         return self.lobbies
 
-    def update(self, lobby: Lobby[LobbyMember]):
-        '''Updates a lobby and its members in the database.'''
-        DI.get(MEMBER_REPO_REGISTRY[lobby.current_type]).upsert_all(lobby.members.values())
+    def update(self, lobby: Lobby):
+        '''Updates a lobby, its members and its game states in the database.'''
+        DI.get(MemberRepo).upsert_all(lobby.members.values())
+        lobby.states_json = lobby.dump_states()
         return super().update(lobby)
 
-    def get(self, id: str) -> Lobby[LobbyMember]:
-        '''Retrieves a lobby and its members from the database.'''
+    def insert(self, lobby: Lobby):
+        lobby.states_json = lobby.dump_states()
+        return super().insert(lobby)
+
+    def get(self, id: str) -> Optional[Lobby]:
+        '''Retrieves a lobby, its members and its game states from the database.'''
         if id not in self.lobbies: return
         lobby = Lobby.from_dict(self.lobbies.get(id))
-        lobby.members = {m.user_uid: m for m in 
-                         DI.get(MEMBER_REPO_REGISTRY.get(lobby.current_type, MemberRepo)
-                                ).get_all(id)}
+        lobby.members = {m.user_uid: m for m in DI.get(MemberRepo).get_all(id)}
         hosts = [m for m in lobby.members.values() if m.is_host]
         if hosts: lobby.host = hosts[0]
+        lobby.load_states()
         return lobby
 
     def ids(self) -> list[str]: return [el['id'] for el in self.lobbies(select='id', as_cls=False)]
@@ -144,11 +167,7 @@ class LobbyRepo(DataRepository[Lobby]):
         if not ids: return 0
         qs = ','.join('?' * len(ids))
         members = DI.get(MemberRepo).members
-        member_ids = [r['id'] for r in self.db.q(f'select id from {members} where lobby_id in ({qs})', ids)]
-        if member_ids:
-            mqs = ','.join('?' * len(member_ids))
-            for repo in {DI.get(t) for t in MEMBER_REPO_REGISTRY.values()}:
-                repo.table.delete_where(f'id in ({mqs})', member_ids)
+        self.db.q(f'delete from {members} where lobby_id in ({qs})', ids)
         self.db.q(f'delete from {self.lobbies} where id in ({qs})', ids)
         return len(ids)
 

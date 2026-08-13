@@ -1,5 +1,5 @@
 from meme_games.core import *
-from meme_games.domain import is_host
+from meme_games.domain import is_host, LobbyMember
 from ..domain import game as gm
 from meme_games.apps.word_packs.components import *
 
@@ -16,7 +16,7 @@ def PackSelect(game_state: gm.GameState):
             id='pack-select')
     )
 
-def ConfigLobby(r: gm.AliasPlayer, game_state: gm.GameState):
+def ConfigLobby(r: LobbyMember, game_state: gm.GameState):
     from ..routes import update_settings
     if not is_host(r): return None
     return Div(
@@ -34,7 +34,7 @@ def ConfigLobby(r: gm.AliasPlayer, game_state: gm.GameState):
     )
 
 
-def GameContents(r: gm.AliasPlayer, game_state: gm.GameState):
+def GameContents(r: LobbyMember, game_state: gm.GameState):
     from ..routes import start_game
     match game_state.state:
         case gm.StateMachine.WAITING_FOR_PLAYERS:
@@ -45,19 +45,20 @@ def GameContents(r: gm.AliasPlayer, game_state: gm.GameState):
         case _: return None
 
 
-def VoteButton(r: gm.AliasPlayer, game: gm.GameState):
+def VoteButton(r: LobbyMember, game: gm.GameState):
     from ..routes import vote, start_round
     if game.state not in [gm.StateMachine.REVIEWING, gm.StateMachine.VOTING_TO_START] or r not in game.active_team: return None
     btn = Button(cls=(ButtonT.primary, 'p-10'), hx_swap='none')
-    if r == game.active_player and game.active_team.all_voted():
+    if r == game.active_player and game.all_voted(game.active_team):
         return Div(
             P("Start explaning when you're ready"),
             btn(H1("Start"), hx_post=start_round))
-    return btn(H1("Not Ready" if r.voted else "Ready"), hx_post=vote.to(voted=not r.voted))
+    voted = game.has_voted(r)
+    return btn(H1("Not Ready" if voted else "Ready"), hx_post=vote.to(voted=not voted))
 
 
 
-def GameControls(r: gm.AliasPlayer, game_state: gm.GameState):
+def GameControls(r: LobbyMember, game_state: gm.GameState):
     from meme_games.apps.word_packs.routes import index
     wordpack = game_state.config.wordpack
     if game_state.state in [gm.StateMachine.ROUND_PLAYING, gm.StateMachine.REVIEWING]: 
