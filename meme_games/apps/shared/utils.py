@@ -21,6 +21,6 @@ def int2px(value: int):
     return int2css(value, 'px')
 
 
-ROUTES: set[APIRouter] = set()
+ROUTES: list[APIRouter] = []
 def register_route(rt):
-    ROUTES.add(rt)
+    if rt not in ROUTES: ROUTES.append(rt)

@@ -69,6 +69,9 @@ async def _start_lobby_cleanup(): app.state.lobby_cleanup = asyncio.create_task(
 setup_toasts(app, duration=1500)
 
 for rt in ROUTES:
+    # `/{lobby_id}` must be matched after its siblings, or GET /alias/vote is read
+    # as a lobby named "vote" and creates one
+    rt.routes.sort(key=lambda r: '{' in r[1])
     rt.to_app(app)
 
 
@@ -78,5 +81,3 @@ async def file_resp(fname:str, ext:str):
 
 app.route("/{fname:path}.{ext:static}")(file_resp)
 app.route("/{fname:path}.{ext:xtra}")(file_resp)
-
-app.router.routes.append(app.router.routes.pop(0)) # change the order for static router
