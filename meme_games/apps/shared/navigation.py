@@ -1,14 +1,7 @@
 from meme_games.core import *
+from .utils import *
 from .settings import *
 from .general import *
-
-# will contain name and url for each page
-PAGES_REGISTRY = {}
-
-
-def register_page(name: str, url: str):
-    PAGES_REGISTRY[name] = url
-
 
 def _ThemeButton(icon: str, text: str, action: str, cls: str = ""):
     return Button(
@@ -37,7 +30,7 @@ def Navbar(*args, **kwargs):
         Button("Select game", cls=ButtonT.primary),
         DropDownNavContainer(
             *[
-                Li(A(name, href=url, _="on click call hideDropdowns()"))
+                Li(A(name, href=page_url(url), _="on click call hideDropdowns()"))
                 for name, url in PAGES_REGISTRY.items()
             ]
         )(cls="min-w-48"),

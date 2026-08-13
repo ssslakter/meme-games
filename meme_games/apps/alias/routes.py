@@ -166,7 +166,7 @@ async def ws(): pass
 
 ws_url = ws_rt.wss[-1][1] # latest added websocket url
 
-register_page('Alias', '/alias')
+register_game_page(ALIAS, 'Alias', lambda lobby_id: index.to(lobby_id=lobby_id))
 
 
 #---------------------------------#

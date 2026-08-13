@@ -53,4 +53,4 @@ def select_pack(wordpack: str):
         *[WordCard(word, CardColor.NEUTRAL) for word in wordpack_manager.get_by_id(wordpack).words],
     )
 
-register_page('Code Names 🚧', '/codenames')
+register_game_page(CODENAMES, 'Code Names 🚧', lambda lobby_id: index.to(lobby_id=lobby_id))

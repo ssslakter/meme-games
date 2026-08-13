@@ -7,6 +7,13 @@ from ..shared import settings_rt as rt
 
 logger = logging.getLogger(__name__)
 
+GAME_BLURBS = {
+    "Alias": "Guess the words before time runs out!",
+    "Code Names 🚧": "Give clever clues to find your team's words.",
+    "Who Am I": "Ask yes/no questions to guess your identity.",
+    "Videos 🚧": "Sync videos and enjoy them with friends.",
+}
+
 
 def GameCard(title, desc, href):
     return A(
@@ -51,10 +58,8 @@ def index():
                     cls="text-lg mb-12 text-center text-gray-700 dark:text-[color:var(--muted-foreground)]"
                 ),
                 Slider(
-                    GameCard("Alias", "Guess the words before time runs out!", "/alias"),
-                    GameCard("Codenames", "Give clever clues to find your team’s words.", "/codenames"),
-                    GameCard("Who Am I?", "Ask yes/no questions to guess your identity.", "/whoami"),
-                    GameCard("Watch Together", "Sync videos and enjoy them with friends.", "/video"),
+                    *[GameCard(name, desc, page_url(PAGES_REGISTRY[name]))
+                      for name, desc in GAME_BLURBS.items() if name in PAGES_REGISTRY],
                     cls="grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
                 ),
                 cls=(
