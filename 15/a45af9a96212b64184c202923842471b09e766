@@ -1,0 +1,43 @@
+mcp_gateway/src/meme_games_mcp/server.py
+  s_4f6be57d5e6f82::t_828732ecaabb02 9,25,28-32,56,59-63,78-85,124,127
+mcp_gateway/README.md
+  s_4f6be57d5e6f82::t_61f8f7f4d65a2b 17-26
+meme_games/apps/user/components/general.py
+  s_4f6be57d5e6f82::t_537ece738c3622 26
+mcp_gateway/src/meme_games_mcp/client.py
+  s_4f6be57d5e6f82::t_828732ecaabb02 48-51,53
+meme_games/apps/agent_api/routes.py
+  s_4f6be57d5e6f82::t_537ece738c3622 138-151,154-156,158-164
+  s_4f6be57d5e6f82::t_61f8f7f4d65a2b 152-153
+meme_games/apps/codenames/components/game.py
+  s_4f6be57d5e6f82::t_537ece738c3622 35,139
+meme_games/domain/events.py
+  s_4f6be57d5e6f82::t_537ece738c3622 2,7,10,21-47,54,56,65,72-73
+mcp_gateway/tests/test_gateway.py
+  s_4f6be57d5e6f82::t_828732ecaabb02 14,30,32-33,41,47,52-53
+tests/test_agent_api.py
+  s_4f6be57d5e6f82::t_aa1694e4a501ba 71-87
+README.md
+  s_4f6be57d5e6f82::t_61f8f7f4d65a2b 47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "15a45af9a96212b64184c202923842471b09e766",
+  "prompts": {},
+  "humans": {
+    "h_cec284cdd16cba": {
+      "author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_4f6be57d5e6f82": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffb09-b037-7570-bb8d-10870f97e2e4",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
