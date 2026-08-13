@@ -14,8 +14,8 @@ dependencies = ["python-fasthtml", "fastcore", "monsterui>=1.0.21,<2", "starlett
 [project.scripts]
 meme-games = "meme_games.cli:main"
 
-[tool.setuptools]
-packages = ["meme_games"]
+[tool.setuptools.packages.find]
+include = ["meme_games*"]
 
 [tool.pixi.workspace]
 channels = ["conda-forge"]

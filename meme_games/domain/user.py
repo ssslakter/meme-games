@@ -13,6 +13,7 @@ class User(Model):
     name: str
     avatar: Optional[str] = None
     named: bool = False
+    kind: str = 'human'
 
     @property
     def needs_name(self) -> bool:
@@ -45,8 +46,8 @@ class UserManager(DataRepository):
         self.users: fl.Table = self.db.t.user
         return self.users
     
-    def create(self, uid: str=None, name: str = DEFAULT_NAME) -> User:
-        u = User(uid or random_id(), name)
+    def create(self, uid: str=None, name: str = DEFAULT_NAME, named=False, kind='human') -> User:
+        u = User(uid or random_id(), name, named=named, kind=kind)
         self.users.insert(u)
         return u
     

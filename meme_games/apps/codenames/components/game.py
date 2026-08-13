@@ -31,7 +31,9 @@ def TeamPanel(reciever: LobbyMember | User, lobby: Lobby, team: TeamColor):
             cls='flex items-center justify-between'),
         Div(*[
             Div(
-                UserInfo(reciever, member.user, member.is_connected, avatar_cls='h-11 w-11'),
+                UserInfo(reciever, member.user,
+                         member.is_connected or member.uid in DI.get(AgentAccessService).connected_users,
+                         avatar_cls='h-11 w-11'),
                 Span('Spymaster', cls='rounded-full border px-2 py-1 text-xs') if member.uid in state.spymasters else None,
                 cls='flex items-center justify-between gap-2')
             for member in members], cls='space-y-3'),
@@ -119,9 +121,48 @@ def Board(reciever, state):
         cls='min-w-0 space-y-5')
 
 
-def HostSettings(reciever, state):
+def AgentInvites(reciever, lobby):
+    from ..routes import create_agent_invite, revoke_agent
+    if not is_host(reciever): return None
+    service = DI.get(AgentAccessService)
+    invited = [access for access in service.repo.for_lobby(lobby.id) if not access.revoked]
+    return Div(
+        H5('Agent players'),
+        P('Create a lobby-scoped MCP credential. The token is shown once.', cls=TextT.muted),
+        Div(*[
+            Div(
+                Div(Span(service.users.get(access.user_uid).name, cls='font-medium'),
+                    Span('Connected' if access.user_uid in service.connected_users else 'Invited',
+                         cls='text-xs text-muted-foreground'), cls='min-w-0'),
+                Button('Revoke', hx_post=revoke_agent.to(access_id=access.id), hx_swap='none',
+                       hx_confirm='Revoke this agent and remove it from the lobby?',
+                       cls=(ButtonT.destructive, 'shrink-0 px-3 py-1.5')),
+                cls='flex items-center justify-between gap-3')
+            for access in invited], cls='space-y-2'),
+        Form(
+            LabelInput('Agent name', name='name', maxlength=40, required=True, autocomplete='off'),
+            Button(UkIcon('bot', cls='mr-2'), 'Create invite', cls=(ButtonT.default, 'w-full')),
+            hx_post=create_agent_invite, hx_target='#agent-invite-result', hx_swap='innerHTML',
+            cls='space-y-3'),
+        Div(id='agent-invite-result'),
+        cls='space-y-4 border-t pt-5', data_ui='agent-invites')
+
+
+def InviteToken(token: str):
+    import json, os
+    config = {'url': os.environ.get('MCP_PUBLIC_URL', 'http://127.0.0.1:8001/mcp'),
+              'headers': {'Authorization': f'Bearer {token}'}}
+    return Div(
+        P('Copy this now—it will not be shown again.', cls='font-medium'),
+        Input(value=token, readonly=True, cls='uk-input w-full font-mono text-xs', onclick='this.select()'),
+        Pre(Code(json.dumps(config, indent=2)), cls='overflow-auto rounded border p-3 text-xs'),
+        cls='space-y-2 rounded border border-primary/40 bg-primary/5 p-3', role='status')
+
+
+def HostSettings(reciever, lobby):
     from ..routes import restart_game, select_pack
     if not is_host(reciever): return None
+    state = lobby.state
     packs = DI.get(WordPackRepo).get_all()
     return Div(
         H5('Host controls'),
@@ -134,6 +175,7 @@ def HostSettings(reciever, state):
         Button(UkIcon('rotate-ccw', cls='mr-2'), 'Restart game', hx_post=restart_game, hx_swap='none',
                hx_confirm='Restart Codenames and keep the current teams?', cls=(ButtonT.destructive, 'w-full'))
             if state.phase != GamePhase.WAITING else None,
+        AgentInvites(reciever, lobby),
         id='codenames-host-controls', hx_swap_oob='true',
         cls='space-y-4', data_ui='codenames-host-controls')
 
@@ -150,7 +192,7 @@ def Game(reciever: LobbyMember | User, lobby: Lobby, **kwargs):
 def Page(reciever: LobbyMember | User, lobby: Lobby):
     from ..routes import ws_url
     return LobbyPage(
-        GameShell(Game(reciever, lobby), LobbyTools(reciever, lobby, HostSettings(reciever, lobby.state))),
+        GameShell(Game(reciever, lobby), LobbyTools(reciever, lobby, HostSettings(reciever, lobby))),
         hx_ext='ws', ws_connect=ws_url, no_image=True, user=reciever,
         title=f'Codenames lobby: {lobby.id}', page='codenames')
 

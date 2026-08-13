@@ -6,6 +6,7 @@ from meme_games.apps.shared.spectators import Spectators
 from meme_games.apps.shared.ws_route import lobby_ws
 
 from .domain import *
+from .actions import *
 from .components import *
 
 
@@ -22,11 +23,22 @@ def pre_init(req: Request): return lobby_state(req, CODENAMES)
 def game_update(reciever: LobbyMember, lobby: Lobby):
     return (Spectators(reciever, lobby, hx_swap_oob='true'),
             Game(reciever, lobby, hx_swap_oob='true'),
-            HostSettings(reciever, lobby.state))
+            HostSettings(reciever, lobby))
 
 
 async def update_all(lobby):
     await notify_all(lobby, lambda reciever, *_: game_update(reciever, lobby))
+
+
+async def _render_game_event(event: LobbyChanged, lobby: Lobby):
+    if event.game == CODENAMES and event.topics & {'game', 'settings'}:
+        await update_all(lobby)
+
+
+lobby_events.subscribe(_render_game_event)
+
+
+def rejected(req, error): return add_toast(req.session, str(error), 'error')
 
 
 @rt('/{lobby_id}', methods=['get'])
@@ -49,77 +61,81 @@ def redirect(lobby_id: str): return Redirect(index.to(lobby_id=lobby_id))
 
 @rt
 async def join_team(req: Request, team: str):
-    lobby, state, member = pre_init(req)
-    try: team = TeamColor(team)
-    except ValueError: return add_toast(req.session, 'Unknown team', 'error')
-    if lobby.locked or not state.join(member, team):
-        return add_toast(req.session, 'Teams are locked', 'error')
-    member.play()
-    lobby_service.update(lobby)
-    await update_all(lobby)
+    lobby, _, member = pre_init(req)
+    try: await codenames_actions.join_team(lobby, member, team)
+    except ActionRejected as error: return rejected(req, error)
 
 
 @rt
 async def toggle_spymaster(req: Request):
     lobby, state, member = pre_init(req)
-    if not state.toggle_spymaster(member):
-        return add_toast(req.session, 'This team already has a spymaster', 'error')
-    await update_all(lobby)
+    role = 'operative' if member.uid in state.spymasters else 'spymaster'
+    try: await codenames_actions.set_role(lobby, member, role)
+    except ActionRejected as error: return rejected(req, error)
 
 
 @rt
 async def select_pack(req: Request, pack_id: str):
-    lobby, state, member = pre_init(req)
-    pack = wordpack_manager.get_by_id(pack_id)
-    if not is_host(member) or state.phase != GamePhase.WAITING or not pack:
-        return add_toast(req.session, 'Cannot select that wordpack', 'error')
-    state.wordpack = pack
-    await update_all(lobby)
+    lobby, _, member = pre_init(req)
+    try: await codenames_actions.select_pack(lobby, member, pack_id)
+    except ActionRejected as error: return rejected(req, error)
 
 
 @rt
 async def start_game(req: Request):
-    lobby, state, member = pre_init(req)
-    if not is_host(member) or not state.start():
-        return add_toast(req.session, 'Each team needs two players and a spymaster', 'error')
-    lobby.lock()
-    lobby_service.update(lobby)
-    await update_all(lobby)
+    lobby, _, member = pre_init(req)
+    try: await codenames_actions.start(lobby, member)
+    except ActionRejected: return add_toast(req.session, 'Each team needs two players and a spymaster', 'error')
 
 
 @rt
 async def submit_clue(req: Request, clue: str, number: int):
-    lobby, state, member = pre_init(req)
-    if not state.give_clue(member, clue, number):
-        return add_toast(req.session, 'Invalid clue', 'error')
-    await update_all(lobby)
+    lobby, _, member = pre_init(req)
+    try: await codenames_actions.give_clue(lobby, member, clue, number)
+    except ActionRejected as error: return rejected(req, error)
 
 
 @rt
 async def reveal_card(req: Request, card_id: str):
-    lobby, state, member = pre_init(req)
-    if not state.reveal(member, card_id):
-        return add_toast(req.session, 'You cannot reveal that card', 'error')
-    await update_all(lobby)
+    lobby, _, member = pre_init(req)
+    try: await codenames_actions.reveal_card(lobby, member, card_id)
+    except ActionRejected as error: return rejected(req, error)
 
 
 @rt
 async def end_turn(req: Request):
-    lobby, state, member = pre_init(req)
-    if (state.phase != GamePhase.GUESSING or state.team_of(member) != state.turn or
-            member.uid in state.spymasters or not state.end_turn()):
-        return add_toast(req.session, 'You cannot end this turn', 'error')
-    await update_all(lobby)
+    lobby, _, member = pre_init(req)
+    try: await codenames_actions.end_turn(lobby, member)
+    except ActionRejected as error: return rejected(req, error)
 
 
 @rt
 async def restart_game(req: Request):
-    lobby, state, member = pre_init(req)
-    if not is_host(member): return add_toast(req.session, 'Only the host can restart', 'error')
-    state.restart()
-    lobby.unlock()
+    lobby, _, member = pre_init(req)
+    try: await codenames_actions.restart(lobby, member)
+    except ActionRejected as error: return rejected(req, error)
+
+
+@rt
+async def create_agent_invite(req: Request, name: str):
+    lobby, _, member = pre_init(req)
+    if not is_host(member): return add_toast(req.session, 'Only the host can invite agents', 'error')
+    try: _, token = DI.get(AgentAccessService).create(lobby.id, name)
+    except ValueError as error: return rejected(req, error)
+    await lobby_events.publish(lobby, 'settings')
+    return InviteToken(token)
+
+
+@rt
+async def revoke_agent(req: Request, access_id: str):
+    lobby, _, member = pre_init(req)
+    if not is_host(member): return add_toast(req.session, 'Only the host can revoke agents', 'error')
+    access = DI.get(AgentAccessService).revoke(access_id, lobby.id)
+    if not access: return add_toast(req.session, 'Agent invite not found', 'error')
+    had_member = lobby.get_member(access.user_uid) is not None
+    if had_member: lobby.remove_member(access.user_uid)
     lobby_service.update(lobby)
-    await update_all(lobby)
+    await lobby_events.publish(lobby, 'roster' if had_member else 'settings')
 
 
 ws_url = lobby_ws('/codenames')

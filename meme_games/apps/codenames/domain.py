@@ -70,11 +70,15 @@ class CodenamesState:
         return True
 
     def toggle_spymaster(self, member: LobbyMember):
+        return self.set_spymaster(member, member.uid not in self.spymasters)
+
+    def set_spymaster(self, member: LobbyMember, enabled: bool):
         if self.phase != GamePhase.WAITING or member.uid not in self.players: return False
-        if member.uid in self.spymasters: self.spymasters.remove(member.uid)
-        elif not any(uid in self.spymasters and self.players.get(uid) == self.players[member.uid]
-                     for uid in self.players): self.spymasters.add(member.uid)
-        else: return False
+        if not enabled:
+            self.spymasters.discard(member.uid)
+        elif any(uid in self.spymasters and self.players.get(uid) == self.players[member.uid]
+                 for uid in self.players if uid != member.uid): return False
+        else: self.spymasters.add(member.uid)
         return True
 
     def remove_player(self, uid: str):

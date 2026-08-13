@@ -53,6 +53,7 @@ class Lobby(Model):
     states: dict[str, Any] = field(default_factory=dict)
     states_json: str = ''
     persistent: bool = False # whether the lobby should be saved in the database
+    revision: int = 0
 
     def __post_init__(self):
         if isinstance(self.last_active, str):

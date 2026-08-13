@@ -1,5 +1,5 @@
 from meme_games.core import *
-from meme_games.domain import LobbyMember, User, Lobby, LobbyService
+from meme_games.domain import LobbyMember, User, Lobby, LobbyService, LobbyChanged, lobby_events
 from meme_games.domain.notify import notify_all
 from meme_games.apps.user.components import MemberName, UserInfo
 from ..shared.utils import register_route, lobby_state
@@ -61,7 +61,15 @@ def LobbyView(reciever: LobbyMember | User, lobby: Lobby):
 
 async def notify_roster_changed(lobby: Lobby):
     '''Tell everyone the players and spectators changed.'''
-    await notify_all(lobby, lambda r, *_: LobbyView(r, lobby))
+    await lobby_events.publish(lobby, 'roster')
+
+
+async def _render_roster_event(event: LobbyChanged, lobby: Lobby):
+    if 'roster' in event.topics:
+        await notify_all(lobby, lambda r, *_: LobbyView(r, lobby))
+
+
+lobby_events.subscribe(_render_roster_event)
 
 
 @rt
