@@ -44,19 +44,11 @@ def Navbar(*args, **kwargs):
         **kwargs,
     )
 
-    handle = Div(
-        Div(cls="w-20 h-1 bg-gray-400 rounded-full"),
-        cls="h-4 w-full flex justify-center items-center cursor-pointer",
-    )
-
     return Div(
         inner_navbar,
-        handle,
         cls=(
             'mg-navbar uk-card rounded-t-none',
             "fixed top-0 left-0 right-0 z-50",
-            "transition-transform duration-300 ease-in-out",
-            "transform -translate-y-[calc(100%-1rem)] hover:-translate-y-0 focus-within:-translate-y-0",
         ), data_ui='navbar',
     )
 
@@ -72,5 +64,5 @@ def LobbyPage(*args, navbar_args=(), title: str = '',
         Navbar(*navbar_args),
         Background(background_url, no_image),
         Div(*args, cls=stringify(('mg-page-content', cls)), data_ui='page-content', **kwargs),
-        cls="mg-page relative isolate min-h-screen", data_page=page, data_ui='page',
+        cls="mg-page relative isolate min-h-screen pt-20", data_page=page, data_ui='page',
     ))

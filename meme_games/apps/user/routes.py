@@ -24,7 +24,7 @@ def index(req: Request):
             IdentitySettings(req.state.user),
             Card(H3('Color mode'), ThemeSwitcher(), cls='mg-settings-section', data_ui='theme-settings'),
             CustomCssSettings(),
-            cls='max-w-4xl pt-24 pb-12 space-y-6'),
+            cls='max-w-4xl py-12 space-y-6'),
         title='User settings',
         no_image=True,
         page='settings',

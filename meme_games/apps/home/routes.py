@@ -86,6 +86,6 @@ def index():
             cls="mg-page-content flex-1", data_ui='page-content'
         ),
         footer,
-        cls="mg-page flex flex-col min-h-screen bg-gray-50 dark:bg-[color:var(--background)]",
+        cls="mg-page flex flex-col min-h-screen pt-20 bg-gray-50 dark:bg-[color:var(--background)]",
         data_page='home', data_ui='page'
     ))

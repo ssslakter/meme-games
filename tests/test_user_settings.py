@@ -17,6 +17,8 @@ def test_user_settings_page_and_nickname_update():
         assert 'id="identity-settings"' in page.text
         assert 'id="custom-css-editor"' in page.text
         assert 'id="custom-css-enabled"' in page.text
+        assert 'fixed top-0 left-0 right-0' in page.text
+        assert '-translate-y-[calc(100%-1rem)]' not in page.text
 
         updated = client.put('/me/name', data={'name': '  Theme   Maker  '}, headers=HEADERS)
         assert updated.status_code == 200
