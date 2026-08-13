@@ -1,4 +1,4 @@
-from ..shared.utils import register_route
+from ..shared.utils import register_route, lobby_state
 from ..shared.spectators import SpectatorsList 
 from ..shared.ws_route import ws_fn 
 from meme_games.core import *
@@ -20,13 +20,8 @@ lobby_service = DI.get(LobbyService)
 user_manager = DI.get(UserManager)
 
 
-def pre_init(req: Request) -> tuple[Lobby, GameState, AliasPlayer]:
-    try:
-        lobby: AliasLobby = req.state.lobby
-    except AttributeError as e:
-        logger.error(f"Lobby not found in request state: {req.state}")
-        raise HTTPException(status_code=400, detail="Incorrect client state. Please refresh the page.")
-    return lobby, lobby.game_state, lobby.get_member(req.state.user.uid)
+def pre_init(req: Request) -> tuple[Lobby, GameState, LobbyMember]:
+    return lobby_state(req, ALIAS)
 
 
 @rt 
@@ -45,8 +40,8 @@ async def select_pack(req: Request, id: str):
     if not is_host(p): return
     pack = wordpack_manager.get_by_id(id)
     if not pack: return add_toast(req.session, "Wordpack not found", "error")
-    lobby.game_state.config.wordpack = pack
-    await notify_all(lobby, lambda r, *_: Game(r, lobby.game_state, hx_swap_oob='true'))
+    lobby.state.config.wordpack = pack
+    await notify_all(lobby, lambda r, *_: Game(r, lobby, hx_swap_oob='true'))
 
 @rt
 async def new_team(req: Request):
@@ -66,10 +61,9 @@ async def join_team(req: Request, team_id: str):
     game_state.remove_player(p)
     team.append(p); p.play()
     lobby_service.update(lobby)
-    def update(r: AliasPlayer, lobby: AliasLobby):
-        res = (Div(hx_swap_oob=f"delete:#spectators [data-username='{p.uid}']"),
-               Game(r, lobby.game_state, hx_swap_oob='true'))
-        return res
+    def update(r: LobbyMember, lobby: Lobby):
+        return (Div(hx_swap_oob=f"delete:#spectators [data-username='{p.uid}']"),
+                Game(r, lobby, hx_swap_oob='true'))
     await notify_all(lobby, update)
 
 
@@ -85,8 +79,7 @@ async def update_settings(req: Request, config: gm.GameConfig):
 def index(req: Request, lobby_id: str = None):
     if not lobby_id: return redirect(random_id())
     u: User = req.state.user
-    lobby, was_created = lobby_service.get_or_create(u, lobby_id, AliasLobby, persistent=False)
-    lobby.set_default_game_state(GameState())
+    lobby, was_created = lobby_service.get_or_create(u, lobby_id, ALIAS, persistent=False)
     if was_created: lobby_service.update(lobby)
     m = lobby.get_member(u.uid)
     req.session['lobby_id'] = lobby.id
@@ -102,13 +95,13 @@ async def start_game(req: Request):
         return add_toast(req.session, "Cannot start game", "error")
     game.start_game()
     lobby.lock()
-    await notify_all(lobby, lambda r, *_: Game(r, game, hx_swap_oob='true'))
+    await notify_all(lobby, lambda r, *_: Game(r, lobby, hx_swap_oob='true'))
 
-async def set_end_round_timer(lobby: AliasLobby):
-    game_state: GameState = lobby.game_state
+async def set_end_round_timer(lobby: Lobby):
+    game_state: GameState = lobby.state
     await game_state.timer.sleep()
-    def update(r: AliasPlayer, *_):
-        return Game(r, game_state, hx_swap_oob='true')
+    def update(r: LobbyMember, *_):
+        return Game(r, lobby, hx_swap_oob='true')
     await notify_all(lobby, update)
 
 
@@ -119,12 +112,12 @@ async def vote(req: Request, voted: bool):
         game_state.state in [gm.StateMachine.VOTING_TO_START, 
                              gm.StateMachine.REVIEWING]):
         raise HTTPException(400, 'cannot vote now')
-    if p.voted == voted: return VoteButton(p, game_state)
+    if game_state.has_voted(p) == voted: return VoteButton(p, game_state)
     if voted: game_state.add_vote(p)
     else: game_state.retract_vote(p)
     if game_state.state == gm.StateMachine.REVIEWING and game_state.check_all_voted(): 
         game_state.next_state()
-        await notify_all(lobby, lambda r, *_: Game(r, game_state, hx_swap_oob='true'))
+        await notify_all(lobby, lambda r, *_: Game(r, lobby, hx_swap_oob='true'))
 
     await notify_all(lobby, lambda r, *_: (TeamCard(r, game_state.active_team, game_state), GameControls(r, game_state)))
 
@@ -135,8 +128,8 @@ async def start_round(req: Request):
     if not (p == game_state.active_player and game_state.state == gm.StateMachine.VOTING_TO_START):
         raise HTTPException(400, 'cannot vote now')
     game_state.next_state()
-    def update(r: AliasPlayer, *_):
-        return Game(r, game_state, hx_swap_oob='true')
+    def update(r: LobbyMember, *_):
+        return Game(r, lobby, hx_swap_oob='true')
     await notify_all(lobby, update)
     asyncio.create_task(set_end_round_timer(lobby))
 
@@ -151,8 +144,8 @@ async def guess(req: Request, correct: bool):
     game_state.guess_word(p, correct)
     if game_state.timer.finished:
         game_state.next_state()
-        return await notify_all(lobby, lambda r, *_: Game(r, game_state, hx_swap_oob='true'))
-    def update(r: AliasPlayer, *_):
+        return await notify_all(lobby, lambda r, *_: Game(r, lobby, hx_swap_oob='true'))
+    def update(r: LobbyMember, *_):
         return RoundLog(game_state.guess_log, game_state)
     await notify_all(lobby, update)
     return CurrentWord(game_state)
@@ -164,7 +157,7 @@ async def change_guess_points(req: Request, guess_id: str, delta: int):
     if not is_player(p): return add_toast(req.session, "You cannot change score", "error")
     entry = game_state.change_guess_points(guess_id, delta)
     if not entry: return add_toast(req.session, "Guess not found", "error")
-    def update(r: AliasPlayer, *_):
+    def update(r: LobbyMember, *_):
         return WordEntryScore(entry), TeamCard(r, game_state.active_team, game_state)
     await notify_all(req.state.lobby, update)
 
@@ -190,7 +183,7 @@ rt = APIRouter('/alias/api')
 
 @rt.get('/teams')
 def get_teams(req: Request):
-    lobby: AliasLobby = req.state.lobby
-    return {'team_ids':[t.id for t in lobby.game_state.teams.values()]}
+    _, game_state, _ = lobby_state(req, ALIAS)
+    return {'team_ids':[t.id for t in game_state.teams.values()]}
 
 register_route(rt)

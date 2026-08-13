@@ -32,10 +32,15 @@ class GameState:
     state: StateMachine = field(default=StateMachine.WAITING_FOR_PLAYERS)
     teams: Dict[int, Team] = field(default_factory=dict)
     active_team: Optional[Team] = None
-    active_player: Optional[AliasPlayer] = None
+    active_player: Optional[LobbyMember] = None
     active_word: Optional[str] = None
     guess_log: List[GuessEntry] = field(default_factory=list)
+    votes: set[str] = field(default_factory=set)
     timer: Timer = field(default_factory=Timer)
+
+    def has_voted(self, player: LobbyMember) -> bool: return player.uid in self.votes
+
+    def all_voted(self, team: Team) -> bool: return all(self.has_voted(m) for m in team.members)
 
     def change_config(self, config: GameConfig):
         self.config = config
@@ -87,17 +92,16 @@ class GameState:
         random.shuffle(words)
         self.words_iterator = cycle(words)
 
-    def retract_vote(self, player: AliasPlayer):
-        player.voted = False
-    
-    def add_vote(self, player: AliasPlayer) -> bool:
-        team = self.team_by_player(player)
-        if team: player.voted = True
-    
+    def retract_vote(self, player: LobbyMember):
+        self.votes.discard(player.uid)
+
+    def add_vote(self, player: LobbyMember):
+        if self.team_by_player(player): self.votes.add(player.uid)
+
     def check_all_voted(self):
-        return all(m.voted for m in self.active_team.members)
-    
-    def guess_word(self, player: AliasPlayer, correct: bool):
+        return self.all_voted(self.active_team)
+
+    def guess_word(self, player: LobbyMember, correct: bool):
         if self.state != StateMachine.ROUND_PLAYING or player != self.active_player: return
         self.guess_log.append(GuessEntry(self.active_word, self.config.correct_guess_score 
                                          if correct else self.config.mistake_penalty))
@@ -110,29 +114,26 @@ class GameState:
         return guess
 
     
-    def reset_votes(self):
-        for team in self.teams.values():
-            for player in team.members:
-                player.reset_votes()
-
+    def reset_votes(self): self.votes.clear()
 
     def create_team(self) -> Team:
         team = Team()
         return self.teams.setdefault(team.id, team)
-        
+
     def delete_team(self, id: str): self.teams.pop(id, None)
-        
-    def team_by_player(self, player: AliasPlayer) -> Optional[Team]:
+
+    def team_by_player(self, player: LobbyMember) -> Optional[Team]:
         return next((t for t in self.teams.values() if player in t), None)
-    
-    def remove_player(self, p: AliasPlayer):
+
+    def remove_player(self, uid: str):
+        p = next((m for t in self.teams.values() for m in t.members if m.uid == uid), None)
+        self.votes.discard(uid)
+        if not p: return
         team = self.team_by_player(p)
-        if not team: return
         team.remove_member(p)
-        p.reset_votes(); p.reset_score()
+        p.reset_score()
         if not len(team): self.delete_team(team.id)
 
-        
 
-AliasLobby = Lobby[AliasPlayer, GameState]
-register_lobby_type(AliasLobby)
+ALIAS = 'alias'
+register_game(ALIAS, GameState)

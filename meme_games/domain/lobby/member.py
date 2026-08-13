@@ -72,13 +72,7 @@ class LobbyMember(fc.GetAttr, Model):
         data[cls]['user'] = User.from_dict(data.pop(User))
         return super().from_dict(data[cls])
 
-    @classmethod
-    def convert(cls, member: Optional['LobbyMember'] = None):
-        """Converts a member to a different lobby type."""
-        cf = dataclasses.fields(cls)
-        if member: return cls(**{f.name: getattr(member, f.name) for f in dataclasses.fields(member) if f in cf})
-
-    def update_user(self, u: User): 
+    def update_user(self, u: User):
         """Updates the user associated with this member."""
         # TODO the same as sync_user
         self.user = u

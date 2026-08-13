@@ -9,6 +9,9 @@ from .components import *
 
 rt = APIRouter('/video')
 register_route(rt)
+
+VIDEO = 'video'
+register_game(VIDEO)
 register_page("Videos 🚧", rt.prefix)
 
 logger = logging.getLogger(__name__)
@@ -21,7 +24,7 @@ user_manager = DI.get(UserManager)
 def index(req: Request, lobby_id: str = None):
     if not lobby_id: return redirect(random_id())
     u: User = req.state.user
-    lobby, was_created = lobby_service.get_or_create(u, lobby_id, BasicLobby, persistent=True)
+    lobby, was_created = lobby_service.get_or_create(u, lobby_id, VIDEO, persistent=True)
     if was_created: lobby_service.update(lobby)
     req.session['lobby_id'] = lobby.id
 
@@ -42,7 +45,7 @@ def upd(r, lobby, conn_member):
 @ws_rt.ws('/video', conn=ws_fn(render_fn=upd), disconn=ws_fn(False, upd))
 async def ws(ws, sess, data):
     u = user_manager.get(sess['uid'])
-    lobby = lobby_service.get_lobby(sess.get("lobby_id"), BasicLobby)
+    lobby = lobby_service.get_lobby(sess.get("lobby_id"))
     m = lobby.get_member(u.uid)
     await notify_all(lobby, lambda *_: data, but=m, json=True)
 
