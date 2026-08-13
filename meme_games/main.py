@@ -57,11 +57,8 @@ app = FastHTML(before=bwares, hdrs=hdrs,
 lobby_service = DI.get(LobbyService)
 
 app.add_middleware(PrometheusMiddleware, filter_unhandled_paths=True)
-# Rate limiting middleware - the last one added is the outermost, so bot filter runs first, then global, then lobby
-app.add_middleware(LobbyCreationRateLimitMiddleware, max_creations=5, window=60.0, patterns=LOBBY_PATTERNS,
-                   lobby_exists=lambda id: id in lobby_service.lobbies)
-app.add_middleware(RateLimitMiddleware, max_requests=250, window=60.0, skip_paths=static_re)
-# Outermost: filter crawlers/unfurlers (and serve robots.txt) before they create lobbies
+# Rate limiting is handled by nginx + crowdsec. This only stops crawlers/unfurlers
+# (and serves robots.txt) before they can create lobbies nobody joins.
 app.add_middleware(BotFilterMiddleware, patterns=LOBBY_PATTERNS)
 app.route('/metrics')(metrics)
 
