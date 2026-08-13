@@ -1,0 +1,24 @@
+CLAUDE.md
+  s_10880c3c5cce0c::t_32e853088de837 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "76410446e8d10d06fa8df27df031ad0519c7fb5c",
+  "prompts": {},
+  "humans": {
+    "h_cec284cdd16cba": {
+      "author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_10880c3c5cce0c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "27427aa0-b1c8-440d-ae41-8d935ea578e5",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
