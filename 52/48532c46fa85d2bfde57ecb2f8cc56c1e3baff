@@ -1,0 +1,88 @@
+meme_games/apps/shared/spectators.py
+  s_4f6be57d5e6f82::t_1e62f27f0e22d6 2,64-72
+meme_games/domain/events.py
+  s_4f6be57d5e6f82::t_1e62f27f0e22d6 1-41
+meme_games/apps/agent_api/routes.py
+  s_4f6be57d5e6f82::t_5dd49d7b3f0c22 1-9,11-169
+  s_4f6be57d5e6f82::t_1311a290e68fdf 10
+meme_games/apps/codenames/actions.py
+  s_4f6be57d5e6f82::t_7b4488f130502b 31,33,45,51,59,66,70,74,81,88,96
+  s_4f6be57d5e6f82::t_c72c3382aeb100 1-30,32,34-44,46-50,52-58,60-65,67-69,71-73,75-80,82-87,89-95,97-99
+meme_games/apps/codenames/domain.py
+  s_4f6be57d5e6f82::t_c72c3382aeb100 73-75,77-81
+mcp_gateway/pyproject.toml
+  s_4f6be57d5e6f82::t_aade302237ad5f 1-24
+mcp_gateway/src/meme_games_mcp/cli.py
+  s_4f6be57d5e6f82::t_aade302237ad5f 1-27
+docker-compose.yml
+  s_4f6be57d5e6f82::t_aade302237ad5f 11-12,16-30
+mcp_gateway/README.md
+  s_4f6be57d5e6f82::t_280894ede2ef4b 1-17
+meme_games/domain/agent.py
+  s_4f6be57d5e6f82::t_1e62f27f0e22d6 1-47,49-80,82-85
+  s_4f6be57d5e6f82::t_5dd49d7b3f0c22 48,81
+README.md
+  s_4f6be57d5e6f82::t_280894ede2ef4b 27-47
+mcp_gateway/Dockerfile
+  s_4f6be57d5e6f82::t_aade302237ad5f 1-9
+mcp_gateway/src/meme_games_mcp/client.py
+  s_4f6be57d5e6f82::t_aade302237ad5f 1-63
+mcp_gateway/src/meme_games_mcp/__init__.py
+  s_4f6be57d5e6f82::t_aade302237ad5f 1
+meme_games/apps/codenames/__init__.py
+  s_4f6be57d5e6f82::t_c72c3382aeb100 2-3
+meme_games/apps/__init__.py
+  s_4f6be57d5e6f82::t_5dd49d7b3f0c22 3,10
+meme_games/apps/codenames/routes.py
+  s_4f6be57d5e6f82::t_23f6184deed7d6 26,117-136,138
+  s_4f6be57d5e6f82::t_c72c3382aeb100 9,33-43,64-66,72-74,79-81,86-88,93-95,100-102,107-109,114-116
+tests/test_agent_api.py
+  s_4f6be57d5e6f82::t_b33cbad949a541 1-100
+meme_games/domain/__init__.py
+  s_4f6be57d5e6f82::t_1e62f27f0e22d6 3-4,6
+meme_games/apps/codenames/components/game.py
+  s_4f6be57d5e6f82::t_23f6184deed7d6 34-36,124-162,165,178,195
+meme_games/domain/user.py
+  s_4f6be57d5e6f82::t_1e62f27f0e22d6 16,49-50
+mcp_gateway/tests/test_gateway.py
+  s_4f6be57d5e6f82::t_b33cbad949a541 1-14,16-33,38-53,55-72
+  s_4f6be57d5e6f82::t_e99f49b56c20dd 73
+  s_4f6be57d5e6f82::t_280894ede2ef4b 15,34-37
+  s_4f6be57d5e6f82::t_0a95597c4ee342 54
+meme_games/apps/agent_api/__init__.py
+  s_4f6be57d5e6f82::t_5dd49d7b3f0c22 1
+pyproject.toml
+  s_4f6be57d5e6f82::t_aade302237ad5f 17-18
+meme_games/main.py
+  s_4f6be57d5e6f82::t_5dd49d7b3f0c22 14,17-19
+meme_games/apps/user/components/general.py
+  s_4f6be57d5e6f82::t_1e62f27f0e22d6 16-19
+  s_4f6be57d5e6f82::t_5dd49d7b3f0c22 26-28
+mcp_gateway/src/meme_games_mcp/server.py
+  s_4f6be57d5e6f82::t_aade302237ad5f 1-5,7-23,31-60,63-70,72,74-77,81-96,98-99,101-104,106-109,111-114,116-119,121-124,126-152
+  s_4f6be57d5e6f82::t_4c41f29fd48d2c 6,24-30,97,100,105,110,115,120,125
+  s_4f6be57d5e6f82::t_b33cbad949a541 61-62
+  s_4f6be57d5e6f82::t_280894ede2ef4b 71,73,78-80
+mcp_gateway/.dockerignore
+  s_4f6be57d5e6f82::t_aade302237ad5f 1-4
+meme_games/domain/lobby/lobby.py
+  s_4f6be57d5e6f82::t_1e62f27f0e22d6 56
+mcp_gateway/uv.lock
+  s_4f6be57d5e6f82::t_5b727da9ce96d3 1-727
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "5248532c46fa85d2bfde57ecb2f8cc56c1e3baff",
+  "prompts": {},
+  "sessions": {
+    "s_4f6be57d5e6f82": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffb09-b037-7570-bb8d-10870f97e2e4",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
