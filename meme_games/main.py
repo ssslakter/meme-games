@@ -1,12 +1,10 @@
 from meme_games.core import *
+from meme_games.services import db, data_dir
 from meme_games.domain import *
 from starlette.routing import compile_path
 from starlette_prometheus import PrometheusMiddleware
 from .metrics import metrics
 from meme_games.apps import *
-
-db = init_db('data/data.db')
-DI.register_instance(db)
 
 reg_re_param("xtra", "_hs|json|moc|mtn")
 
@@ -49,7 +47,7 @@ exception_handlers = {404: not_found}
 app = FastHTML(before=bwares, hdrs=hdrs,
                    exts='ws',
                    sess_cls=middlware_cls,
-                   key_fname='data/.sesskey',
+                   key_fname=str(data_dir/'.sesskey'),
                    exception_handlers=exception_handlers,
                    htmlkw={'class': 'uk-custom-theme'},
                    bodykw={'hx-boost': 'true'})
