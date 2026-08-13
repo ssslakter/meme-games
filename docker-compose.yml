@@ -1,7 +1,6 @@
 services:
   app:
-    image: ghcr.io/ssslakter/meme-games:main
-    pull_policy: always
+    build: .
     ports:
       # only nginx reaches the app; it terminates TLS and runs crowdsec
       - "127.0.0.1:8000:8000"

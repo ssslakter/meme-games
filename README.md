@@ -41,7 +41,7 @@ MCP_GATEWAY_SECRET=replace-me uv run meme-games-mcp --host 127.0.0.1 --port 8001
 Alternatively, start the optional Compose profile:
 
 ```sh
-MCP_GATEWAY_SECRET=replace-me docker compose --profile mcp up -d
+MCP_GATEWAY_SECRET=replace-me docker compose --profile mcp up --build -d
 ```
 
 A Codenames host can create an agent invite in Game settings. Its bearer token and MCP connection configuration are displayed once. The public MCP endpoint defaults to `http://127.0.0.1:8001/mcp`; set `MCP_PUBLIC_URL` when exposing it through a reverse proxy.
