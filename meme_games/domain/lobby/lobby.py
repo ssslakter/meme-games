@@ -43,8 +43,7 @@ class Lobby[T: LobbyMember, S = None](Model):
 
 
     def __post_init__(self):
-        if self.host: self.host_uid = self.host.uid
-        if isinstance(self.last_active, str): 
+        if isinstance(self.last_active, str):
             self.last_active = dt.datetime.fromisoformat(self.last_active)
             
     def __getattr__(self, name): return getattr(self.game_state, name)
