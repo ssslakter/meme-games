@@ -11,11 +11,12 @@ reg_re_param("xtra", "_hs|json|moc|mtn")
 
 static_path = '.'
 static_re = [compile_path("/{fname:path}.{ext:static}")[0], compile_path("/{fname:path}.{ext:xtra}")[0]]
+internal_re = compile_path("/internal/{path:path}")[0]
 middlware_cls = partial(ConditionalSessionMiddleware, skip=static_re)
 
-bwares = [user_beforeware(DI.get(UserManager), skip = static_re),
-          lobby_beforeware(DI.get(LobbyService), skip = static_re),
-          current_game_beforeware(skip=static_re),
+bwares = [user_beforeware(DI.get(UserManager), skip = [*static_re, internal_re]),
+          lobby_beforeware(DI.get(LobbyService), skip = [*static_re, internal_re]),
+          current_game_beforeware(skip=[*static_re, internal_re]),
           ]
 
 style = Style(

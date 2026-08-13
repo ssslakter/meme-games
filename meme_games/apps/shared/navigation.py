@@ -30,7 +30,8 @@ def Navbar(*args, **kwargs):
         Button("Select game", cls=(ButtonT.primary, 'shrink-0 whitespace-nowrap px-5 py-2')),
         DropDownNavContainer(
             *[
-                Li(A(name, href=page_url(url), _="on click call hideDropdowns()"))
+                Li(A(name, href=page_url(url), data_new_lobby='true',
+                     _="on click call hideDropdowns()"))
                 for name, url in PAGES_REGISTRY.items()
             ]
         )(cls="min-w-48"),

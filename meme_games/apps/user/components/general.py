@@ -13,7 +13,10 @@ def get_avatar_path(u: User):
 
 def UserName(r: User, u: User, is_connected=True, cls='', **kwargs):
     """Renders the user's name as a styled HTML span."""
-    return Span(B(u.name) if r==u else u.name, data_username = u.uid,
+    return Span(B(u.name) if r==u else u.name,
+                    Span('AI', cls='ml-2 rounded-full border px-1.5 py-0.5 text-[.65rem] font-semibold')
+                        if u.kind == 'agent' else None,
+                    data_username = u.uid,
                     hx_swap_oob=f"outerHTML:span[data-username='{u.uid}']",
                     data_ui='user-name',
                     cls=stringify((cls, 'opacity-50' if not is_connected else '')),

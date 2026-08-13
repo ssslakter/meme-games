@@ -1,5 +1,5 @@
 from ..shared.ws_route import lobby_ws
-from ..shared.utils import register_route
+from ..shared.utils import register_route, new_lobby_options, fresh_lobby_redirect
 from meme_games.domain import *
 from meme_games.apps.shared import register_page
 from meme_games.core import *
@@ -20,10 +20,13 @@ lobby_service = DI.get(LobbyService)
 
 @rt('/{lobby_id}', methods=['get'])
 def index(req: Request, lobby_id: str = None):
-    if not lobby_id: return redirect(random_id())
+    if not lobby_id: return fresh_lobby_redirect(index.to(lobby_id=random_id()), req)
     u: User = req.state.user
-    lobby, was_created = lobby_service.get_or_create(u, lobby_id, VIDEO, persistent=True)
-    if was_created: lobby_service.update(lobby)
+    lobby, was_created = lobby_service.get_or_create(
+        u, lobby_id, VIDEO, persistent=True, **new_lobby_options(req))
+    if was_created:
+        lobby_service.update(lobby)
+        if 'allow_agents' in req.query_params: return Redirect(index.to(lobby_id=lobby.id))
     req.session['lobby_id'] = lobby.id
     member = lobby.get_member(u.uid) or u
 

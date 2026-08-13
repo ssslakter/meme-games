@@ -53,6 +53,8 @@ class Lobby(Model):
     states: dict[str, Any] = field(default_factory=dict)
     states_json: str = ''
     persistent: bool = False # whether the lobby should be saved in the database
+    revision: int = 0
+    allow_agents: bool = False
 
     def __post_init__(self):
         if isinstance(self.last_active, str):
@@ -158,6 +160,12 @@ class LobbyRepo(DataRepository[Lobby]):
         lobby.load_states()
         return lobby
 
+    def delete(self, id: str):
+        # Session handles and event history have no meaning after their lobby is gone.
+        for table in ('agent_player_sessions', 'lobby_events'):
+            if table in self.db.t: self.db.q(f'DELETE FROM {table} WHERE lobby_id = ?', [id])
+        if id in self.lobbies: return super().delete(id)
+
     def ids(self) -> list[str]: return [el['id'] for el in self.lobbies(select='id', as_cls=False)]
 
     def delete_stale(self, cutoff: dt.datetime, keep: set[str] = frozenset()) -> int:
@@ -168,6 +176,8 @@ class LobbyRepo(DataRepository[Lobby]):
         qs = ','.join('?' * len(ids))
         members = DI.get(MemberRepo).members
         self.db.q(f'delete from {members} where lobby_id in ({qs})', ids)
+        for table in ('agent_player_sessions', 'lobby_events'):
+            if table in self.db.t: self.db.q(f'delete from {table} where lobby_id in ({qs})', ids)
         self.db.q(f'delete from {self.lobbies} where id in ({qs})', ids)
         return len(ids)
 

@@ -1,14 +1,29 @@
 services:
   app:
-    image: ghcr.io/ssslakter/meme-games:main
-    pull_policy: always
+    build: .
     ports:
       # only nginx reaches the app; it terminates TLS and runs crowdsec
       - "127.0.0.1:8000:8000"
     environment:
       # nginx's address as the app sees it, so X-Forwarded-For is trusted from it alone
       - FORWARDED_ALLOW_IPS=${FORWARDED_ALLOW_IPS:-127.0.0.1}
+      - MCP_GATEWAY_SECRET=${MCP_GATEWAY_SECRET:-}
     volumes:
       - ./data:/app/data
       - ./user-content:/app/user-content
+    restart: always
+
+  mcp:
+    profiles: ["mcp"]
+    build: ./mcp_gateway
+    ports:
+      - "127.0.0.1:8001:8001"
+    environment:
+      - MEME_GAMES_AGENT_API=http://app:8000/internal/agents
+      - MCP_GATEWAY_SECRET=${MCP_GATEWAY_SECRET:-}
+      - MCP_AUTH_TOKEN=${MCP_AUTH_TOKEN:-}
+      - MCP_ALLOWED_HOSTS=${MCP_ALLOWED_HOSTS:-127.0.0.1:*,localhost:*}
+      - MCP_ALLOWED_ORIGINS=${MCP_ALLOWED_ORIGINS:-http://127.0.0.1:8001,http://localhost:8001}
+    depends_on:
+      - app
     restart: always

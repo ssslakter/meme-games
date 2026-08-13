@@ -78,6 +78,7 @@ target/
 .env
 .venv/
 venv/
+.pixi/
 
 # PyCharm
 .idea

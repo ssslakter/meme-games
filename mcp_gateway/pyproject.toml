@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "meme-games-mcp"
+version = "0.1.0"
+description = "Opt-in MCP gateway for Meme Games agent players"
+requires-python = ">=3.13"
+dependencies = [
+  "httpx>=0.28,<1",
+  "mcp>=2,<3",
+  "starlette>=0.48,<1",
+  "uvicorn>=0.35,<1",
+]
+
+[project.scripts]
+meme-games-mcp = "meme_games_mcp.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[dependency-groups]
+dev = ["pytest>=8", "pytest-asyncio>=1"]

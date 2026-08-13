@@ -6,7 +6,7 @@ from .general import *
 
 
 __all__ = ['Settings', 'SettingsPanel', 'LobbyTools',
-           'lock_lobby', 'switch_game', 'SwitchGame', 'GoTo']
+           'lock_lobby', 'toggle_agents', 'switch_game', 'SwitchGame', 'GoTo']
 
 
 rt = APIRouter()
@@ -30,6 +30,19 @@ def LockLobby(l: Lobby, cls=('uk-btn cursor-pointer', ButtonT.default, 'w-full j
     args = ('lock-open', 'Lock lobby') if not l.locked else ('lock', 'Unlock lobby')
     return Setting(*args, hx_post=lock_lobby, cls=cls)(hx_swap_oob='outerHTML', id='lock-lobby')
 
+
+def AllowAgents(lobby: Lobby, save_preference=False):
+    return Div(
+        Div(
+            Input(type='checkbox', id='allow-agents-checkbox', checked=lobby.allow_agents,
+                  cls='uk-checkbox', hx_post=toggle_agents, hx_trigger='change',
+                  hx_target='#allow-agents', hx_swap='outerHTML'),
+            FormLabel('Allow agents to join', fr='allow-agents-checkbox', cls='m-0 cursor-pointer pl-2'),
+            cls='flex items-center px-3 py-2'),
+        Script(f"localStorage.setItem('meme-games.allow-agents', '{str(lobby.allow_agents).lower()}')")
+            if save_preference else None,
+        id='allow-agents', data_ui='allow-agents')
+
 def GoTo(url: str):
     '''Sends a websocket-connected member to `url` - used when the host changes the game.'''
     return Div(hx_swap_oob="beforeend:body", _=f'init go to url "{url}"')
@@ -48,7 +61,7 @@ def SwitchGame(lobby: Lobby):
 
 def Settings(*lobby_settings, lobby: Lobby = None, member: LobbyMember = None):
     lobby_settings = tuple(lobby_settings or ())
-    if lobby and is_host(member): lobby_settings += (SwitchGame(lobby),)
+    if lobby and is_host(member): lobby_settings += (AllowAgents(lobby), SwitchGame(lobby))
     if not any(lobby_settings): return None
     return Div(
         H5('Lobby', cls='mb-4'), Div(*lobby_settings, cls='space-y-6'),
@@ -113,6 +126,16 @@ async def lock_lobby(req: Request):
     lobby_service.update(lobby)
     def update(*_): return LockLobby(lobby)
     return await notify(p, update)
+
+
+@rt('/agents', methods=['post'])
+async def toggle_agents(req: Request):
+    lobby: Lobby = req.state.lobby
+    member = lobby.get_member(req.state.user.uid)
+    if not is_host(member): return
+    lobby.allow_agents = not lobby.allow_agents
+    lobby_service.update(lobby)
+    return AllowAgents(lobby, save_preference=True)
 
 
 @rt

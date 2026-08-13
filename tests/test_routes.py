@@ -94,3 +94,12 @@ def test_static_files_keep_their_own_caching():
         css = c.get('/static/styles/app.css')
         assert css.status_code == 200
         assert 'max-age' in css.headers['cache-control']
+
+
+def test_public_404_is_the_normal_html_page():
+    with TestClient(app, client=("10.0.0.5", 1)) as c:
+        response = c.get('/this-page-does-not-exist', headers={'user-agent': 'Mozilla/5.0 Firefox'})
+        assert response.status_code == 404
+        assert response.headers['content-type'].startswith('text/html')
+        assert '<title>Not Found</title>' in response.text
+        assert 'data-page="not-found"' in response.text

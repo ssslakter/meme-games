@@ -31,7 +31,9 @@ def TeamPanel(reciever: LobbyMember | User, lobby: Lobby, team: TeamColor):
             cls='flex items-center justify-between'),
         Div(*[
             Div(
-                UserInfo(reciever, member.user, member.is_connected, avatar_cls='h-11 w-11'),
+                UserInfo(reciever, member.user,
+                         member.is_connected,
+                         avatar_cls='h-11 w-11'),
                 Span('Spymaster', cls='rounded-full border px-2 py-1 text-xs') if member.uid in state.spymasters else None,
                 cls='flex items-center justify-between gap-2')
             for member in members], cls='space-y-3'),
@@ -119,9 +121,10 @@ def Board(reciever, state):
         cls='min-w-0 space-y-5')
 
 
-def HostSettings(reciever, state):
+def HostSettings(reciever, lobby, oob=False):
     from ..routes import restart_game, select_pack
     if not is_host(reciever): return None
+    state = lobby.state
     packs = DI.get(WordPackRepo).get_all()
     return Div(
         H5('Host controls'),
@@ -134,7 +137,7 @@ def HostSettings(reciever, state):
         Button(UkIcon('rotate-ccw', cls='mr-2'), 'Restart game', hx_post=restart_game, hx_swap='none',
                hx_confirm='Restart Codenames and keep the current teams?', cls=(ButtonT.destructive, 'w-full'))
             if state.phase != GamePhase.WAITING else None,
-        id='codenames-host-controls', hx_swap_oob='true',
+        id='codenames-host-controls', hx_swap_oob='true' if oob else None,
         cls='space-y-4', data_ui='codenames-host-controls')
 
 
@@ -150,7 +153,7 @@ def Game(reciever: LobbyMember | User, lobby: Lobby, **kwargs):
 def Page(reciever: LobbyMember | User, lobby: Lobby):
     from ..routes import ws_url
     return LobbyPage(
-        GameShell(Game(reciever, lobby), LobbyTools(reciever, lobby, HostSettings(reciever, lobby.state))),
+        GameShell(Game(reciever, lobby), LobbyTools(reciever, lobby, HostSettings(reciever, lobby))),
         hx_ext='ws', ws_connect=ws_url, no_image=True, user=reciever,
         title=f'Codenames lobby: {lobby.id}', page='codenames')
 

@@ -77,10 +77,13 @@ async def update_settings(req: Request, config: gm.GameConfig):
 
 @rt('/{lobby_id}', methods=['get'])
 def index(req: Request, lobby_id: str = None):
-    if not lobby_id: return redirect(random_id())
+    if not lobby_id: return fresh_lobby_redirect(index.to(lobby_id=random_id()), req)
     u: User = req.state.user
-    lobby, was_created = lobby_service.get_or_create(u, lobby_id, ALIAS, persistent=False)
-    if was_created: lobby_service.update(lobby)
+    lobby, was_created = lobby_service.get_or_create(
+        u, lobby_id, ALIAS, persistent=False, **new_lobby_options(req))
+    if was_created:
+        lobby_service.update(lobby)
+        if 'allow_agents' in req.query_params: return Redirect(index.to(lobby_id=lobby.id))
     m = lobby.get_member(u.uid)
     req.session['lobby_id'] = lobby.id
     return Page(m or u, lobby)

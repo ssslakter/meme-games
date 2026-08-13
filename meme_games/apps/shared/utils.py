@@ -60,6 +60,18 @@ def page_url(url: str | Callable[[str], str], lobby_id: str = None) -> str:
     return url(lobby_id or '') if callable(url) else url
 
 
+def new_lobby_options(req: Request) -> dict:
+    """Preferences attached by the creating browser; ignored for existing lobbies."""
+    value = req.query_params.get('allow_agents')
+    return {'allow_agents': value in ('1', 'true')} if value is not None else {}
+
+
+def fresh_lobby_redirect(url: str, req: Request):
+    value = req.query_params.get('allow_agents')
+    if value is None: return Redirect(url)
+    return Redirect(f"{url}?allow_agents={'1' if value in ('1', 'true') else '0'}")
+
+
 def game_url(game: str, lobby_id: str) -> Optional[str]:
     entry = GAME_PAGES.get(game)
     return page_url(entry[1], lobby_id) if entry else None
