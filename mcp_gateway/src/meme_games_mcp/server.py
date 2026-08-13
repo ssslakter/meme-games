@@ -1,6 +1,7 @@
 import hmac
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
+from typing import Literal
 
 from mcp.server import MCPServer
 from mcp.server.transport_security import TransportSecuritySettings
@@ -77,34 +78,60 @@ def build_gateway(settings: Settings, client=None):
         return ToolResult(**await client.action(player_session, name, arguments))
 
     @mcp.tool()
-    async def join_team(player_session: str, team: str) -> ToolResult:
+    async def codenames_join_team(player_session: str, team: str) -> ToolResult:
         """Join the red or blue Codenames team while the lobby is waiting."""
-        return await act(player_session, 'join_team', {'team': team})
+        return await act(player_session, 'codenames_join_team', {'team': team})
 
     @mcp.tool()
-    async def set_role(player_session: str, role: str) -> ToolResult:
+    async def codenames_set_role(player_session: str, role: str) -> ToolResult:
         """Choose operative or spymaster after joining a Codenames team."""
-        return await act(player_session, 'set_role', {'role': role})
+        return await act(player_session, 'codenames_set_role', {'role': role})
 
     @mcp.tool()
-    async def give_clue(player_session: str, clue: str, number: int) -> ToolResult:
+    async def codenames_give_clue(player_session: str, clue: str, number: int) -> ToolResult:
         """As the active Codenames spymaster, give a one-word clue and target count."""
-        return await act(player_session, 'give_clue', {'clue': clue, 'number': number})
+        return await act(player_session, 'codenames_give_clue', {'clue': clue, 'number': number})
 
     @mcp.tool()
-    async def reveal_card(player_session: str, card_id: str) -> ToolResult:
+    async def codenames_reveal_card(player_session: str, card_id: str) -> ToolResult:
         """As an active Codenames operative, reveal an unrevealed card by ID."""
-        return await act(player_session, 'reveal_card', {'card_id': card_id})
+        return await act(player_session, 'codenames_reveal_card', {'card_id': card_id})
 
     @mcp.tool()
-    async def end_turn(player_session: str) -> ToolResult:
+    async def codenames_end_turn(player_session: str) -> ToolResult:
         """End your Codenames team's guessing turn."""
-        return await act(player_session, 'end_turn')
+        return await act(player_session, 'codenames_end_turn')
 
     @mcp.tool()
-    async def spectate(player_session: str) -> ToolResult:
+    async def codenames_spectate(player_session: str) -> ToolResult:
         """Leave your current game seat and become a spectator when legal."""
-        return await act(player_session, 'spectate')
+        return await act(player_session, 'codenames_spectate')
+
+    @mcp.tool()
+    async def whoami_write_card(player_session: str, text: str) -> ToolResult:
+        """Write or revise the hidden identity card for your next Who Am I player."""
+        return await act(player_session, 'whoami_write_card', {'text': text})
+
+    @mcp.tool()
+    async def whoami_ask_question(player_session: str, question: str) -> ToolResult:
+        """Ask a yes/no question when it is your Who Am I turn."""
+        return await act(player_session, 'whoami_ask_question', {'question': question})
+
+    @mcp.tool()
+    async def whoami_answer_question(
+            player_session: str, answer: Literal['yes', 'no', 'not_sure']) -> ToolResult:
+        """Answer the current Who Am I question with yes, no, or not_sure."""
+        return await act(player_session, 'whoami_answer_question', {'answer': answer})
+
+    @mcp.tool()
+    async def whoami_write_note(player_session: str, text: str) -> ToolResult:
+        """Replace your own Who Am I deduction notes."""
+        return await act(player_session, 'whoami_write_note', {'text': text})
+
+    @mcp.tool()
+    async def whoami_end_turn(player_session: str) -> ToolResult:
+        """End your Who Am I turn and advance to the next player."""
+        return await act(player_session, 'whoami_end_turn')
 
     security = TransportSecuritySettings(
         allowed_hosts=list(settings.allowed_hosts), allowed_origins=list(settings.allowed_origins))

@@ -4,6 +4,8 @@ from starlette.testclient import TestClient
 
 from meme_games.apps.codenames.actions import ActionRejected, codenames_actions
 from meme_games.apps.codenames.domain import CODENAMES, CardColor, GamePhase, TeamColor, WordCard
+from meme_games.apps.whoami.actions import whoami_actions
+from meme_games.apps.whoami.domain import WHOAMI
 from meme_games.core import DI
 from meme_games.domain import AgentPlayerSessionService, LobbyService, UserManager, lobby_events
 from meme_games.main import app
@@ -17,6 +19,13 @@ sessions = DI.get(AgentPlayerSessionService)
 def create_lobby(lobby_id, allow_agents=True):
     host = users.create(name=f'host-{lobby_id}', named=True)
     return lobbies.create_lobby(host, lobby_id, CODENAMES, allow_agents=allow_agents)
+
+
+def create_whoami_lobby(lobby_id):
+    host = users.create(name=f'host-{lobby_id}', named=True)
+    lobby = lobbies.create_lobby(host, lobby_id, WHOAMI, allow_agents=True)
+    lobby.get_member(host.uid).play()
+    return lobby
 
 
 def headers(secret='test-gateway'): return {'X-Meme-Games-Gateway': secret}
@@ -43,11 +52,11 @@ def test_two_shared_gateway_clients_get_independent_players(monkeypatch):
         bob = join(client, lobby, 'Robot Bob').json()
         assert alice['player_session'] != bob['player_session']
         assert sessions.get(alice['player_session']).handle_hash != alice['player_session']
-        assert post(client, 'action', alice['player_session'], action='join_team',
+        assert post(client, 'action', alice['player_session'], action='codenames_join_team',
                     arguments={'team': 'red'}).json()['ok']
-        assert post(client, 'action', bob['player_session'], action='join_team',
+        assert post(client, 'action', bob['player_session'], action='codenames_join_team',
                     arguments={'team': 'blue'}).json()['ok']
-        assert post(client, 'action', alice['player_session'], action='set_role',
+        assert post(client, 'action', alice['player_session'], action='codenames_set_role',
                     arguments={'role': 'spymaster'}).json()['ok']
         a_state = post(client, 'state', alice['player_session']).json()
         b_state = post(client, 'state', bob['player_session']).json()
@@ -92,9 +101,9 @@ def test_hidden_state_is_receiver_specific(monkeypatch):
     with TestClient(app, raise_server_exceptions=False) as client:
         operative = join(client, lobby, 'Operative').json()['player_session']
         spymaster = join(client, lobby, 'Spymaster').json()['player_session']
-        post(client, 'action', operative, action='join_team', arguments={'team': 'red'})
-        post(client, 'action', spymaster, action='join_team', arguments={'team': 'red'})
-        post(client, 'action', spymaster, action='set_role', arguments={'role': 'spymaster'})
+        post(client, 'action', operative, action='codenames_join_team', arguments={'team': 'red'})
+        post(client, 'action', spymaster, action='codenames_join_team', arguments={'team': 'red'})
+        post(client, 'action', spymaster, action='codenames_set_role', arguments={'role': 'spymaster'})
         lobby.state.board = [WordCard('secret', CardColor.BLUE)]
         op_card = post(client, 'state', operative).json()['board'][0]
         spy_card = post(client, 'state', spymaster).json()['board'][0]
@@ -135,6 +144,50 @@ def test_events_are_durable_ordered_generic_and_reconnectable(monkeypatch):
     assert [event['sequence'] for event in payload['events']] == [cursor + 1, cursor + 2]
     assert payload['next_cursor'] == cursor + 2
     assert all(set(event) == {'sequence', 'type', 'revision'} for event in payload['events'])
+
+
+def test_whoami_agent_boundary_flow_is_personalized(monkeypatch):
+    monkeypatch.setenv('MCP_GATEWAY_SECRET', 'test-gateway')
+    lobby = create_whoami_lobby('whoami-agent')
+    host = lobby.host
+    with TestClient(app, raise_server_exceptions=False) as client:
+        joined = join(client, lobby, 'Robot').json()
+        handle = joined['player_session']
+        agent_uid = sessions.get(handle).user_uid
+        assert lobby.members[agent_uid].is_player
+        state = post(client, 'state', handle).json()
+        assert state['you']['card_to_write']['id'] == host.uid
+        assert post(client, 'action', handle, action='whoami_write_card',
+                    arguments={'text': 'Sherlock Holmes'}).json()['ok']
+        asyncio.run(whoami_actions.write_card(lobby, host, 'A friendly robot'))
+        asyncio.run(whoami_actions.start(lobby, host))
+
+        asyncio.run(whoami_actions.ask_question(lobby, host, 'Am I fictional?'))
+        state = post(client, 'state', handle).json()
+        assert state['question']['text'] == 'Am I fictional?'
+        assert 'whoami_answer_question' in state['available_actions']
+        assert post(client, 'action', handle, action='whoami_answer_question',
+                    arguments={'answer': 'yes'}).json()['ok']
+        asyncio.run(whoami_actions.end_turn(lobby, host))
+
+        state = post(client, 'state', handle).json()
+        own = next(player for player in state['players'] if player['id'] == agent_uid)
+        assert 'card' not in own
+        assert state['you']['is_current_turn']
+        assert {'whoami_ask_question', 'whoami_end_turn'} <= set(state['available_actions'])
+        assert post(client, 'action', handle, action='whoami_ask_question',
+                    arguments={'question': 'Am I electronic?'}).json()['ok']
+        assert post(client, 'action', handle, action='whoami_write_note',
+                    arguments={'text': 'Possibly a machine'}).json()['ok']
+        asyncio.run(whoami_actions.write_note(lobby, host, 'Shared human deduction'))
+        shared = post(client, 'state', handle).json()
+        assert next(player for player in shared['players'] if player['id'] == host.uid)['notes'] == 'Shared human deduction'
+        lobby.state.config.private_notes = True
+        private = post(client, 'state', handle).json()
+        assert 'notes' not in next(player for player in private['players'] if player['id'] == host.uid)
+        assert post(client, 'action', handle, action='whoami_end_turn', arguments={}).json()['ok']
+    assert lobby.state.player(agent_uid).notes == 'Possibly a machine'
+    assert lobby.state.current_turn_uid == host.uid
 
 
 def test_codenames_action_publishes_one_revisioned_event():

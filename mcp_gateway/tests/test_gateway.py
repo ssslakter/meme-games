@@ -44,19 +44,24 @@ async def test_tools_use_independent_player_session_arguments():
     async with Client(mcp) as client:
         tools = await client.list_tools()
         assert {tool.name for tool in tools.tools} >= {
-            'join_lobby', 'get_game_state', 'leave_lobby', 'join_team', 'set_role',
-            'give_clue', 'reveal_card', 'end_turn', 'spectate', 'wait_for_events'}
+            'join_lobby', 'get_game_state', 'leave_lobby', 'codenames_join_team',
+            'codenames_set_role', 'codenames_give_clue', 'codenames_reveal_card',
+            'codenames_end_turn', 'codenames_spectate', 'wait_for_events',
+            'whoami_write_card', 'whoami_ask_question', 'whoami_answer_question',
+            'whoami_write_note', 'whoami_end_turn'}
+        assert not {'join_team', 'set_role', 'give_clue', 'reveal_card', 'end_turn', 'spectate'} & {
+            tool.name for tool in tools.tools}
         joined = await client.call_tool('join_lobby', {'lobby_code': 'room', 'name': 'Robot'})
         assert joined.structured_content['player_session'] == HANDLE
         state = await client.call_tool('get_game_state', {'player_session': HANDLE})
         assert json.loads(state.content[0].text)['revision'] == 3
-        result = await client.call_tool('join_team', {'player_session': HANDLE, 'team': 'red'})
+        result = await client.call_tool('codenames_join_team', {'player_session': HANDLE, 'team': 'red'})
         assert result.structured_content['ok']
         events = await client.call_tool('wait_for_events', {'player_session': HANDLE, 'cursor': 3})
         assert events.structured_content['next_cursor'] == 4
         left = await client.call_tool('leave_lobby', {'player_session': HANDLE})
         assert left.structured_content['ok']
-    assert fake.actions == [('join_team', {'team': 'red'})]
+    assert fake.actions == [('codenames_join_team', {'team': 'red'})]
 
 
 @pytest.mark.asyncio

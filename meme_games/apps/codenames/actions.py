@@ -1,9 +1,6 @@
-import asyncio
-from collections import defaultdict
-from dataclasses import dataclass
-
 from meme_games.core import DI
-from meme_games.domain import Lobby, LobbyMember, LobbyService, is_host, lobby_events
+from meme_games.domain import Lobby, LobbyMember, LobbyService, is_host
+from meme_games.apps.shared.actions import ActionRejected, ActionResult, GameActions
 from meme_games.apps.word_packs.domain import WordPackRepo
 
 from .domain import CodenamesState, GamePhase, TeamColor
@@ -11,29 +8,12 @@ from .domain import CodenamesState, GamePhase, TeamColor
 __all__ = ['ActionRejected', 'ActionResult', 'CodenamesActions', 'codenames_actions']
 
 
-class ActionRejected(ValueError): pass
-
-
-@dataclass(frozen=True)
-class ActionResult:
-    ok: bool
-    message: str
-    revision: int
-
-
-class CodenamesActions:
+class CodenamesActions(GameActions):
     """The shared application boundary used by browser routes and agent calls."""
 
     def __init__(self, lobbies: LobbyService, wordpacks: WordPackRepo):
-        self.lobbies, self.wordpacks = lobbies, wordpacks
-        self._locks = defaultdict(asyncio.Lock)
-
-    async def _change(self, lobby: Lobby, mutate, message: str, topic='game', rejected='Action is not legal now') -> ActionResult:
-        async with self._locks[lobby.id]:
-            if not mutate(): raise ActionRejected(rejected)
-            self.lobbies.update(lobby)
-            event = await lobby_events.publish(lobby, topic)
-            return ActionResult(True, message, event.revision)
+        super().__init__(lobbies)
+        self.wordpacks = wordpacks
 
     async def join_team(self, lobby: Lobby, member: LobbyMember, team: str):
         try: team = TeamColor(team)

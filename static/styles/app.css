@@ -45,6 +45,44 @@
   min-height: calc(100vh - 8rem);
 }
 
+.mg-whoami-header {
+  background: linear-gradient(to bottom, hsl(var(--background) / .95), hsl(var(--background) / .72), transparent);
+  pointer-events: none;
+}
+
+.mg-whoami-header button { pointer-events: auto; }
+
+.mg-whoami-topic {
+  color: hsl(var(--foreground));
+  text-wrap: balance;
+}
+
+.mg-question-bubble {
+  position: absolute;
+  bottom: calc(100% + 7rem);
+  left: 50%;
+  z-index: 12;
+  width: min(24rem, 90vw);
+  padding: .75rem;
+  transform: translateX(-50%);
+  border: 1px solid hsl(var(--border));
+  border-radius: 1rem;
+  background: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  box-shadow: 0 8px 24px rgb(0 0 0 / .2);
+  text-align: center;
+}
+
+.mg-question-bubble::after {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  border: .65rem solid transparent;
+  border-top-color: hsl(var(--card));
+  content: '';
+  transform: translateX(-50%);
+}
+
 .mg-player-card {
   z-index: 1;
   display: flex;

@@ -1,5 +1,4 @@
 from ...shared import *
-from ...shared.settings import LockLobby
 from ...user import *
 from ..domain import *
 from .cards import *
@@ -13,11 +12,36 @@ def BoardTransform():
                hx_vals='js:{...(window.mgBoardMsg || {})}')
 
 
+def TopicBanner(lobby: Lobby, **kwargs):
+    return H2(lobby.state.config.topic.strip() or 'Everything', id='whoami-topic',
+              cls='mg-whoami-topic m-0 text-center', **kwargs)
+
+
+def TurnStatus(reciever: LobbyMember | User, lobby: Lobby, **kwargs):
+    from ..routes import end_turn
+    state: WhoAmIState = lobby.state
+    active = lobby.members.get(state.current_turn_uid)
+    return Div(
+        P(f"{active.name}'s turn" if active else 'Set a card for every player, then start.',
+          cls='m-0 font-medium'),
+        Button('End turn', hx_post=end_turn, hx_swap='none', cls=(ButtonT.primary, 'px-4 py-2'))
+            if active and isinstance(reciever, LobbyMember) and reciever == active and active.user.kind != 'agent'
+            else None,
+        id='whoami-turn', cls='flex items-center justify-center gap-4', **kwargs)
+
+
+def QuestionUpdates(reciever, lobby):
+    return tuple(QuestionPanel(reciever, player, lobby, hx_swap_oob='outerHTML')
+                 for player in lobby.sorted_members() if player.is_player)
+
+
 def Game(reciever: LobbyMember | User, lobby: Lobby, **kwargs):
     players = [p for p in lobby.sorted_members() if p.is_player]
     cards = [PlayerCard(reciever, p, lobby, i) for i, p in enumerate(players)]
-    if not is_player(reciever): cards.append(NewPlayerCard(len(players)))
+    if not is_player(reciever) and not lobby.locked: cards.append(NewPlayerCard(len(players)))
     return Div(
+        Div(TopicBanner(lobby), TurnStatus(reciever, lobby),
+            cls='mg-whoami-header sticky top-16 z-30 space-y-2 py-3'),
         Div(*cards, id='players', cls='mg-board', data_ui='board',
             style=f'height:{board_height(len(cards))}px'),
         BoardTransform(),
@@ -35,8 +59,7 @@ def MainBlock(reciever: LobbyMember | User, lobby: Lobby):
     return LobbyPage(
         GameShell(
             Game(reciever, lobby),
-            LobbyTools(reciever, lobby, WhoAmISettings(reciever, lobby),
-                       LockLobby(lobby) if is_host(reciever) else None)),
+            LobbyTools(reciever, lobby, WhoAmISettings(reciever, lobby))),
         navbar_args=[A("Monitor", href=monitor.to(), cls=AT.text)],
         hx_ext="ws",
         ws_connect=ws_url,

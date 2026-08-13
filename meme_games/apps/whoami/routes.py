@@ -5,6 +5,7 @@ from meme_games.core import *
 from meme_games.domain import *
 from ..shared import *
 from .domain import *
+from .actions import *
 from .components import *
 
 #---------------------------------#
@@ -16,6 +17,9 @@ register_route(rt)
 logger = logging.getLogger(__name__)
 
 lobby_service = DI.get(LobbyService)
+
+
+def rejected(req, error): return add_toast(req.session, str(error), 'error')
 
 
 @rt('/{lobby_id}', methods=['get'])
@@ -51,14 +55,51 @@ register_game_view(WHOAMI, Game)
 
 @rt
 async def notes(req: Request, text: str):
-    lobby, state, p = lobby_state(req, WHOAMI)
-    if not p.is_player: return
-    data = state.player(p.uid)
-    data.set_notes(text)
-    lobby_service.update(lobby)
-    if state.config.private_notes: return
-    def update(r, *_): return NotesCard(r, p, data, state)(hx_swap_oob=f"outerHTML:[data-notes='{p.uid}']")
-    await notify_all(lobby, update, but=p)
+    lobby, _, p = lobby_state(req, WHOAMI)
+    try: await whoami_actions.write_note(lobby, p, text)
+    except ActionRejected as error: return rejected(req, error)
+
+
+@rt
+async def update_topic(req: Request, topic: str):
+    lobby, _, member = lobby_state(req, WHOAMI)
+    try: await whoami_actions.set_topic(lobby, member, topic)
+    except ActionRejected as error: return rejected(req, error)
+
+
+@rt
+async def start_game(req: Request):
+    lobby, _, member = lobby_state(req, WHOAMI)
+    try: await whoami_actions.start(lobby, member)
+    except ActionRejected as error: return rejected(req, error)
+
+
+@rt
+async def restart_game(req: Request):
+    lobby, _, member = lobby_state(req, WHOAMI)
+    try: await whoami_actions.restart(lobby, member)
+    except ActionRejected as error: return rejected(req, error)
+
+
+@rt
+async def ask_question(req: Request, text: str):
+    lobby, _, member = lobby_state(req, WHOAMI)
+    try: await whoami_actions.ask_question(lobby, member, text)
+    except ActionRejected as error: return rejected(req, error)
+
+
+@rt
+async def answer_question(req: Request, answer: str):
+    lobby, _, member = lobby_state(req, WHOAMI)
+    try: await whoami_actions.answer_question(lobby, member, answer)
+    except ActionRejected as error: return rejected(req, error)
+
+
+@rt
+async def end_turn(req: Request):
+    lobby, _, member = lobby_state(req, WHOAMI)
+    try: await whoami_actions.end_turn(lobby, member)
+    except ActionRejected as error: return rejected(req, error)
 
 
 @rt
@@ -67,9 +108,7 @@ async def toggle_private_notes(req: Request):
     if not is_host(p): return add_toast(req.session, "Only the host can change this", "error")
     state.config.private_notes = not state.config.private_notes
     lobby_service.update(lobby)
-    def update(r, *_): return (PrivateNotesSetting(lobby) if is_host(r) else None,
-                               Game(r, lobby, hx_swap_oob='true'))
-    await notify_all(lobby, update)
+    await lobby_events.publish(lobby, 'game')
 
 
 def _board_member(sess: dict, owner_uid: str) -> tuple[Optional[Lobby], Optional[LobbyMember], Optional[LobbyMember]]:
@@ -84,13 +123,12 @@ def _board_member(sess: dict, owner_uid: str) -> tuple[Optional[Lobby], Optional
 
 async def edit_label_text(sess, label: str, owner_uid: str):
     lobby, p, owner = _board_member(sess, owner_uid)
-    if not lobby or p == owner: return
-    lobby.state.player(owner.uid).set_label(label)
-    lobby_service.update(lobby)
-    def update(*_): return dict(type='label_text', owner_uid=owner.uid, label=label)
-    await notify_all(lobby, update, but=[owner, p], json=True)
-    def update(r, *_): return PlayerLabelText(r, r, lobby.state.player(r.uid))[1](hx_swap_oob=f"innerHTML:[data-label-text='{owner.uid}']")
-    await notify(owner, update, owner)
+    if not lobby: return
+    order = (lobby.state.turn_order if lobby.state.phase == WhoAmIPhase.PLAYING
+             else whoami_actions.order(lobby))
+    if lobby.state.next_player(p.uid, order) != owner.uid: return
+    try: await whoami_actions.write_card(lobby, p, label)
+    except ActionRejected: return
 
 
 async def edit_label_position(sess, owner_uid: str, **kwargs):
@@ -118,6 +156,42 @@ async def on_message(sess, data):
         elif msg_type == 'label_position': await edit_label_position(sess, **data)
         elif msg_type == 'card_position': await move_card(sess, **data)
     except Exception as e: logger.error(e)
+
+
+async def _render_whoami_event(event: LobbyChanged, lobby: Lobby):
+    if event.game != WHOAMI: return
+    topics = event.topics
+    if 'game' in topics:
+        return await notify_all(lobby, lambda r, *_: (
+            Game(r, lobby, hx_swap_oob='true'),
+            WhoAmISettings(r, lobby, hx_swap_oob='outerHTML') if is_host(r) else None))
+    if 'topic' in topics:
+        await notify_all(lobby, lambda *_: TopicBanner(lobby, hx_swap_oob='outerHTML'))
+    if topics & {'turn', 'question'}:
+        await notify_all(lobby, lambda r, *_: (
+            TurnStatus(r, lobby, hx_swap_oob='outerHTML'), *QuestionUpdates(r, lobby)))
+    for topic in topics:
+        if topic.startswith('notes:'):
+            uid = topic.partition(':')[2]
+            owner = lobby.members.get(uid)
+            if owner:
+                def note_update(r, *_):
+                    note = NotesCard(r, owner, lobby.state.player(uid), lobby.state)
+                    return note(hx_swap_oob=f"outerHTML:[data-notes='{uid}']") if note else None
+                await notify_all(lobby, note_update, but=owner)
+        elif topic.startswith('card:'):
+            uid = topic.partition(':')[2]
+            owner = lobby.members.get(uid)
+            if not owner: continue
+            label = lobby.state.player(uid).label_text
+            await notify_all(lobby, lambda *_: dict(type='label_text', owner_uid=uid, label=label), json=True)
+            await notify_all(lobby, lambda r, *_: (
+                PlayerLabelText(r, owner, lobby.state.player(uid), lobby)[1](
+                    hx_swap_oob=f"innerHTML:[data-label-text='{uid}']") if r == owner else None,
+                GameControl(lobby, hx_swap_oob='outerHTML') if is_host(r) else None))
+
+
+lobby_events.subscribe(_render_whoami_event)
 
 ws_url = lobby_ws('/whoami', on_message)
 

@@ -1,13 +1,12 @@
 import asyncio
 import hmac
 import os
-from dataclasses import dataclass
 
 from meme_games.core import *
 from meme_games.domain import *
-from meme_games.apps.shared import register_route
-from meme_games.apps.codenames.actions import ActionRejected, codenames_actions
-from meme_games.apps.codenames.domain import CODENAMES, GamePhase, TeamColor
+from meme_games.apps.shared.actions import ActionRejected
+from meme_games.apps.shared.agent import AgentGame, agent_games
+from meme_games.apps.shared.utils import register_route
 
 
 rt = APIRouter('/internal/agents')
@@ -16,15 +15,6 @@ register_route(rt)
 lobbies = DI.get(LobbyService)
 users = DI.get(UserManager)
 sessions = DI.get(AgentPlayerSessionService)
-
-
-@dataclass(frozen=True)
-class AgentGameAdapter:
-    snapshot: Callable
-    action: Callable
-
-
-GAME_ADAPTERS: dict[str, AgentGameAdapter] = {}
 
 
 def _service_auth(req: Request):
@@ -56,75 +46,8 @@ def _player(handle: str):
     return session, lobby, member
 
 
-def _available_actions(member: LobbyMember, state) -> list[str]:
-    team = state.team_of(member)
-    spymaster = member.uid in state.spymasters
-    if state.phase == GamePhase.WAITING:
-        actions = ['join_team']
-        if team: actions.append('set_role')
-        if member.is_player: actions.append('spectate')
-        return actions
-    if state.phase == GamePhase.CLUE and team == state.turn and spymaster: return ['give_clue']
-    if state.phase == GamePhase.GUESSING and team == state.turn and not spymaster:
-        return ['reveal_card', 'end_turn']
-    return []
-
-
-def codenames_snapshot(lobby: Lobby, member: LobbyMember):
-    state = lobby.state
-    knows_key = member.uid in state.spymasters
-
-    def card_data(card):
-        result = {'id': card.id, 'word': card.word, 'revealed': card.revealed}
-        if card.revealed or knows_key: result['color'] = card.color.value
-        return result
-
-    return {
-        'lobby_id': lobby.id,
-        'game': CODENAMES,
-        'revision': lobby.revision,
-        'phase': state.phase.value,
-        'turn': state.turn.value if state.turn else None,
-        'winner': state.winner.value if state.winner else None,
-        'clue': {'word': state.clue, 'number': state.clue_number,
-                 'guesses_left': state.guesses_left} if state.clue else None,
-        'you': {'id': member.uid, 'name': member.name,
-                'team': state.team_of(member).value if state.team_of(member) else None,
-                'role': 'spymaster' if knows_key else 'operative' if state.team_of(member) else 'spectator'},
-        'teams': {
-            team.value: [
-                {'id': uid, 'name': lobby.members[uid].name,
-                 'role': 'spymaster' if uid in state.spymasters else 'operative',
-                 'kind': lobby.members[uid].user.kind}
-                for uid in state.team_uids(team) if uid in lobby.members]
-            for team in TeamColor},
-        'spectators': [
-            {'id': candidate.uid, 'name': candidate.name, 'kind': candidate.user.kind}
-            for candidate in lobby.sorted_members() if not candidate.is_player],
-        'board': [card_data(card) for card in state.board],
-        'available_actions': _available_actions(member, state),
-    }
-
-
-async def codenames_action(lobby: Lobby, member: LobbyMember, action: str, arguments: dict):
-    match action:
-        case 'join_team': return await codenames_actions.join_team(lobby, member, arguments.get('team', ''))
-        case 'set_role': return await codenames_actions.set_role(lobby, member, arguments.get('role', ''))
-        case 'give_clue':
-            try: number = int(arguments.get('number'))
-            except (TypeError, ValueError): raise ActionRejected('number must be an integer')
-            return await codenames_actions.give_clue(lobby, member, str(arguments.get('clue', '')), number)
-        case 'reveal_card': return await codenames_actions.reveal_card(lobby, member, str(arguments.get('card_id', '')))
-        case 'end_turn': return await codenames_actions.end_turn(lobby, member)
-        case 'spectate': return await codenames_actions.spectate(lobby, member)
-        case _: raise ActionRejected('Unknown action')
-
-
-GAME_ADAPTERS[CODENAMES] = AgentGameAdapter(codenames_snapshot, codenames_action)
-
-
-def _adapter(lobby: Lobby) -> AgentGameAdapter:
-    adapter = GAME_ADAPTERS.get(lobby.current_game)
+def _adapter(lobby: Lobby) -> AgentGame:
+    adapter = agent_games.get(lobby.current_game)
     if not adapter: raise HTTPException(409, f'unsupported_game:{lobby.current_game}')
     return adapter
 
@@ -141,7 +64,9 @@ async def join(req: Request):
         raise HTTPException(409, 'name_taken')
     session, handle = sessions.create(lobby.id, name)
     user = users.get(session.user_uid)
-    lobby.create_member(user)
+    member = lobby.create_member(user)
+    adapter = agent_games.get(lobby.current_game)
+    if adapter: adapter.join(lobby, member)
     lobbies.update(lobby)
     await lobby_events.publish(lobby, 'roster')
     return {'player_session': handle, 'lobby_id': lobby.id, 'name': name, 'cursor': lobby.revision}

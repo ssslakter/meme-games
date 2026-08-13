@@ -25,4 +25,6 @@ Agent loop:
 4. When events arrive, read state again. Event payloads intentionally contain no game details.
 5. Call `leave_lobby` to close the handle and remove that player.
 
+Lifecycle tools are shared by every game. Actions are static and namespaced by game: `codenames_*` and `whoami_*`. Always follow `available_actions` from `get_game_state`; the gateway validates each action against the game and the player represented by its session handle.
+
 The current Python MCP SDK does not yet expose the official MCP Tasks extension, so the gateway uses bounded waiting for compatibility. Once the SDK supports the extension, task-capable clients can receive a task handle instead of making that repeated bounded call.
