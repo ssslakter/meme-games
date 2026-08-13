@@ -76,7 +76,8 @@ async def notes(req: Request, text: str):
 
 async def edit_label_text(sess, label: str, owner_uid: str):
     lobby = lobby_service.get_lobby(sess.get("lobby_id"), WAILobby)
-    p = lobby.get_member(user_manager.get(sess.get('uid')).uid)
+    if not lobby: return
+    p = lobby.get_member(sess.get('uid'))
     owner = lobby.get_member(owner_uid)
     if not (owner and p and p.is_player) or p == owner: return
     owner.set_label(label)
@@ -89,7 +90,8 @@ async def edit_label_text(sess, label: str, owner_uid: str):
 
 async def edit_label_position(sess, owner_uid: str, **kwargs):
     lobby = lobby_service.get_lobby(sess.get("lobby_id"), WAILobby)
-    p = lobby.get_member(user_manager.get(sess.get('uid')).uid)
+    if not lobby: return
+    p = lobby.get_member(sess.get('uid'))
     owner = lobby.get_member(owner_uid)
     if not (p and owner): return
     owner.set_label_transform(kwargs)

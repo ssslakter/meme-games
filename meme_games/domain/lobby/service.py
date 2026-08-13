@@ -48,7 +48,7 @@ class LobbyService:
 
     def delete_lobby(self, id: str):
         """Deletes a lobby from cache and the database."""
-        self.lobbies.pop(id)
+        self.lobbies.pop(id, None)
         self.repo.delete(id)
 
     def evict_lobby(self, id: str):
@@ -94,7 +94,7 @@ class LobbyService:
             400, 'Too many lobbies, wait until some are finished')
         if host and self._host_lobby_count(host.uid) >= self.max_lobbies_per_host:
             raise HTTPException(429, 'You already have several open lobbies. Close one before creating another.')
-        return self.create_lobby(host, id, as_type, **create_kwargs), True
+        return self.create_lobby(host, id, as_type or BasicLobby, **create_kwargs), True
 
     def sync_active_lobbies_user(self, u: User):
         """Synchronizes user information across all active lobbies they are in."""
