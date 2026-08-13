@@ -33,8 +33,13 @@ class DiContext:
         '''Get a service by class or class name, building its dependencies first'''
         if isinstance(service_type, str): service_type = self.service_types[service_type]
         if service_type not in self.services:
+            deps = get_init_args(service_type)
+            for d in deps:
+                if not isinstance(d, type): raise TypeError(
+                    f"Cannot build {service_type.__name__}: dependency {d!r} is not a class. "
+                    "Services take concrete classes, and instances like the database must be registered first.")
             self.register_service(service_type)
-            self.services[service_type] = service_type(*[self.get(t) for t in get_init_args(service_type)])
+            self.services[service_type] = service_type(*[self.get(t) for t in deps])
         return cast(T, self.services[service_type])
 
     def reset(self) -> None:
