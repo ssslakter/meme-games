@@ -14,6 +14,7 @@ class LobbyService:
     lobby_limit = 100
     cleanup_interval = 60.0       # seconds between stale-lobby sweeps
     max_lobbies_per_host = 3      # max concurrent lobbies one host may own
+    lobby_ttl = dt.timedelta(days=1)  # persistent lobbies are dropped from the db after this
 
     def __init__(self, lobby_repo: LobbyRepo):
         self.repo = lobby_repo
@@ -64,11 +65,13 @@ class LobbyService:
                    for l in self.lobbies.values())
 
     def cleanup_lobbies(self) -> int:
-        """Evict stale lobbies; returns how many were freed."""
+        """Evict stale lobbies from memory and drop long-dead ones from the db; returns how many were freed."""
         stale = [id for id, l in list(self.lobbies.items()) if self._is_stale(l)]
         for id in stale: self.evict_lobby(id)
-        if stale: logger.info(f'Evicted {len(stale)} stale lobbies ({len(self.lobbies)} active)')
-        return len(stale)
+        purged = self.repo.delete_stale(dt.datetime.now() - self.lobby_ttl, keep=set(self.lobbies))
+        if stale or purged:
+            logger.info(f'Evicted {len(stale)} stale lobbies, purged {purged} from db ({len(self.lobbies)} active)')
+        return len(stale) + purged
 
     async def run_cleanup_loop(self):
         """Background task: periodically evict stale lobbies."""

@@ -22,8 +22,8 @@ class Timer:
         self.reset()
         finish_t = t.monotonic() + self.total
         while self.rem_t > 0:
-            timer = asyncio.create_task(asyncio.sleep(0.5))  # interval check on pause and stop
-            await asyncio.wait([timer, asyncio.create_task(self.stop_.wait())], return_when=asyncio.FIRST_COMPLETED)
+            try: await asyncio.wait_for(self.stop_.wait(), 0.5)  # interval check on pause and stop
+            except TimeoutError: pass
             if self.stop_.is_set(): return
             elif self.pause_.is_set():
                 paused_t = t.monotonic()

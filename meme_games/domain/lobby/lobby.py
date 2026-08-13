@@ -138,6 +138,21 @@ class LobbyRepo(DataRepository[Lobby]):
 
     def ids(self) -> list[str]: return [el['id'] for el in self.lobbies(select='id', as_cls=False)]
 
+    def delete_stale(self, cutoff: dt.datetime, keep: set[str] = frozenset()) -> int:
+        '''Deletes lobbies (and their members) that were last active before `cutoff`.'''
+        ids = [r['id'] for r in self.db.q(f'select id from {self.lobbies} where last_active < ?',
+                                          [cutoff.isoformat()]) if r['id'] not in keep]
+        if not ids: return 0
+        qs = ','.join('?' * len(ids))
+        members = DI.get(MemberRepo).members
+        member_ids = [r['id'] for r in self.db.q(f'select id from {members} where lobby_id in ({qs})', ids)]
+        if member_ids:
+            mqs = ','.join('?' * len(member_ids))
+            for repo in {DI.get(t) for t in MEMBER_REPO_REGISTRY.values()}:
+                repo.table.delete_where(f'id in ({mqs})', member_ids)
+        self.db.q(f'delete from {self.lobbies} where id in ({qs})', ids)
+        return len(ids)
+
 
 def is_player(u: LobbyMember|User): return isinstance(u, LobbyMember) and u.is_player
 

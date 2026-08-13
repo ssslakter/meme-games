@@ -139,6 +139,15 @@ class TestLobbyCreationRateLimitMiddlewareIntegration:
         assert app.call_count == 2
         assert send.messages[0]["status"] == 429
     
+    def test_joins_to_existing_lobbies_are_not_limited(self):
+        app = MockApp()
+        existing = {'test1'}
+        middleware = LobbyCreationRateLimitMiddleware(app, max_creations=1, window=60.0,
+                                                      lobby_exists=existing.__contains__)
+        scope = {"type": "http", "path": "/alias/test1", "method": "GET", "client": ("192.168.1.1", 12345)}
+        for _ in range(10): run_async(middleware(scope, MockReceive(), MockSend()))
+        assert app.call_count == 10
+
     def test_allows_non_lobby_routes(self):
         app = MockApp()
         middleware = LobbyCreationRateLimitMiddleware(app, max_creations=1, window=60.0)
