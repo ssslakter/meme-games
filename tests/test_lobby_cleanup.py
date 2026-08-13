@@ -1,14 +1,12 @@
 """Tests for the leaks the lobby cleanup is supposed to plug."""
-import asyncio, datetime as dt, tempfile, time
-from pathlib import Path
+import asyncio, datetime as dt, time
 
-from meme_games.core import DI, init_db
+from meme_games.core import DI
+from meme_games.services import db
 from meme_games.domain import LobbyService
 from meme_games.domain.timer import Timer
 from meme_games.domain.user import UserManager
 
-db = init_db(str(Path(tempfile.mkdtemp()) / 'test.db'))
-DI.register_instance(db)
 service = DI.get(LobbyService)
 host = DI.get(UserManager).create(name='host')
 
