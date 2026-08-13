@@ -38,11 +38,7 @@ def index(req: Request, lobby_id: str = None):
 
 def redirect(lobby_id: str): return Redirect(index.to(lobby_id=lobby_id))
 
-def upd(r, lobby, conn_member):
-    if r == conn_member: return SpectatorsList(r, lobby), MemberName(r, conn_member)
-    return SpectatorsList(r, lobby), MemberName(r, conn_member)
-
-@ws_rt.ws('/video', conn=ws_fn(render_fn=upd), disconn=ws_fn(False, upd))
+@ws_rt.ws('/video', conn=ws_fn(), disconn=ws_fn(False))
 async def ws(ws, sess, data):
     u = user_manager.get(sess['uid'])
     lobby = lobby_service.get_lobby(sess.get("lobby_id"))

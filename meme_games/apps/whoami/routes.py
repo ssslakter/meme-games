@@ -1,4 +1,4 @@
-from ..shared.spectators import register_lobby_spectators_update, SpectatorsList
+from ..shared.spectators import register_game_view, notify_roster_changed
 from ..shared.ws_route import ws_fn
 from ..shared.utils import register_route, lobby_state
 from meme_games.core import *
@@ -42,21 +42,10 @@ async def play(req: Request):
         return NewPlayerCard()
     p.play()
     lobby_service.update(lobby)
-
-    def update(r: LobbyMember, lobby):
-        swap_position = 'beforeend:#players' if r.is_player else 'beforebegin:#players #new-player-card'
-        res = (Div(hx_swap_oob=f"delete:#spectators [data-username='{p.uid}']"),)
-        if r != p: res += (Div(PlayerCard(r, p, lobby), hx_swap_oob=swap_position),)
-        return res
-    await notify_all(lobby, update)
-    return NotesBlock(p, lobby), PlayerCard(p, p, lobby)
+    await notify_roster_changed(lobby)  # everyone, including p, re-renders the board
 
 
-register_lobby_spectators_update(
-    WHOAMI,
-    lambda *args: Div(hx_swap_oob=f"delete:div[data-user='{args[-1].user.uid}']"),
-    lambda r, lobby: (Div(NewPlayerCard(), hx_swap_oob="beforeend:#players"), NotesBlock(r, lobby))
-    )
+register_game_view(WHOAMI, Game)
 
 @rt
 async def notes(req: Request, text: str):
@@ -99,11 +88,7 @@ async def edit_label_position(sess, owner_uid: str, **kwargs):
     await notify_all(lobby, update, json=True, but=p)
 
 
-def upd(r, lobby, conn_member):
-    if r == conn_member: return Game(r, lobby), SpectatorsList(r, lobby), MemberName(r, conn_member)
-    return SpectatorsList(r, lobby), MemberName(r, conn_member)
-
-@ws_rt.ws('/whoami', conn=ws_fn(render_fn=upd), disconn=ws_fn(False, upd))
+@ws_rt.ws('/whoami', conn=ws_fn(), disconn=ws_fn(False))
 async def ws(sess, data):
     try:
         msg_type = data.pop('type')

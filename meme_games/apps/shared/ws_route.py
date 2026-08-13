@@ -2,6 +2,7 @@ from meme_games.core import *
 from ..user import MemberName
 from meme_games.domain import LobbyService, UserManager, notify_all
 from .utils import register_route
+from .spectators import SpectatorsList, GameView
 
 ws_rt = APIRouter('/ws')
 register_route(ws_rt)
@@ -10,7 +11,14 @@ lobby_service = DI.get(LobbyService)
 user_manager = DI.get(UserManager)
 
 
-def ws_fn(connected=True, render_fn: Callable = lambda *_: None):
+def lobby_view(r, lobby, conn_member):
+    '''What every member sees when someone connects or drops: the spectator list and
+    that member's connection state. The member who just connected also gets the board.'''
+    common = SpectatorsList(r, lobby), MemberName(r, conn_member)
+    return (GameView(r, lobby), *common) if r == conn_member else common
+
+
+def ws_fn(connected=True, render_fn: Callable = lobby_view):
     '''Returns a function that will be called when a user joins the lobby websocket'''
     async def user_joined(sess, send, ws):
         u = user_manager.get_or_create(sess)
