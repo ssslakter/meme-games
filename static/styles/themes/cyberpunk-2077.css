@@ -1,0 +1,494 @@
+/* Cyberpunk 2077-inspired neon theme for Meme Games */
+:root {
+  --mg-cyber-cyan: #00f0ff;
+  --mg-cyber-red: #ff345f;
+  --mg-cyber-white: #e8fbff;
+  --mg-cyber-ink: #050a0e;
+  --radius: 0;
+  --mg-label-bg: rgba(5, 12, 18, .95);
+  --mg-label-fg: var(--mg-cyber-cyan);
+  --mg-label-border: var(--mg-cyber-cyan);
+  --mg-label-handle: var(--mg-cyber-red);
+}
+
+.mg-label {
+  border-radius: 0 !important;
+  box-shadow: 4px 4px 0 var(--mg-cyber-red), 0 0 16px rgba(0, 240, 255, .25) !important;
+}
+
+.mg-label-handle { border-radius: 0 !important; }
+
+html:not(.dark) {
+  --background: 195 55% 95% !important;
+  --foreground: 195 48% 8% !important;
+  --card: 195 48% 91% !important;
+  --card-foreground: 195 48% 8% !important;
+  --popover: 195 48% 91% !important;
+  --popover-foreground: 195 48% 8% !important;
+  --primary: 185 100% 47% !important;
+  --primary-foreground: 195 48% 8% !important;
+  --secondary: 185 100% 47% !important;
+  --secondary-foreground: 195 48% 8% !important;
+  --muted: 195 30% 84% !important;
+  --muted-foreground: 195 22% 28% !important;
+  --accent: 347 100% 60% !important;
+  --accent-foreground: 0 0% 100% !important;
+  --border: 195 48% 8% !important;
+  --input: 195 48% 8% !important;
+  --ring: 185 100% 47% !important;
+}
+
+html.dark {
+  --background: 198 47% 4% !important;
+  --foreground: 190 100% 94% !important;
+  --card: 198 43% 8% !important;
+  --card-foreground: 185 100% 75% !important;
+  --popover: 198 43% 8% !important;
+  --popover-foreground: 185 100% 75% !important;
+  --primary: 185 100% 47% !important;
+  --primary-foreground: 198 47% 4% !important;
+  --secondary: 185 100% 47% !important;
+  --secondary-foreground: 198 47% 4% !important;
+  --muted: 198 30% 14% !important;
+  --muted-foreground: 185 45% 68% !important;
+  --accent: 347 100% 60% !important;
+  --accent-foreground: 0 0% 100% !important;
+  --border: 185 100% 47% !important;
+  --input: 185 100% 47% !important;
+  --ring: 347 100% 60% !important;
+}
+
+body {
+  background-color: hsl(var(--background)) !important;
+  background-image:
+    linear-gradient(rgba(0, 240, 255, .08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, .08) 1px, transparent 1px) !important;
+  background-size: 32px 32px !important;
+  background-position: 0 0, 0 0 !important;
+  font-family: "Arial Narrow", "Roboto Condensed", system-ui, sans-serif !important;
+  animation: mg-cyber-grid-drift 12s linear infinite;
+}
+
+.mg-background {
+  background-image:
+    linear-gradient(120deg, rgba(0, 240, 255, .16), transparent 38%),
+    linear-gradient(300deg, rgba(255, 52, 95, .18), transparent 45%) !important;
+  filter: none !important;
+  overflow: hidden;
+}
+
+.mg-background::before {
+  content: "";
+  position: absolute;
+  inset: 42% -20% -20%;
+  background-image:
+    linear-gradient(rgba(0, 240, 255, .18) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, .18) 1px, transparent 1px);
+  background-size: 52px 32px;
+  transform: perspective(420px) rotateX(62deg) scale(1.35);
+  transform-origin: center top;
+  mask-image: linear-gradient(to bottom, transparent, black 18%, black 75%, transparent);
+  animation: mg-cyber-floor 2.8s linear infinite;
+}
+
+.mg-background::after {
+  content: "";
+  position: absolute;
+  top: -15%;
+  bottom: -15%;
+  width: 28%;
+  background: linear-gradient(90deg, transparent, rgba(0, 240, 255, .07), rgba(255, 52, 95, .1), transparent);
+  filter: blur(12px);
+  transform: skewX(-14deg);
+  animation: mg-cyber-ambient 8s ease-in-out infinite alternate;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent 0, rgba(0, 240, 255, .12) 47%, rgba(232, 251, 255, .22) 50%, rgba(255, 52, 95, .08) 53%, transparent 100%);
+  background-repeat: no-repeat;
+  background-size: 100% 14rem;
+  opacity: .5;
+  mix-blend-mode: screen;
+  animation: mg-cyber-scan 7s linear infinite;
+}
+
+.mg-navbar,
+.mg-game-card,
+.mg-round-history,
+.mg-round-center,
+.mg-panel,
+.mg-settings-section,
+.mg-spectators,
+.mg-content-card > * {
+  border: 1px solid rgba(0, 240, 255, .16) !important;
+  border-radius: 0 !important;
+  box-shadow: 5px 5px 0 rgba(255, 52, 95, .72), 0 0 18px rgba(0, 240, 255, .22) !important;
+  background-color: color-mix(in srgb, hsl(var(--card)) 94%, transparent) !important;
+  color: var(--mg-cyber-white) !important;
+  background-image:
+    linear-gradient(var(--mg-cyber-cyan), var(--mg-cyber-cyan)),
+    linear-gradient(var(--mg-cyber-cyan), var(--mg-cyber-cyan)),
+    linear-gradient(var(--mg-cyber-red), var(--mg-cyber-red)),
+    linear-gradient(var(--mg-cyber-red), var(--mg-cyber-red)) !important;
+  background-repeat: no-repeat !important;
+  background-position: left top, left top, right bottom, right bottom !important;
+  background-size: 24px 2px, 2px 24px, 24px 2px, 2px 24px !important;
+}
+
+/* Settings are utility UI: quieter than the game board. */
+.mg-settings-panel {
+  border: 1px solid rgba(0, 240, 255, .3) !important;
+  border-radius: 4px !important;
+  background: rgba(7, 15, 24, .96) !important;
+  box-shadow: 0 0 18px rgba(0, 240, 255, .12) !important;
+}
+
+.mg-settings-panel > summary {
+  border-bottom: 1px solid transparent;
+  color: var(--mg-cyber-white) !important;
+  font-style: normal;
+  letter-spacing: .02em;
+  text-transform: none;
+}
+
+.mg-settings-panel[open] > summary {
+  border-bottom-color: rgba(0, 240, 255, .18);
+  background: rgba(0, 240, 255, .05);
+}
+
+.mg-settings-panel .mg-lobby-settings {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.mg-settings-panel .mg-settings-group + .mg-settings-group {
+  border-top-color: rgba(0, 240, 255, .14) !important;
+}
+
+.mg-settings-panel h5,
+.mg-settings-panel h6 {
+  color: rgba(232, 251, 255, .82) !important;
+  font-style: normal;
+  letter-spacing: .02em;
+  text-shadow: none;
+  text-transform: none;
+}
+
+.mg-settings-panel .uk-btn {
+  border-color: rgba(0, 240, 255, .3) !important;
+  border-radius: 3px !important;
+  background: rgba(0, 240, 255, .04) !important;
+  box-shadow: none !important;
+  clip-path: none;
+  color: var(--mg-cyber-white) !important;
+  font-weight: 600 !important;
+  letter-spacing: .01em;
+  text-transform: none;
+}
+
+.mg-settings-panel .uk-btn:hover {
+  border-color: var(--mg-cyber-cyan) !important;
+  background: rgba(0, 240, 255, .11) !important;
+  box-shadow: 0 0 10px rgba(0, 240, 255, .12) !important;
+}
+
+.mg-settings-panel .uk-btn-primary {
+  border-color: rgba(0, 240, 255, .55) !important;
+  background: rgba(0, 240, 255, .14) !important;
+  color: var(--mg-cyber-cyan) !important;
+}
+
+.mg-settings-panel .uk-btn-destructive {
+  border-color: rgba(255, 52, 95, .45) !important;
+  background: rgba(255, 52, 95, .08) !important;
+}
+
+.mg-settings-panel .uk-btn:disabled {
+  opacity: .38;
+}
+
+.mg-settings-panel .uk-range {
+  filter: none;
+}
+
+.mg-settings-panel .mg-more-settings {
+  border-color: rgba(0, 240, 255, .16) !important;
+  background: rgba(232, 251, 255, .025) !important;
+}
+
+.mg-settings-panel .mg-more-settings > summary {
+  color: rgba(232, 251, 255, .72) !important;
+  font-style: normal;
+  letter-spacing: 0;
+  text-shadow: none;
+  text-transform: none;
+}
+
+.mg-settings-panel .mg-more-settings[open] {
+  padding-bottom: .75rem;
+}
+
+.mg-settings-panel .mg-more-settings > :not(summary) {
+  margin-left: .75rem;
+  margin-right: .75rem;
+}
+
+.mg-current-word-card {
+  border-color: rgba(0, 240, 255, .35) !important;
+  box-shadow: 5px 5px 0 var(--mg-cyber-red), 0 0 28px rgba(0, 240, 255, .3) !important;
+}
+
+/* Game semantics must stay legible even though the generic neon card rule wins
+   over Tailwind utility colors. Operatives still receive only "hidden". */
+[data-page="codenames"] .mg-word-card::after { display: none; }
+[data-page="codenames"] .mg-word-card[data-color="red"] {
+  border-color: var(--mg-cyber-red) !important;
+  background-color: rgba(104, 9, 29, .94) !important;
+  color: #fff0f4 !important;
+  box-shadow: 4px 4px 0 var(--mg-cyber-red), 0 0 16px rgba(255, 52, 95, .35) !important;
+}
+[data-page="codenames"] .mg-word-card[data-color="blue"] {
+  border-color: var(--mg-cyber-cyan) !important;
+  background-color: rgba(0, 44, 54, .94) !important;
+  color: #e8fbff !important;
+  box-shadow: 4px 4px 0 var(--mg-cyber-cyan), 0 0 16px rgba(0, 240, 255, .3) !important;
+}
+[data-page="codenames"] .mg-word-card[data-color="neutral"] {
+  border-color: #8b9296 !important;
+  background-color: rgba(47, 52, 55, .96) !important;
+  color: #f4f4f2 !important;
+  box-shadow: 4px 4px 0 #697176 !important;
+}
+[data-page="codenames"] .mg-word-card[data-color="bomb"] {
+  border-color: #f2f5f6 !important;
+  background-color: #010203 !important;
+  color: #fff !important;
+  box-shadow: 4px 4px 0 var(--mg-cyber-red), 0 0 22px rgba(255, 52, 95, .45) !important;
+}
+
+.mg-navbar {
+  background: rgba(5, 10, 14, .96) !important;
+  color: var(--mg-cyber-cyan) !important;
+  border-width: 0 0 2px !important;
+  box-shadow: 0 3px 0 var(--mg-cyber-red), 0 0 24px var(--mg-cyber-cyan) !important;
+}
+
+.mg-navbar a,
+.mg-navbar h3 {
+  color: var(--mg-cyber-cyan) !important;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+h1, h2, h3, h4, h5,
+.uk-h1, .uk-h2, .uk-h3, .uk-h4 {
+  font-style: italic;
+  font-weight: 900 !important;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(255, 52, 95, .7), 0 0 12px rgba(0, 240, 255, .25);
+}
+
+.uk-btn {
+  border: 1px solid currentColor !important;
+  border-radius: 0 !important;
+  padding-block: .6em !important;
+  font-size: .8125rem;
+  font-weight: 800 !important;
+  line-height: 1.25;
+  letter-spacing: .01em;
+  text-transform: uppercase;
+  clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
+}
+
+.uk-btn-primary {
+  background: var(--mg-cyber-cyan) !important;
+  color: var(--mg-cyber-ink) !important;
+  box-shadow: 3px 3px 0 var(--mg-cyber-red) !important;
+}
+
+.uk-btn:hover {
+  background: var(--mg-cyber-cyan) !important;
+  color: var(--mg-cyber-ink) !important;
+  box-shadow: 3px 3px 0 var(--mg-cyber-red), 0 0 14px var(--mg-cyber-cyan) !important;
+}
+
+.uk-input,
+.uk-textarea,
+.uk-select {
+  border: 1px solid var(--mg-cyber-cyan) !important;
+  border-radius: 0 !important;
+  background: rgba(5, 10, 14, .88) !important;
+  color: var(--mg-cyber-cyan) !important;
+  caret-color: var(--mg-cyber-red);
+  box-shadow: inset 3px 0 0 var(--mg-cyber-red) !important;
+}
+
+.mg-avatar,
+.mg-avatar-big {
+  border: 2px solid var(--mg-cyber-cyan) !important;
+  filter: contrast(1.1) saturate(1.25);
+  box-shadow: 0 0 14px var(--mg-cyber-cyan);
+}
+
+.mg-game-controls {
+  background: rgba(5, 10, 14, .94) !important;
+  border-color: var(--mg-cyber-red) !important;
+  color: var(--mg-cyber-cyan) !important;
+  box-shadow: 0 -4px 0 var(--mg-cyber-red), 0 -8px 30px rgba(0, 240, 255, .18);
+}
+
+.uk-checkbox {
+  position: relative;
+  border: 1px solid var(--mg-cyber-cyan) !important;
+  border-radius: 0 !important;
+  background-color: rgba(5, 10, 14, .9) !important;
+  box-shadow: 2px 2px 0 var(--mg-cyber-red);
+}
+
+.uk-checkbox:checked {
+  background-image: none !important;
+  background-color: var(--mg-cyber-cyan) !important;
+  border-color: var(--mg-cyber-cyan) !important;
+}
+
+.uk-checkbox:checked::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid var(--mg-cyber-ink);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.uk-range {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  width: 100%;
+  height: 1.25rem;
+  background: transparent !important;
+  accent-color: var(--mg-cyber-cyan);
+  cursor: pointer;
+}
+
+.uk-range::-webkit-slider-runnable-track {
+  height: 4px;
+  background: rgba(0, 240, 255, .18);
+  border-radius: 0;
+}
+
+.uk-range::-moz-range-track {
+  height: 4px;
+  background: rgba(0, 240, 255, .18);
+  border-radius: 0;
+}
+
+.uk-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -6px;
+  border-radius: 0 !important;
+  background: var(--mg-cyber-red) !important;
+  box-shadow: 0 0 10px var(--mg-cyber-red);
+  cursor: pointer;
+}
+
+.uk-range::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: var(--mg-cyber-red) !important;
+  box-shadow: 0 0 10px var(--mg-cyber-red);
+  cursor: pointer;
+}
+
+.mg-ready-badge,
+[data-ui="ready-button"][data-ready="true"] {
+  border: 1px solid var(--mg-cyber-cyan) !important;
+  border-radius: 0 !important;
+  background: rgba(0, 240, 255, .13) !important;
+  color: var(--mg-cyber-cyan) !important;
+  box-shadow: 0 0 10px rgba(0, 240, 255, .35);
+}
+
+.mg-team-score,
+.mg-score {
+  border-radius: 0 !important;
+  background: rgba(232, 251, 255, .1) !important;
+  color: var(--mg-cyber-white) !important;
+}
+
+.mg-score[data-sign="positive"] { color: var(--mg-cyber-cyan) !important; }
+.mg-score[data-sign="negative"] { color: var(--mg-cyber-red) !important; }
+
+.mg-word-entry[data-result="guessed"] {
+  border-color: rgba(0, 240, 255, .35) !important;
+  background-color: rgba(0, 240, 255, .08) !important;
+}
+
+.mg-word-entry[data-result="skipped"] {
+  border-color: rgba(255, 52, 95, .4) !important;
+  background-color: rgba(255, 52, 95, .09) !important;
+}
+
+.mg-toast-container { top: 5.5rem; align-items: flex-end; }
+.mg-toast {
+  border: 1px solid rgba(0, 240, 255, .2) !important;
+  border-left: 3px solid var(--mg-cyber-cyan) !important;
+  border-radius: 0 !important;
+  background: rgba(5, 10, 14, .96) !important;
+  color: var(--mg-cyber-white) !important;
+  box-shadow: 4px 4px 0 var(--mg-cyber-red), 0 0 18px rgba(0, 240, 255, .28) !important;
+}
+.mg-toast-success { border-left-color: var(--mg-cyber-cyan) !important; }
+.mg-toast-warning, .mg-toast-error { border-left-color: var(--mg-cyber-red) !important; }
+
+.mg-timer {
+  color: var(--mg-cyber-cyan) !important;
+  filter: drop-shadow(0 0 8px var(--mg-cyber-cyan));
+}
+
+::selection {
+  background: var(--mg-cyber-red);
+  color: white;
+}
+
+/* Draggable labels must remain outside their player cards while moving. */
+[data-page="whoami"] .mg-player-card {
+  overflow: visible !important;
+  clip-path: none !important;
+  isolation: auto !important;
+}
+
+@keyframes mg-cyber-grid-drift {
+  to { background-position: 32px 32px, 32px 32px; }
+}
+
+@keyframes mg-cyber-floor {
+  to { background-position: 0 32px, 52px 0; }
+}
+
+@keyframes mg-cyber-ambient {
+  from { left: -25%; }
+  to { left: 100%; }
+}
+
+@keyframes mg-cyber-scan {
+  from { background-position: 0 -14rem; }
+  to { background-position: 0 100vh; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body, .mg-background::before, .mg-background::after, body::after { animation: none !important; }
+}

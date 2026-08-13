@@ -7,6 +7,10 @@ Random social games to have fun with friends
 git clone https://github.com/ssslakter/meme-games
 pixi run app
 ```
+Choose a bind address or port with:
+```sh
+pixi run app --host 127.0.0.1 --port 9000
+```
 2. Run with docker compose
 ```sh
 docker compose up -d

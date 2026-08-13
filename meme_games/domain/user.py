@@ -1,15 +1,23 @@
-__all__ = ['User', 'UserManager', 'user_beforeware']
+__all__ = ['User', 'UserManager', 'user_beforeware', 'DEFAULT_NAME']
 
 import time
 from dataclasses import dataclass
 import fastlite as fl
 from ..core import *
 
+DEFAULT_NAME = 'Guest'
+
 @dataclass
 class User(Model):
     uid: str
     name: str
     avatar: Optional[str] = None
+    named: bool = False
+
+    @property
+    def needs_name(self) -> bool:
+        '''Rows written before the flag existed count as named if they carry a custom name.'''
+        return not self.named and self.name == DEFAULT_NAME
 
     async def set_picture(self, file: UploadFile, content_path='./user-content'):
         """Sets the user's profile picture."""
@@ -37,7 +45,7 @@ class UserManager(DataRepository):
         self.users: fl.Table = self.db.t.user
         return self.users
     
-    def create(self, uid: str=None, name: str = 'Guest') -> User:
+    def create(self, uid: str=None, name: str = DEFAULT_NAME) -> User:
         u = User(uid or random_id(), name)
         self.users.insert(u)
         return u
@@ -45,7 +53,7 @@ class UserManager(DataRepository):
     def get(self, uid: str) -> User: return self.users.get(uid)
     def update(self, user: User) -> User: return self.users.update(user)
     
-    def get_or_create(self, sess: dict, name: str = 'Guest') -> User:
+    def get_or_create(self, sess: dict, name: str = DEFAULT_NAME) -> User:
         """Gets a user from the database or creates a new one based on the session."""
         sess = sess['session'] if 'session' in sess else sess
         uid = sess.setdefault('uid', random_id())

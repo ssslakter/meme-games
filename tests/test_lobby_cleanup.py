@@ -43,6 +43,37 @@ def test_stop_wakes_the_timer_without_leaking_tasks():
     asyncio.run(run())
 
 
+def test_pause_freezes_and_resume_finishes_timer():
+    async def run():
+        timer = Timer()
+        timer.set(0.3)
+        task = asyncio.create_task(timer.sleep())
+        await asyncio.sleep(0.08)
+        timer.pause()
+        paused_at = timer.rem_t
+        await asyncio.sleep(0.2)
+        assert not task.done()
+        assert abs(timer.rem_t - paused_at) < 0.03
+        timer.resume()
+        await task
+        assert timer.finished
+    asyncio.run(run())
+
+
+def test_restarted_timer_invalidates_the_old_countdown():
+    async def run():
+        timer = Timer()
+        timer.set(10)
+        old = asyncio.create_task(timer.sleep())
+        await asyncio.sleep(0.05)
+        timer.stop()
+        timer.set(0.1)
+        new = asyncio.create_task(timer.sleep())
+        await asyncio.gather(old, new)
+        assert timer.finished
+    asyncio.run(run())
+
+
 def test_cleanup_purges_dead_lobbies_from_db():
     dead = service.create_lobby(host, 'deadlobby', persistent=True)
     dead.last_active = dt.datetime.now() - service.lobby_ttl - dt.timedelta(minutes=1)

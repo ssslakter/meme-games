@@ -4,7 +4,7 @@ from meme_games.domain import LobbyMember
 from .word_panel import *
 from ..domain import game as gm
 
-card_cls = "w-[20rem]"
+card_cls = "min-w-0"
 
 
 def TeamCard(r: User | LobbyMember, team: gm.Team, game: gm.GameState):
@@ -16,14 +16,16 @@ def TeamCard(r: User | LobbyMember, team: gm.Team, game: gm.GameState):
 
     return Card(
         WinnerTag() if game.is_winner(team) else None,
+        DivFullySpaced(
+            H4(f'Team {list(game.teams).index(team.id) + 1}', cls='mg-team-name'),
+            Div(Span(team.points, cls='mg-team-score tabular-nums'), PotentialScore(team, game),
+                cls='flex items-center gap-2')),
         *(
             DivFullySpaced(
-                UserInfo(r, m.user, m.is_connected),
-                Div(Span(team.points), PotentialScore(team, game)),
-                cls=(
-                    "bg-green-100 rounded-md dark:bg-green-500" if game.has_voted(m) else "",
-                    "w-full truncate",
-                ),
+                UserInfo(r, m.user, m.is_connected, avatar_cls='h-12 w-12'),
+                Span('Ready', cls='mg-ready-badge rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800 dark:bg-green-900 dark:text-green-100') if game.has_voted(m) else None,
+                cls="mg-team-member w-full truncate",
+                data_ready=str(game.has_voted(m)).lower(),
             )
             for m in team.members
         ),
@@ -40,7 +42,9 @@ def TeamCard(r: User | LobbyMember, team: gm.Team, game: gm.GameState):
         id="id-" + team.id,
         hx_swap_oob="true",
         cls=f"mg-game-card mg-team-card {card_cls} {winner_classes}",
+        body_cls='space-y-3 p-4',
         data_ui='team-card', data_team=team.id,
+        data_active=str(team == game.active_team).lower(),
     )
 
 
@@ -48,7 +52,9 @@ def NewTeamCard():
     from ..routes import new_team
 
     return Card(Button("New team", hx_post=new_team, hx_swap="none"),
-                cls=f'mg-game-card mg-new-team-card {card_cls}', data_ui='new-team-card')
+                cls=f'mg-game-card mg-new-team-card {card_cls} flex min-h-24 items-center justify-center',
+                body_cls='p-4',
+                data_ui='new-team-card')
 
 
 def WinnerTag():

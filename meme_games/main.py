@@ -14,7 +14,8 @@ static_re = [compile_path("/{fname:path}.{ext:static}")[0], compile_path("/{fnam
 middlware_cls = partial(ConditionalSessionMiddleware, skip=static_re)
 
 bwares = [user_beforeware(DI.get(UserManager), skip = static_re),
-          lobby_beforeware(DI.get(LobbyService), skip = static_re)
+          lobby_beforeware(DI.get(LobbyService), skip = static_re),
+          current_game_beforeware(skip=static_re),
           ]
 
 style = Style(
@@ -35,6 +36,7 @@ hdrs = [
     Script(src='/static/scripts/imports/live2d/live2d.min.js'),
     Script(src='/static/scripts/imports/live2d/pixi.min.js'),
     Script(src='/static/scripts/imports/live2d/index.min.js'),
+    Statics(ext='css', static_path='static', wc='styles/*.css'),
     Statics(ext='js', static_path='static', wc='scripts/common/**/*.js'),
     Statics(ext='js', static_path='static', wc='scripts/whoami/**/*.js'),
     Statics(ext='js', static_path='static', wc='scripts/video/**/*.js', defer=True),
@@ -62,13 +64,14 @@ app = FastHTML(before=bwares, hdrs=hdrs,
                    htmlkw={'class': 'uk-custom-theme'},
                    bodykw={'hx-boost': 'true'})
 
+app.add_middleware(NoStoreHTMLMiddleware)
 app.add_middleware(PrometheusMiddleware, filter_unhandled_paths=True)
 # Rate limiting is handled by nginx + crowdsec. This only stops crawlers/unfurlers
 # (and serves robots.txt) before they can create lobbies nobody joins.
 app.add_middleware(BotFilterMiddleware, patterns=LOBBY_PATTERNS)
 app.route('/metrics')(metrics)
 
-setup_toasts(app, duration=1500)
+setup_app_toasts(app, duration=2500)
 
 for rt in ROUTES:
     # `/{lobby_id}` must be matched after its siblings, or GET /alias/vote is read

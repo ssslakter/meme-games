@@ -46,7 +46,6 @@ class Lobby(Model):
 
     id: str = field(default_factory=random_id)
     locked: bool = False # TODO move locked to game state
-    background_url: Optional[str] = None
     host: Optional[LobbyMember] = None
     members: dict[str, LobbyMember] = field(default_factory=dict)
     last_active: dt.datetime = field(default_factory=dt.datetime.now)
@@ -104,6 +103,7 @@ class Lobby(Model):
         self.last_active = dt.datetime.now()
         for state in self.states.values():
             if hasattr(state, 'remove_player'): state.remove_player(uid)
+        if self.host and self.host.uid == uid: self.host = None
         return self.members.pop(uid, None)
 
     def lock(self): self.locked = True

@@ -34,14 +34,13 @@ class LobbyService:
         if lobby.persistent: self.repo.insert(lobby)
         return lobby
 
-    def get_lobby(self, id: Optional[str] = None, game: Optional[str] = None) -> Optional[Lobby]:
-        """Gets a lobby from cache or the database, optionally switching it to `game`."""
+    def get_lobby(self, id: Optional[str] = None) -> Optional[Lobby]:
+        """Gets a lobby from cache or the database without changing its game."""
         lobby = self.lobbies.get(id)
         if not lobby:
             lobby = self.repo.get(id)
             if not lobby: return
             self.lobbies[id] = lobby
-        if game and lobby.current_game != game: lobby.play_game(game)
         return lobby
 
     def delete_lobby(self, id: str):
@@ -59,7 +58,15 @@ class LobbyService:
         return dt.datetime.now() - lobby.last_active > self.lobby_lifetime
 
     def _host_lobby_count(self, uid: str) -> int:
-        return sum(l.host is not None and l.host.uid == uid and not self._is_stale(l)
+        """Only lobbies someone is actually connected to count against the quota.
+
+        `_is_stale` uses a long idle window meant for data retention (so a refresh
+        doesn't lose your lobby); reusing it here let a host who merely clicked
+        through a few game cards get stuck for up to `lobby_lifetime` before the
+        abandoned lobbies stopped counting against them.
+        """
+        return sum(l.host is not None and l.host.uid == uid
+                   and any(m.is_connected for m in l.members.values())
                    for l in self.lobbies.values())
 
     def cleanup_lobbies(self) -> int:
@@ -80,10 +87,13 @@ class LobbyService:
 
     def get_or_create(self, host: User = None, id: Optional[str] = None,
                       game: str = BASIC_GAME, **create_kwargs) -> tuple[Lobby, bool]:
-        '''Returns the lobby if it exists, otherwise creates one if id was valid.
-        Either way the lobby ends up playing `game`. Returns (lobby, created)'''
+        '''Returns an existing lobby unchanged, or creates one playing `game`.'''
         if not id or not id.isascii(): raise HTTPException(400, 'Invalid lobby id, must be ascii')
-        if lobby := self.get_lobby(id, game): return lobby, False
+        if lobby := self.get_lobby(id):
+            if host and host.uid not in lobby.members:
+                lobby.create_member(host)
+                self.update(lobby)
+            return lobby, False
         if len(self.lobbies) >= self.lobby_limit: raise HTTPException(
             400, 'Too many lobbies, wait until some are finished')
         if host and self._host_lobby_count(host.uid) >= self.max_lobbies_per_host:

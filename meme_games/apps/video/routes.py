@@ -1,6 +1,5 @@
 from ..shared.ws_route import lobby_ws
 from ..shared.utils import register_route
-from ..shared.spectators import *
 from meme_games.domain import *
 from meme_games.apps.shared import register_page
 from meme_games.core import *
@@ -26,14 +25,14 @@ def index(req: Request, lobby_id: str = None):
     lobby, was_created = lobby_service.get_or_create(u, lobby_id, VIDEO, persistent=True)
     if was_created: lobby_service.update(lobby)
     req.session['lobby_id'] = lobby.id
+    member = lobby.get_member(u.uid) or u
 
     return LobbyPage(
-        H1("Videos"),
-        StreamingMain(),
-        Spectators(u, lobby, cls='right-0 bottom-1/3 -translate-y-1/2'),
-        SettingsPopover(lobby=lobby, member=lobby.get_member(u.uid)),
+        GameShell(
+            Div(H1("Videos"), StreamingMain(), cls='min-w-0 space-y-4'),
+            LobbyTools(member, lobby)),
         title=f"Watch together lobby: {lobby.id}",
-        no_image=True, page='video')
+        no_image=True, user=member, page='video')
 
 def redirect(lobby_id: str): return Redirect(index.to(lobby_id=lobby_id))
 

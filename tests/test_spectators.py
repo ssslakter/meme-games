@@ -8,6 +8,7 @@ from meme_games.domain.user import UserManager
 from meme_games.apps.shared.spectators import GAME_VIEWS, GameView, LobbyView, notify_roster_changed
 from meme_games.apps.whoami.domain import WHOAMI
 from meme_games.apps.alias.domain import ALIAS
+from meme_games.apps.codenames.domain import CODENAMES
 import meme_games.main  # registers every game view
 
 service = DI.get(LobbyService)
@@ -21,7 +22,7 @@ def _lobby(id, game):
 
 
 def test_games_with_a_board_register_a_view():
-    assert set(GAME_VIEWS) >= {WHOAMI, ALIAS}
+    assert set(GAME_VIEWS) >= {WHOAMI, ALIAS, CODENAMES}
 
 
 def test_lobby_without_a_game_view_renders_nothing():
@@ -61,3 +62,15 @@ def test_lobby_view_lists_spectators_and_the_board():
     assert 'id="spectators"' in html
     assert 'watcher' in html
     assert 'id="game"' in html
+
+
+def test_host_can_return_to_spectators_after_joining_whoami():
+    lobby, host = _lobby('spec5', WHOAMI)
+    host.play()
+
+    playing_html = to_xml(LobbyView(host, lobby))
+    assert 'id="spectators-panel"' in playing_html
+    assert 'hx-post="/lobby/spectate"' in playing_html
+
+    service.spectate(host, lobby)
+    assert not host.is_player

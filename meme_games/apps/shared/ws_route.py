@@ -2,7 +2,7 @@ from meme_games.core import *
 from ..user import MemberName
 from meme_games.domain import LobbyService, UserManager, notify_all
 from .utils import register_route
-from .spectators import SpectatorsList, GameView
+from .spectators import Spectators, GameView
 
 ws_rt = APIRouter('/ws')
 register_route(ws_rt)
@@ -14,7 +14,7 @@ user_manager = DI.get(UserManager)
 def lobby_view(r, lobby, conn_member):
     '''What every member sees when someone connects or drops: the spectator list and
     that member's connection state. The member who just connected also gets the board.'''
-    common = SpectatorsList(r, lobby), MemberName(r, conn_member)
+    common = Spectators(r, lobby, hx_swap_oob='true'), MemberName(r, conn_member)
     return (GameView(r, lobby), *common) if r == conn_member else common
 
 
@@ -32,7 +32,7 @@ def ws_fn(connected=True, render_fn: Callable = lobby_view):
         if not lobby: return
         if m := lobby.get_member(u.uid):
             if connected: m.connect(send, ws)
-            else: m.disconnect()
+            else: m.disconnect(ws)
 
         else:
             if not connected: return  # user not found in the lobby and not connecting

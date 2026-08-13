@@ -63,3 +63,16 @@ def page_url(url: str | Callable[[str], str], lobby_id: str = None) -> str:
 def game_url(game: str, lobby_id: str) -> Optional[str]:
     entry = GAME_PAGES.get(game)
     return page_url(entry[1], lobby_id) if entry else None
+
+
+def current_game_beforeware(skip=None):
+    '''Redirect stale game-page URLs without letting them switch the lobby.'''
+    def before(req: Request):
+        lobby = getattr(req.state, 'lobby', None)
+        lobby_id = req.path_params.get('lobby_id')
+        if not lobby or not lobby_id: return
+        requested = next((game for game in GAME_PAGES
+                          if game_url(game, lobby_id) == req.url.path), None)
+        if requested and requested != lobby.current_game:
+            if target := game_url(lobby.current_game, lobby_id): return Redirect(target)
+    return Beforeware(before, skip)

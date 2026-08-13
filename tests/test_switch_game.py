@@ -18,6 +18,8 @@ def test_host_switch_keeps_the_lobby_and_the_other_games_state():
     with _client('172.16.0.1') as host:
         host.get('/whoami/sw-a', headers=BROWSER)
         lobby = service.lobbies['sw-a']
+        lobby.host.play()
+        lobby.lock()
         lobby.state.player(lobby.host.uid).set_notes('still here')
 
         r = host.post('/switch_game?game=' + ALIAS, headers=BROWSER, follow_redirects=False)
@@ -25,7 +27,21 @@ def test_host_switch_keeps_the_lobby_and_the_other_games_state():
         assert r.status_code == 303
         assert dict(r.headers)['location'] == '/alias/sw-a'
         assert lobby.current_game == ALIAS
+        assert not lobby.host.is_player
+        assert not lobby.locked
         assert lobby.states[WHOAMI].player(lobby.host.uid).notes == 'still here'
+
+
+def test_stale_game_url_redirects_without_switching_lobby():
+    with _client('172.16.0.6') as host:
+        host.get('/whoami/sw-d', headers=BROWSER)
+        lobby = service.lobbies['sw-d']
+
+        stale = host.get('/alias/sw-d', headers=BROWSER, follow_redirects=False)
+
+        assert stale.status_code == 303
+        assert dict(stale.headers)['location'] == '/whoami/sw-d'
+        assert lobby.current_game == WHOAMI
 
 
 def test_only_the_host_may_switch():
@@ -42,7 +58,10 @@ def test_connected_members_are_sent_to_the_new_game():
     with _client('172.16.0.4') as host, _client('172.16.0.5') as guest:
         host.get('/whoami/sw-c', headers=BROWSER)
         guest.get('/whoami/sw-c', headers=BROWSER)
+        host.post('/whoami/play', headers=BROWSER)
+        guest.post('/whoami/play', headers=BROWSER)
         with guest.websocket_connect('/ws/whoami') as ws:
             ws.receive_text()  # initial board
             host.post('/switch_game?game=' + ALIAS, headers=BROWSER, follow_redirects=False)
             assert '/alias/sw-c' in ws.receive_text()
+        assert all(not member.is_player for member in service.lobbies['sw-c'].members.values())

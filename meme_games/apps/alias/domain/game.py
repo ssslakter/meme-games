@@ -92,6 +92,26 @@ class GameState:
         random.shuffle(words)
         self.words_iterator = cycle(words)
 
+    def restart(self):
+        self.timer.stop()
+        self.state = StateMachine.WAITING_FOR_PLAYERS
+        self.active_team = self.active_player = self.active_word = None
+        self.guess_log.clear()
+        self.reset_votes()
+        for team in self.teams.values():
+            team.points = team.times_played = 0
+        for attr in ('teams_iterator', 'words_iterator'):
+            if hasattr(self, attr): delattr(self, attr)
+
+    def shuffle_teams(self):
+        sizes = [len(team.members) for team in self.teams.values()]
+        members = [member for team in self.teams.values() for member in team.members]
+        random.shuffle(members)
+        offset = 0
+        for team, size in zip(self.teams.values(), sizes):
+            team.members[:] = members[offset:offset + size]
+            offset += size
+
     def retract_vote(self, player: LobbyMember):
         self.votes.discard(player.uid)
 
@@ -126,13 +146,13 @@ class GameState:
         return next((t for t in self.teams.values() if player in t), None)
 
     def remove_player(self, uid: str):
-        p = next((m for t in self.teams.values() for m in t.members if m.uid == uid), None)
         self.votes.discard(uid)
-        if not p: return
-        team = self.team_by_player(p)
-        team.remove_member(p)
-        p.reset_score()
-        if not len(team): self.delete_team(team.id)
+        removed = [m for team in self.teams.values() for m in team.members if m.uid == uid]
+        for team in list(self.teams.values()):
+            had_member = any(m.uid == uid for m in team.members)
+            team.members[:] = [m for m in team.members if m.uid != uid]
+            if had_member and not len(team): self.delete_team(team.id)
+        if removed: removed[0].reset_score()
 
 
 ALIAS = 'alias'

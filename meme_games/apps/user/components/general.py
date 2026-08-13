@@ -1,5 +1,6 @@
 from meme_games.core import *
 from meme_games.domain import *
+import fasthtml.common as fh
 
 def UserRemover(uid: str):
     data_classes = ['user', 'username', 'avatar', 'avatar-big', 'notes']
@@ -22,11 +23,12 @@ def MemberName(r: User, m: LobbyMember, **kwargs):
     return UserName(r, m.user, is_connected=m.is_connected, **kwargs)
 
 
-def UserInfo(r: User, user: User, is_connected=True, cls='', **kwargs):
-    return DivLAligned(
-            Span(cls="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full bg-secondary")(Avatar(user)),
-            Span(UserName(r, user, is_connected), cls=f'{TextT.sm} {TextT.medium} {cls}', **kwargs),
-            cls='mg-user', data_ui='user')
+def UserInfo(r: User, user: User, is_connected=True, cls='', avatar_cls='h-10 w-10', **kwargs):
+    return Div(
+        Span(Avatar(user, cls=f'aspect-square {avatar_cls}'),
+             cls=f'relative flex {avatar_cls} shrink-0 overflow-hidden rounded-full bg-secondary'),
+        Span(UserName(r, user, is_connected), cls=f'min-w-0 truncate {TextT.sm} {TextT.medium} {cls}', **kwargs),
+        cls='mg-user flex min-w-0 items-center gap-3', data_ui='user')
 
 
 def Avatar(u: User, cls="aspect-square h-10 w-10", **kwargs):
@@ -76,7 +78,18 @@ def CustomCssSettings():
         H3('Custom CSS'),
         P('Stored only in this browser. This page never applies custom CSS, so you can always return here to disable it.',
           cls=TextT.muted),
-        Form(
+        Div(
+            Div(
+                FormLabel('Template', fr='custom-css-template'),
+                fh.Select(
+                    fh.Option('Choose a template…', value='', selected=True),
+                    fh.Option('Cyberpunk 2077', value='/static/styles/themes/cyberpunk-2077.css'),
+                    fh.Option('Sakura', value='/static/styles/themes/sakura.css'),
+                    id='custom-css-template', cls='uk-select w-full sm:max-w-sm',
+                    onchange="if (this.value) { loadCustomCssTemplate(this.value, this.options[this.selectedIndex].text); this.value = ''; }"),
+                P('Loading a template only places its contents in the editor. Edit it freely, then press Save.',
+                  cls=TextT.muted),
+                cls='space-y-2'),
             Div(
                 CheckboxX(id='custom-css-enabled', cls='shrink-0'),
                 FormLabel('Enable custom CSS', fr='custom-css-enabled', cls='m-0 cursor-pointer'),
@@ -87,10 +100,10 @@ def CustomCssSettings():
             P(id='custom-css-error', cls='text-destructive', role='alert'),
             P(id='custom-css-status', cls=TextT.muted, role='status'),
             Div(
-                Button('Save CSS', cls=ButtonT.primary, type='submit'),
+                Button('Save CSS', cls=ButtonT.primary, type='button', onclick='saveCustomCss()'),
                 Button('Clear CSS', type='button', onclick='clearCustomCss()'),
                 cls='flex flex-wrap gap-2'),
-            onsubmit='return saveCustomCss(event)', cls='space-y-4'),
+            cls='space-y-4'),
         Details(
             Summary('Selector reference and starter CSS'),
             Pre(Code('''html:not(.dark) { --background: 45 60% 96%; }
@@ -100,7 +113,7 @@ html.dark { --background: 260 25% 8%; }
 [data-ui="navbar"] { backdrop-filter: blur(12px); }
 [data-ui="player-card"] { box-shadow: 0 0 1rem hotpink; }'''),
                 cls='overflow-auto p-3'),
-            P('Stable hooks: .mg-page, .mg-page-content, .mg-navbar, .mg-background, .mg-game, .mg-game-card, .mg-user, .mg-avatar, .mg-spectators, .mg-timer, .mg-game-controls, and [data-page].',
+            P('Stable hooks: .mg-page, .mg-page-content, .mg-navbar, .mg-background, .mg-game, .mg-game-card, .mg-user, .mg-avatar, .mg-spectators, .mg-lobby-tools, .mg-settings-panel, .mg-team-card, .mg-round-history, .mg-current-word-card, .mg-timer, .mg-game-controls, and [data-page].',
               cls=TextT.muted),
             cls='pt-2'),
         cls='mg-settings-section', data_ui='custom-css-settings')

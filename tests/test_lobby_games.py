@@ -62,3 +62,27 @@ def test_removing_a_member_clears_them_from_every_game():
 
     assert host.uid not in lobby.states[WHOAMI].players
     assert host.uid not in lobby.states[ALIAS].votes
+
+
+def test_alias_removes_all_duplicate_team_memberships():
+    lobby = service.create_lobby(host, 'switch6', ALIAS)
+    member = lobby.get_member(host.uid)
+    first, second = lobby.state.create_team(), lobby.state.create_team()
+    first.append(member)
+    second.append(member)
+
+    lobby.state.remove_player(member.uid)
+
+    assert all(member not in team for team in lobby.state.teams.values())
+
+
+def test_stale_websocket_cannot_disconnect_the_new_connection():
+    lobby = service.create_lobby(host, 'switch7', WHOAMI)
+    member = lobby.get_member(host.uid)
+    old_ws, new_ws = object(), object()
+    member.connect(lambda _: None, old_ws)
+    member.connect(lambda _: None, new_ws)
+
+    member.disconnect(old_ws)
+
+    assert member.ws is new_ws

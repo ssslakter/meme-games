@@ -39,8 +39,9 @@ class LobbyMember(fc.GetAttr, Model):
     def connect(self, send: FunctionType, ws: Optional[WebSocket] = None): 
         """Connects the member with a websocket."""
         self.send, self.ws = send, ws
-    def disconnect(self): 
+    def disconnect(self, ws: Optional[WebSocket] = None):
         """Disconnects the member."""
+        if ws is not None and self.ws is not ws: return
         self.send, self.ws = None, None
     def add_score(self, score: int): 
         """Adds a score to the member."""
@@ -105,4 +106,3 @@ class MemberRepo(DataRepository[LobbyMember]):
                   from {self.members} join {self.users}
                   on {cols.user_uid} = {self.users.c.uid} where {cols.lobby_id} = ?"""
         return list(map(LobbyMember.from_dict, self.db.q(qry, [lobby_id])))
-

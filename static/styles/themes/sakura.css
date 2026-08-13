@@ -1,0 +1,325 @@
+/* Japanese spring and sakura theme for Meme Games */
+:root {
+  --mg-sakura: #f7a8bd;
+  --mg-sakura-deep: #be4768;
+  --mg-plum: #5b2944;
+  --mg-cream: #fffaf3;
+  --mg-leaf: #668f69;
+  --radius: 1rem;
+  --mg-label-bg: var(--mg-cream);
+  --mg-label-fg: var(--mg-plum);
+  --mg-label-border: var(--mg-sakura);
+  --mg-label-handle: var(--mg-sakura-deep);
+}
+
+.mg-label {
+  border-radius: 12px 4px 12px 4px !important;
+  box-shadow: 0 8px 20px rgba(91, 41, 68, .22) !important;
+}
+
+html:not(.dark) {
+  --background: 36 100% 98% !important;
+  --foreground: 333 38% 20% !important;
+  --card: 350 100% 98% !important;
+  --card-foreground: 333 38% 20% !important;
+  --popover: 350 100% 98% !important;
+  --popover-foreground: 333 38% 20% !important;
+  --primary: 343 70% 64% !important;
+  --primary-foreground: 0 0% 100% !important;
+  --secondary: 101 20% 88% !important;
+  --secondary-foreground: 132 18% 27% !important;
+  --muted: 350 38% 92% !important;
+  --muted-foreground: 333 22% 42% !important;
+  --accent: 343 75% 89% !important;
+  --accent-foreground: 333 48% 25% !important;
+  --border: 345 42% 79% !important;
+  --input: 345 42% 79% !important;
+  --ring: 343 70% 64% !important;
+}
+
+html.dark {
+  --background: 330 25% 9% !important;
+  --foreground: 350 65% 91% !important;
+  --card: 331 24% 14% !important;
+  --card-foreground: 350 65% 91% !important;
+  --popover: 331 24% 14% !important;
+  --popover-foreground: 350 65% 91% !important;
+  --primary: 343 72% 70% !important;
+  --primary-foreground: 330 25% 9% !important;
+  --secondary: 132 14% 24% !important;
+  --secondary-foreground: 100 30% 87% !important;
+  --muted: 331 18% 21% !important;
+  --muted-foreground: 347 33% 72% !important;
+  --accent: 337 39% 28% !important;
+  --accent-foreground: 350 65% 91% !important;
+  --border: 342 32% 38% !important;
+  --input: 342 32% 38% !important;
+  --ring: 343 72% 70% !important;
+}
+
+body {
+  background-color: hsl(var(--background)) !important;
+  background-image:
+    radial-gradient(circle at 10% 15%, rgba(247, 168, 189, .22) 0 4px, transparent 5px),
+    radial-gradient(circle at 85% 22%, rgba(247, 168, 189, .18) 0 6px, transparent 7px),
+    radial-gradient(circle at 65% 78%, rgba(190, 71, 104, .12) 0 5px, transparent 6px),
+    linear-gradient(135deg, transparent 48%, rgba(247, 168, 189, .08) 49% 51%, transparent 52%) !important;
+  background-size: 180px 180px, 240px 240px, 210px 210px, 72px 72px !important;
+  font-family: Georgia, "Yu Mincho", "Hiragino Mincho ProN", serif !important;
+  animation: mg-sakura-drift 40s linear infinite;
+}
+
+.mg-background {
+  background-image:
+    radial-gradient(ellipse at top, rgba(247, 168, 189, .24), transparent 58%),
+    linear-gradient(to bottom, transparent, rgba(102, 143, 105, .08)) !important;
+  filter: none !important;
+}
+
+.mg-navbar {
+  background: color-mix(in srgb, hsl(var(--card)) 92%, transparent) !important;
+  border: 0 !important;
+  border-bottom: 2px solid var(--mg-sakura) !important;
+  box-shadow: 0 5px 20px rgba(91, 41, 68, .12) !important;
+  backdrop-filter: blur(14px);
+}
+
+.mg-navbar h3::before {
+  content: "桜  ";
+  display: inline-block;
+  color: var(--mg-sakura-deep);
+  animation: mg-sakura-sway 3.5s ease-in-out infinite;
+}
+
+.mg-game-card,
+.mg-round-history,
+.mg-round-center,
+.mg-settings-panel,
+.mg-panel,
+.mg-settings-section,
+.mg-lobby-settings,
+.mg-spectators,
+.mg-content-card > * {
+  position: relative;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 18px 6px 18px 6px !important;
+  background: color-mix(in srgb, hsl(var(--card)) 94%, transparent) !important;
+  box-shadow: 0 10px 28px rgba(91, 41, 68, .12) !important;
+  backdrop-filter: blur(8px);
+}
+
+.mg-game-card::after,
+.mg-settings-section::after {
+  content: "✿";
+  position: absolute;
+  top: .35rem;
+  right: .65rem;
+  color: var(--mg-sakura);
+  font-size: 1.25rem;
+  pointer-events: none;
+  animation: mg-sakura-sway 4s ease-in-out infinite;
+}
+
+h1, h2, h3, h4, h5,
+.uk-h1, .uk-h2, .uk-h3, .uk-h4 {
+  color: hsl(var(--foreground)) !important;
+  letter-spacing: .025em;
+}
+
+h1::after {
+  content: "  花見";
+  color: var(--mg-sakura-deep);
+  font-size: .42em;
+  font-weight: 400;
+  vertical-align: middle;
+}
+
+.uk-btn {
+  border-radius: 999px !important;
+  font-family: inherit !important;
+  font-size: .8125rem;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.uk-btn-primary {
+  border-color: var(--mg-sakura-deep) !important;
+  background: linear-gradient(135deg, var(--mg-sakura), var(--mg-sakura-deep)) !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(190, 71, 104, .25) !important;
+}
+
+.uk-btn:hover {
+  transform: translateY(-2px) rotate(-1deg);
+  box-shadow: 0 6px 16px rgba(190, 71, 104, .25) !important;
+}
+
+.uk-btn:active {
+  transform: translateY(0) scale(.97) rotate(0deg);
+}
+
+.uk-input,
+.uk-textarea,
+.uk-select {
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 12px !important;
+  background: color-mix(in srgb, hsl(var(--card)) 92%, transparent) !important;
+  box-shadow: inset 0 1px 4px rgba(91, 41, 68, .08) !important;
+}
+
+.uk-input:focus,
+.uk-textarea:focus,
+.uk-select:focus {
+  border-color: var(--mg-sakura-deep) !important;
+  box-shadow: 0 0 0 3px rgba(247, 168, 189, .28) !important;
+}
+
+.mg-avatar,
+.mg-avatar-big {
+  border: 3px solid var(--mg-sakura) !important;
+  box-shadow: 0 0 0 4px rgba(247, 168, 189, .18), 0 8px 20px rgba(91, 41, 68, .18);
+}
+
+.mg-game-controls {
+  background: color-mix(in srgb, hsl(var(--card)) 92%, transparent) !important;
+  border-color: var(--mg-sakura) !important;
+  box-shadow: 0 -8px 24px rgba(91, 41, 68, .12);
+  backdrop-filter: blur(12px);
+}
+
+.mg-timer {
+  color: var(--mg-sakura-deep) !important;
+  filter: drop-shadow(0 3px 5px rgba(190, 71, 104, .22));
+}
+
+.uk-checkbox {
+  position: relative;
+  border-color: var(--mg-sakura-deep) !important;
+  accent-color: var(--mg-sakura-deep);
+}
+
+.uk-checkbox:checked {
+  background-image: none !important;
+  background-color: var(--mg-sakura-deep) !important;
+  border-color: var(--mg-sakura-deep) !important;
+}
+
+.uk-checkbox:checked::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid var(--mg-cream);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.uk-range {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  width: 100%;
+  height: 1.25rem;
+  background: transparent !important;
+  accent-color: var(--mg-sakura-deep);
+  cursor: pointer;
+}
+
+.uk-range::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--mg-sakura), rgba(247, 168, 189, .25));
+}
+
+.uk-range::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--mg-sakura), rgba(247, 168, 189, .25));
+}
+
+.uk-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -6px;
+  border-radius: 50%;
+  border: 2px solid var(--mg-cream);
+  background: var(--mg-sakura-deep);
+  box-shadow: 0 2px 6px rgba(190, 71, 104, .4);
+  cursor: pointer;
+}
+
+.uk-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--mg-cream);
+  border-radius: 50%;
+  background: var(--mg-sakura-deep);
+  box-shadow: 0 2px 6px rgba(190, 71, 104, .4);
+  cursor: pointer;
+}
+
+.mg-ready-badge,
+[data-ui="ready-button"][data-ready="true"] {
+  background: rgba(247, 168, 189, .22) !important;
+  color: var(--mg-plum) !important;
+  animation: mg-sakura-pop .3s ease-out;
+}
+
+.mg-word-entry[data-result="guessed"] { background-color: rgba(102, 143, 105, .14) !important; }
+.mg-word-entry[data-result="skipped"] { background-color: rgba(190, 71, 104, .12) !important; }
+
+[data-page="codenames"] .mg-word-card::after { display: none; }
+[data-page="codenames"] .mg-word-card[data-color="red"] {
+  border-color: #b93f59 !important;
+  background: #f7c5cd !important;
+  color: #521625 !important;
+}
+[data-page="codenames"] .mg-word-card[data-color="blue"] {
+  border-color: #477ca5 !important;
+  background: #c7e4ef !important;
+  color: #183b54 !important;
+}
+[data-page="codenames"] .mg-word-card[data-color="neutral"] {
+  border-color: #a38b76 !important;
+  background: #eee4d7 !important;
+  color: #493d33 !important;
+}
+[data-page="codenames"] .mg-word-card[data-color="bomb"] {
+  border-color: #211820 !important;
+  background: #211820 !important;
+  color: #fff5f7 !important;
+  box-shadow: 0 10px 28px rgba(33, 24, 32, .28) !important;
+}
+
+.mg-toast {
+  border-radius: 18px 6px 18px 6px !important;
+  background: color-mix(in srgb, hsl(var(--card)) 95%, transparent) !important;
+  box-shadow: 0 10px 28px rgba(91, 41, 68, .18) !important;
+  backdrop-filter: blur(10px);
+}
+
+::selection {
+  background: var(--mg-sakura);
+  color: var(--mg-plum);
+}
+
+@keyframes mg-sakura-drift {
+  to { background-position: 180px 180px, -240px 240px, 210px -210px, 72px 72px; }
+}
+
+@keyframes mg-sakura-sway {
+  0%, 100% { transform: rotate(-8deg); }
+  50% { transform: rotate(8deg); }
+}
+
+@keyframes mg-sakura-pop {
+  0% { transform: scale(.8); }
+  60% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body, .mg-navbar h3::before, .mg-game-card::after, .mg-settings-section::after,
+  .mg-ready-badge, [data-ui="ready-button"][data-ready="true"] { animation: none !important; }
+}

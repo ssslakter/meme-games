@@ -11,6 +11,9 @@ requires-python=">=3.13"
 license = { text = "MIT" }
 dependencies = ["python-fasthtml", "fastcore", "monsterui>=1.0.21,<2", "starlette-prometheus"]
 
+[project.scripts]
+meme-games = "meme_games.cli:main"
+
 [tool.setuptools]
 packages = ["meme_games"]
 
@@ -29,7 +32,7 @@ dev = { features = ["dev"], solve-group = "default" }
 DEV = 'TRUE'
 
 [tool.pixi.tasks]
-app = "python run.py"
+app = "meme-games"
 
 [tool.pixi.feature.dev.tasks]
 test = "pytest tests/ -q"

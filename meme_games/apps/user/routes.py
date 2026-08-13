@@ -36,7 +36,7 @@ async def edit_name(req: Request, name: str):
     u: User = req.state.user
     name = ' '.join(name.split())
     if not name: raise HTTPException(400, 'Nickname cannot be empty')
-    u.name = name
+    u.name, u.named = name, True
     user_manager.update(u)
     lobby_service = DI.get(LobbyService)
     lobby_service.sync_active_lobbies_user(u)

@@ -43,10 +43,10 @@
     if (!editor || !checkbox) return;
     editor.value = localStorage.getItem(CSS_KEY) || '';
     checkbox.checked = enabled();
+    if (location.search) history.replaceState(null, '', location.pathname);
   }
 
-  window.saveCustomCss = function (event) {
-    event.preventDefault();
+  window.saveCustomCss = function () {
     const css = document.getElementById('custom-css-editor').value;
     const error = document.getElementById('custom-css-error');
     const status = document.getElementById('custom-css-status');
@@ -54,12 +54,33 @@
     status.textContent = '';
     if (containsImport(css)) {
       error.textContent = '@import is not supported. Paste the theme CSS directly.';
-      return false;
+      return;
     }
     localStorage.setItem(CSS_KEY, css);
     localStorage.setItem(ENABLED_KEY, String(document.getElementById('custom-css-enabled').checked));
     status.textContent = 'Saved. Open another page to see your changes.';
-    return false;
+  };
+
+  window.loadCustomCssTemplate = async function (url, name) {
+    const editor = document.getElementById('custom-css-editor');
+    const error = document.getElementById('custom-css-error');
+    const status = document.getElementById('custom-css-status');
+    error.textContent = '';
+    status.textContent = `Loading ${name}…`;
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const css = await response.text();
+      if (containsImport(css)) throw new Error('Template contains a forbidden @import rule');
+      editor.value = css;
+      document.getElementById('custom-css-enabled').checked = true;
+      editor.dispatchEvent(new Event('input', { bubbles: true }));
+      status.textContent = `${name} loaded. Edit it if you like, then press Save.`;
+      editor.focus();
+    } catch (reason) {
+      status.textContent = '';
+      error.textContent = `Could not load ${name}: ${reason.message}`;
+    }
   };
 
   window.clearCustomCss = function () {

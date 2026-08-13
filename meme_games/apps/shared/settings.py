@@ -1,13 +1,12 @@
 from .utils import *
-import urllib
 from meme_games.core import *
 from meme_games.domain import *
 from meme_games.apps.user import *
 from .general import *
 
 
-__all__ = ['Settings', 'SettingsPopover',
-           'lock_lobby', 'change_background', 'switch_game', 'SwitchGame', 'GoTo']
+__all__ = ['Settings', 'SettingsPanel', 'LobbyTools',
+           'lock_lobby', 'switch_game', 'SwitchGame', 'GoTo']
 
 
 rt = APIRouter()
@@ -16,26 +15,20 @@ register_route(rt)
 lobby_service = DI.get(LobbyService)
 
 
-def Setting(icon: str, title: str = None, hx_swap='none', cls=('uk-btn cursor-pointer', ButtonT.default), **kwargs):
+def Setting(icon: str, title: str = None, hx_swap='none',
+            cls=('uk-btn cursor-pointer', ButtonT.default, 'w-full justify-start px-3 py-2'), **kwargs):
     return DivLAligned(
-        UkIcon(icon, cls="text-3xl"),
-        P(title, cls="text-lg pl-2"),
+        UkIcon(icon, width=20, height=20),
+        Span(title, cls="pl-2"),
         cls=cls,
         hx_swap=hx_swap,
         **kwargs
     )
 
 
-def LockLobby(l: Lobby, cls=('uk-btn cursor-pointer', ButtonT.default)): 
+def LockLobby(l: Lobby, cls=('uk-btn cursor-pointer', ButtonT.default, 'w-full justify-start px-3 py-2')):
     args = ('lock-open', 'Lock lobby') if not l.locked else ('lock', 'Unlock lobby')
     return Setting(*args, hx_post=lock_lobby, cls=cls)(hx_swap_oob='outerHTML', id='lock-lobby')
-
-def SetBackground():
-    return Setting('image', title='Background', hx_post=change_background, hx_prompt='Enter the URL of the background image')
-
-def LeaveLobby():
-    return Setting('log-out', title='Leave Lobby', hx_post=leave_lobby, hx_swap="none")
-
 
 def GoTo(url: str):
     '''Sends a websocket-connected member to `url` - used when the host changes the game.'''
@@ -47,70 +40,46 @@ def SwitchGame(lobby: Lobby):
     others = [(game, name) for game, (name, _) in GAME_PAGES.items() if game != lobby.current_game]
     if not others: return None
     return Div(
-        DivLAligned(UkIcon('gamepad-2', cls="text-3xl"), P('Switch game', cls="text-lg pl-2"), cls='py-2'),
+        H6('Switch game', cls='font-semibold'),
         DivHStacked(*[Button(name, cls=ButtonT.default, hx_post=switch_game.to(game=game), hx_swap='none')
-                      for game, name in others], cls='gap-1 flex flex-wrap'),
-        cls='w-full')
+                      for game, name in others], cls='grid grid-cols-2 gap-2'),
+        cls='w-full space-y-3 border-t pt-5', data_ui='switch-game')
 
 
 def Settings(*lobby_settings, lobby: Lobby = None, member: LobbyMember = None):
-    def ico(txt): return UkIcon(txt, width=25, height=25)
     lobby_settings = tuple(lobby_settings or ())
     if lobby and is_host(member): lobby_settings += (SwitchGame(lobby),)
-    card_header_content = DivLAligned(
-        ico('cog'),
-        H4('Settings', cls="text-xl font-bold ml-2")
-    )
-
-    lobby_actions = [
-        SetBackground(),
-        LeaveLobby(),
-    ]
-    container = lambda o, x: Div(o, DivHStacked(*x,cls='gap-1 flex flex-wrap'))
-    head = lambda i, txt: DivLAligned(ico(i), H5(txt), cls='space-x-4 py-2')
-    
-    return Card(
-        Div(
-            container(head('layout-dashboard', "Lobby settings"), lobby_settings) if any(lobby_settings) else None,
-            container(head('settings', "Lobby actions"), lobby_actions),
-            cls='flex flex-col items-right space-y-4'),
-        header=card_header_content,
-        cls='mg-lobby-settings space-y-2', data_ui='lobby-settings',
-    )
-
-
-
-def SettingsPopover(*lobby_settings, lobby: Lobby = None, member: LobbyMember = None):
-    button = Card(
-        UkIcon('cog', width=45, height=45),
-        # TODO on mobile the focus is still on the button, not the card
-        _ = "on mouseenter trigger mouseenter on #settings-panel-wrapper",
-        cls="cursor-pointer rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500",
-        tabindex="0",
-        id="settings-popover-button"
-    )
-
-    settings_card = Settings(*lobby_settings, lobby=lobby, member=member)
-    panel_wrapper = Div(
-        settings_card,
-        cls="absolute bottom-0 right-0 w-[28rem] z-10 opacity-0 scale-75 pointer-events-none transition-all duration-200 ease-out",
-        _ = """on mouseenter or focus
-        remove .opacity-0 .scale-75 .pointer-events-none
-        add .opacity-100 .scale-100 .pointer-events-auto
-        settle
-      on mouseleave or blur
-        remove .opacity-100 .scale-100 .pointer-events-auto
-        add .opacity-0 .scale-75 .pointer-events-none
-        settle""",
-        id="settings-panel-wrapper"
-    )
-
+    if not any(lobby_settings): return None
     return Div(
-        button,
-        panel_wrapper,
-        cls="mg-settings-popover fixed bottom-0 right-0 p-4 z-50 sm:block hidden",
-        data_ui='settings-popover'
-    )
+        H5('Lobby', cls='mb-4'), Div(*lobby_settings, cls='space-y-6'),
+        cls='mg-lobby-settings px-5 pb-5 pt-5', data_ui='lobby-settings')
+
+
+
+def SettingsPanel(*lobby_settings, lobby: Lobby = None, member: LobbyMember = None):
+    settings = Settings(*lobby_settings, lobby=lobby, member=member)
+    if settings is None: return None
+    return Details(
+        Summary(UkIcon('cog', cls='mr-2', width=20, height=20), 'Game settings',
+                cls='cursor-pointer list-none px-4 py-3 font-semibold'),
+        settings,
+        open=True, cls='mg-settings-panel w-full rounded-lg border bg-card shadow-sm',
+        data_ui='settings-panel')
+
+
+def LobbyTools(reciever: LobbyMember | User, lobby: Lobby, *lobby_settings,
+               cls=()):
+    from .spectators import Spectators
+    return GameRail(
+        Div(
+            SettingsPanel(*lobby_settings, lobby=lobby, member=reciever),
+            Button(UkIcon('log-out', cls='mr-2', width=20, height=20), 'Leave lobby',
+                   cls=(ButtonT.destructive, 'inline-flex w-full items-center justify-center whitespace-nowrap px-4 py-2'),
+                   hx_post=leave_lobby, hx_swap='none', data_ui='leave-lobby'),
+            cls='w-full space-y-3'),
+        Spectators(reciever, lobby),
+        cls=('mg-lobby-tools justify-between', cls),
+        data_ui='lobby-tools')
 
 
 #-----------------------------------#
@@ -123,6 +92,9 @@ async def switch_game(req: Request, game: str):
     if not is_host(p): return add_toast(req.session, "Only the host can switch the game", "error")
     url = game_url(game, lobby.id)
     if not url: return add_toast(req.session, "Unknown game", "error")
+    if timer := getattr(lobby.state, 'timer', None): timer.stop()
+    for member in lobby.members.values(): member.spectate()
+    lobby.unlock()
     lobby.play_game(game)
     lobby_service.update(lobby)
     # everyone in the lobby follows the host into the new game
@@ -142,14 +114,6 @@ async def lock_lobby(req: Request):
     def update(*_): return LockLobby(lobby)
     return await notify(p, update)
 
-
-@rt('/background', methods=['post'])
-async def change_background(req: Request, hdrs: HtmxHeaders):
-    lobby: Lobby = req.state.lobby
-    lobby.background_url = urllib.parse.unquote(hdrs.prompt)
-    lobby_service.update(lobby)
-    def update(*_): return Background(lobby.background_url, no_image=not lobby.background_url)
-    return await notify_all(lobby, update)
 
 @rt
 async def leave_lobby(req: Request):
