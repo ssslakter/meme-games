@@ -27,10 +27,11 @@ def WhoAmISettings(reciever: LobbyMember | User, lobby: Lobby, **kwargs):
     from ..routes import update_topic
     state = lobby.state
     return Div(
-        TextArea(state.config.topic, name='topic', maxlength=TOPIC_MAX, rows=2,
-                 placeholder='Everything', cls='uk-textarea w-full resize-y',
-                 hx_post=update_topic, hx_trigger='input changed delay:300ms', hx_swap='none'),
-        P('Topic', cls=TextT.muted),
-        PrivateNotesSetting(lobby),
         GameControl(lobby),
+        Div(FormLabel('Topic', fr='whoami-topic-input'),
+            TextArea(state.config.topic, name='topic', id='whoami-topic-input', maxlength=TOPIC_MAX, rows=2,
+                     placeholder='Everything', cls='uk-textarea w-full resize-y',
+                     hx_post=update_topic, hx_trigger='input changed delay:300ms', hx_swap='none'),
+            cls='space-y-1'),
+        PrivateNotesSetting(lobby),
         id='whoami-settings', cls='space-y-3', **kwargs)

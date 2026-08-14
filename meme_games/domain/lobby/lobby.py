@@ -1,6 +1,6 @@
 
-__all__ = ['Lobby', 'LobbyRepo', 'MemberRepo', 'is_player', 'is_host',
-           'GameSpec', 'GAME_REGISTRY', 'register_game', 'BASIC_GAME']
+__all__ = ['Lobby', 'LobbyRepo', 'MemberRepo', 'is_player', 'is_host', 'ChatMessage',
+           'GameSpec', 'GAME_REGISTRY', 'register_game', 'BASIC_GAME', 'CHAT_MAX']
 
 import json
 from meme_games.core import *
@@ -28,6 +28,21 @@ class GameSpec:
         return self.state_cls(**data)
 
 
+CHAT_MAX, CHAT_HISTORY = 500, 200
+
+
+@dataclass
+class ChatMessage:
+    '''One line of lobby talk. Kept in memory only - it is chatter, not game state.'''
+    uid: str
+    name: str
+    text: str
+    at: dt.datetime = field(default_factory=dt.datetime.now)
+
+    def to_dict(self):
+        return {'uid': self.uid, 'name': self.name, 'text': self.text, 'at': self.at.isoformat()}
+
+
 BASIC_GAME = 'lobby'
 GAME_REGISTRY: dict[str, GameSpec] = {BASIC_GAME: GameSpec(BASIC_GAME)}
 
@@ -42,7 +57,7 @@ def register_game(name: str, state_cls: Optional[type] = None, persist: bool = F
 @dataclass
 class Lobby(Model):
     '''A room of members that can switch between games, keeping everyone in place.'''
-    _ignore = ('members', 'host', 'states')
+    _ignore = ('members', 'host', 'states', 'chat')
 
     id: str = field(default_factory=random_id)
     locked: bool = False # TODO move locked to game state
@@ -55,6 +70,7 @@ class Lobby(Model):
     persistent: bool = False # whether the lobby should be saved in the database
     revision: int = 0
     allow_agents: bool = False
+    chat: list[ChatMessage] = field(default_factory=list)
 
     def __post_init__(self):
         if isinstance(self.last_active, str):
@@ -108,8 +124,24 @@ class Lobby(Model):
         if self.host and self.host.uid == uid: self.host = None
         return self.members.pop(uid, None)
 
+    def say(self, member, text: str) -> Optional[ChatMessage]:
+        '''Everyone in the lobby hears this, whichever game is being played.'''
+        text = ' '.join(str(text or '').split())
+        if not 1 <= len(text) <= CHAT_MAX: return None
+        self.last_active = dt.datetime.now()
+        self.chat.append(ChatMessage(member.uid, member.name, text))
+        del self.chat[:-CHAT_HISTORY]
+        return self.chat[-1]
+
     def lock(self): self.locked = True
     def unlock(self): self.locked = False
+
+    def reset_game(self) -> bool:
+        '''Abandon a round in progress. A game whose player left cannot be finished.'''
+        if not self.locked: return False
+        if hasattr(self.state, 'restart'): self.state.restart()
+        self.unlock()
+        return True
 
     @fc.delegates(create_member)
     def get_or_create_member(self, user: User, **kwargs) -> LobbyMember:

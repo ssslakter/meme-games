@@ -9,7 +9,8 @@ from meme_games.apps.whoami.actions import ActionRejected, whoami_actions
 from meme_games.apps.whoami.components.cards import PlayerCard, PlayerLabelText
 from meme_games.apps.whoami.components.game import Game, TopicBanner, TurnStatus
 from meme_games.apps.whoami.components.notes import NotesBlock, NotesCard, QuestionPanel
-from meme_games.apps.whoami.domain import WHOAMI, WhoAmIPhase, WhoAmIState
+from meme_games.apps.whoami.domain import (LABEL_MIN_H, LABEL_MIN_W, WHOAMI, WhoAmIPhase,
+                                          WhoAmIState)
 from meme_games.core import DI
 from meme_games.domain import GAME_REGISTRY, LobbyService, User
 from meme_games.domain.user import UserManager
@@ -190,17 +191,20 @@ def test_cards_are_static_and_personal_notes_are_movable():
     assert 'id="notes-block"' in empty_mount and '<textarea' not in empty_mount
 
 
-def test_join_immediately_mounts_personal_notes():
-    browser = {'user-agent': 'Mozilla/5.0 Firefox'}
-    with TestClient(app, client=('10.0.1.20', 1)) as client:
-        page = client.get('/whoami/wai-notes-join', headers=browser)
-        assert 'id="notes-block"' in page.text
+def test_board_render_carries_the_receivers_own_notes():
+    '''Joining re-renders the board, which deletes the card the POST targeted. The
+    notes have to ride along with that render or they never mount.'''
+    from meme_games.apps.whoami.routes import WhoAmIView
 
-        joined = client.post('/whoami/play', headers=browser)
+    lobby, host, other = _lobby('wai-notes-join')
+    joining = to_xml(WhoAmIView(host, lobby))
+    assert 'id="notes-block"' in joining
+    assert 'name="text"' in joining
 
-    assert 'id="notes-block"' in joined.text
-    assert 'hx-swap-oob="outerHTML"' in joined.text
-    assert 'name="text"' in joined.text
+    other.spectate()
+    watching = to_xml(WhoAmIView(other, lobby))
+    assert 'id="notes-block"' in watching
+    assert 'name="text"' not in watching
 
 
 def test_agent_boundaries_render_controls_but_human_pair_does_not():
@@ -258,3 +262,42 @@ def test_restart_preserves_topic_and_settings_only():
     assert state.phase == WhoAmIPhase.WAITING and not lobby.locked
     assert state.config.topic == 'Cartoon characters' and state.config.private_notes
     assert state.player(host.uid).label_text == state.player(host.uid).notes == ''
+
+
+def test_a_guessed_player_is_skipped_and_leaving_resets_the_round():
+    lobby, first, second = _lobby('wai-guessed')
+    third = lobby.create_member(um.create(name='third-wai-guessed'))
+    third.play()
+    for member in (first, second, third): lobby.state.player(member.uid).set_label('X')
+    order = [first.uid, second.uid, third.uid]
+    assert lobby.state.start(order)
+
+    lobby.state.set_guessed(second.uid, True)
+    assert lobby.state.end_turn(first) and lobby.state.current_turn_uid == third.uid
+
+    # marking the active player hands the turn on straight away
+    lobby.state.set_guessed(third.uid, True)
+    assert lobby.state.current_turn_uid == first.uid
+    lobby.state.set_guessed(first.uid, True)
+    assert lobby.state.current_turn_uid is None
+
+    lobby.lock()
+    lobby.remove_member(second.uid)
+    assert lobby.reset_game()
+    assert not lobby.locked and lobby.state.phase == WhoAmIPhase.WAITING
+    assert not lobby.state.player(first.uid).guessed
+
+
+def test_a_collapsed_label_transform_is_floored_on_write_and_on_load():
+    '''A client bug once wrote a sliver-sized label for everyone; the floor repairs it.'''
+    lobby, host, _ = _lobby('wai-label-floor')
+    lobby.state.player(host.uid).set_label_transform(dict(x=-80, y=0, width=2, height=130))
+
+    stored = lobby.state.player(host.uid).label_tfm
+    assert stored.width == LABEL_MIN_W  # raised off the floor
+    assert stored.height == 130          # a size above the floor is left alone
+
+    spec = GAME_REGISTRY[WHOAMI]
+    old = {'players': {'u1': {'label_tfm': {'x': 0, 'y': 0, 'width': 3, 'height': 4}}}}
+    restored = spec.from_dict(old).player('u1').label_tfm
+    assert restored.width == LABEL_MIN_W and restored.height == LABEL_MIN_H

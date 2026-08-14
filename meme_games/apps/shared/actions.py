@@ -27,11 +27,12 @@ class GameActions:
         self._locks = defaultdict(asyncio.Lock)
 
     async def _change(
-        self, lobby: Lobby, mutate, message: str, topic='game',
+        self, lobby: Lobby, mutate, message: str, topic: str | tuple[str, ...] = 'game',
         rejected='Action is not legal now',
     ) -> ActionResult:
+        topics = (topic,) if isinstance(topic, str) else tuple(topic)
         async with self._locks[lobby.id]:
             if not mutate(): raise ActionRejected(rejected() if callable(rejected) else rejected)
             self.lobbies.update(lobby)
-            event = await lobby_events.publish(lobby, topic)
+            event = await lobby_events.publish(lobby, *topics)
             return ActionResult(True, message, event.revision)

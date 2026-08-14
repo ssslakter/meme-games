@@ -11,6 +11,117 @@
   transition: left .5s ease-in-out, top .5s ease-in-out, width .5s ease-in-out, height .5s ease-in-out;
 }
 
+/*------------------------- Shared lobby furniture ---------------------------*/
+
+/* One host marker for every game, so a card, a team list and the spectator rail
+   all label the host the same way. */
+.mg-host-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .2rem;
+  margin-left: .4rem;
+  padding: .05rem .35rem;
+  border: 1px solid hsl(var(--primary) / .5);
+  border-radius: 999px;
+  background: hsl(var(--primary) / .15);
+  color: hsl(var(--primary));
+  font-size: .6rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/*-------------------------------- Chat --------------------------------------*/
+
+.mg-chat-messages {
+  display: flex;
+  flex-direction: column;
+  gap: .35rem;
+  max-height: 14rem;
+  min-height: 4rem;
+  overflow-y: auto;
+  padding: .5rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: .5rem;
+  background: hsl(var(--muted) / .4);
+  overflow-wrap: anywhere;
+}
+
+.mg-chat-line {
+  font-size: .85rem;
+  line-height: 1.35;
+}
+
+.mg-chat-author {
+  margin-right: .35rem;
+  color: hsl(var(--muted-foreground));
+  font-weight: 600;
+}
+
+.mg-chat-own .mg-chat-author { color: hsl(var(--primary)); }
+
+.mg-chat-text { color: hsl(var(--card-foreground)); }
+
+/*---------------------------- Settings panel --------------------------------*/
+
+/* The summary is a filled bar, so it has to be clipped by the panel's own corners -
+   themes give the panel a radius the square bar was painting over. */
+.mg-settings-panel { overflow: hidden; }
+
+.mg-settings-summary {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .75rem 1rem;
+  border-bottom: 1px solid hsl(var(--border));
+  cursor: pointer;
+  font-weight: 600;
+  list-style: none;
+}
+
+.mg-settings-summary::-webkit-details-marker { display: none; }
+
+.mg-lobby-settings {
+  display: flex;
+  flex-direction: column;
+  gap: .85rem;
+  padding: 1rem;
+}
+
+/* MonsterUI's Details ships `border border-secondary rounded-lg`, which drew a box
+   around a group that is only a heading plus its contents. */
+.mg-settings-section-group {
+  border: 0;
+  border-top: 1px solid hsl(var(--border));
+  border-radius: 0;
+  padding-top: .85rem;
+}
+
+.mg-settings-section-title {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .25rem 0;
+  cursor: pointer;
+  color: hsl(var(--muted-foreground));
+  font-size: .8rem;
+  font-weight: 600;
+  list-style: none;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.mg-settings-section-title::-webkit-details-marker { display: none; }
+.mg-settings-section-group[open] .mg-section-caret { transform: rotate(90deg); }
+.mg-section-caret { transition: transform .15s ease; }
+.mg-settings-section-body { padding-top: .75rem; }
+
+/* A bare checkbox next to full-width padded controls reads as misaligned, so its
+   row gets the same height and inset as the buttons above it. */
+.mg-settings-check { padding: .35rem .25rem; }
+
 /*------------------------------ Who Am I board ------------------------------*/
 
 /* The board is the playfield, so it gets the whole width and the lobby rail floats
@@ -108,12 +219,21 @@
 .mg-player-card:hover { z-index: 20; }
 .mg-player-card:has(.mg-dragging) { z-index: 100; }
 
+/* `inherit`, not the base --radius: a theme is free to give the card asymmetric
+   corners, and a fixed radius here left the face poking out past the tighter one. */
 .mg-card-face {
   flex: 1;
   min-height: 0;
   overflow: hidden;
-  border-radius: calc(var(--radius, .75rem) - 1px) calc(var(--radius, .75rem) - 1px) 0 0;
+  border-radius: inherit;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
 }
+
+/* The avatar carries a `filter`, and Chrome does not clip a filtered child against
+   its parent's rounded corners - the square corner poked out over the card edge.
+   Rounding the child itself is what actually holds. */
+.mg-card-face > * { border-radius: inherit; }
 
 .mg-card-name {
   display: flex;
@@ -125,6 +245,17 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.mg-card-actions {
+  padding: .35rem .5rem .5rem;
+  border-top: 1px solid hsl(var(--border));
+}
+
+.mg-player-card[data-guessed="true"] .mg-card-face { opacity: .55; }
+.mg-player-card[data-guessed="true"] .mg-guessed-btn {
+  border-color: hsl(var(--primary));
+  color: hsl(var(--primary));
 }
 
 .mg-new-player {
@@ -167,6 +298,7 @@
   background-image: radial-gradient(circle at center, var(--mg-label-handle) 1.2px, transparent 1.3px);
   background-size: 6px 6px;
   cursor: grab;
+  touch-action: none;  /* or the browser pans the page instead of dragging */
 }
 
 .mg-label.mg-dragging { box-shadow: 0 12px 26px rgb(0 0 0 / .32); }
@@ -176,6 +308,10 @@
    note over the colour its own --mg-label-* tokens just set. */
 .mg-label .mg-label-input {
   display: block;
+  /* Let the drag go as small as it likes; board.js animates it back to MIN_W/MIN_H on
+     release. A CSS floor here would instead make the resize handle jam against nothing. */
+  min-width: 0;
+  min-height: 0;
   padding: .25rem .4rem;
   border: none !important;
   border-radius: 0 !important;
@@ -251,15 +387,20 @@
 
 .mg-notes .mg-notes-input:focus { outline: none; }
 
+/* Centred under the board, where the player's own card sits, rather than off in a
+   corner. Dragging replaces left/top outright, so the centring transform is dropped
+   the moment the panel is moved. */
 .mg-floating-notes {
   position: fixed;
   bottom: 1rem;
-  left: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 45;
   box-shadow: 0 12px 28px rgb(0 0 0 / .28);
 }
 
-.mg-floating-notes .mg-notes-title { cursor: grab; }
+.mg-floating-notes > .mg-notes { max-width: calc(100vw - 1.5rem); }
+.mg-floating-notes .mg-notes-title { cursor: grab; touch-action: none; }
 .mg-floating-notes.mg-panel-dragging .mg-notes-title { cursor: grabbing; }
 
 .mg-floating-notes > .mg-notes {
@@ -290,3 +431,52 @@
 
 .mg-shared-notes:hover > .mg-notes,
 .mg-shared-notes:focus-within > .mg-notes { display: flex; }
+
+/*------------------------ Narrow screens (portrait) -------------------------*/
+
+/* Below the rail's breakpoint the tools sit in normal flow under the board, so
+   none of the desktop framing applies: the fixed topic banner has nothing to
+   float over, the board's 11rem head room is empty space to scroll past, and a
+   full-height rail with justify-between parked the spectator card a screen
+   below the settings. */
+@media (max-width: 1279px) {
+  .mg-whoami-header {
+    position: static;
+    padding: 0 1rem .5rem;
+  }
+
+  .mg-board {
+    min-height: 0;
+    gap: 2.5rem 1rem;
+    padding: 1rem .75rem 2rem;
+  }
+
+  .mg-game-rail {
+    min-height: 0;
+    justify-content: flex-start;
+  }
+
+  /* `contents` dissolves the shell so the board, the notes and the rail are all
+     siblings and can be ordered: your notes belong under your card, not after
+     the settings you had to scroll past. */
+  [data-page="whoami"] .mg-page-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding-inline: .75rem;
+  }
+
+  [data-page="whoami"] .mg-game-shell { display: contents; }
+  [data-page="whoami"] .mg-game { order: 1; }
+  [data-page="whoami"] #notes-block { order: 2; }
+  [data-page="whoami"] .mg-lobby-tools { order: 3; }
+
+  /* Fixed here would blanket the settings on a phone-sized screen. */
+  .mg-floating-notes {
+    position: static;
+    transform: none;
+    margin-inline: auto;
+    width: max-content;
+    max-width: 100%;
+  }
+}

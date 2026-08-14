@@ -2,6 +2,8 @@
 (function () {
     const RING = 80;
     const ANIMATION_MS = 500;
+    const MIN_W = 90;
+    const MIN_H = 44;
     const px = (value) => `${Math.round(value)}px`;
     const coord = (el, side) => parseInt(el.style[side], 10) || 0;
     let drag = null;
@@ -27,11 +29,13 @@
     function magnetTarget(label, wanted = transform(label)) {
         const card = label.closest('[data-card]');
         const input = label.querySelector('textarea');
-        if (!card || !input) return wanted;
+        // A card that measures zero is detached or not laid out yet. Clamping against it
+        // produced a negative width, which is how a label collapsed into a sliver.
+        if (!card || !input || !card.offsetWidth || !card.offsetHeight) return wanted;
         const extraWidth = label.offsetWidth - input.offsetWidth;
         const extraHeight = label.offsetHeight - input.offsetHeight;
-        const width = Math.min(wanted.width, card.offsetWidth - extraWidth);
-        const height = Math.min(wanted.height, card.offsetHeight - extraHeight);
+        const width = Math.max(MIN_W, Math.min(wanted.width, card.offsetWidth - extraWidth));
+        const height = Math.max(MIN_H, Math.min(wanted.height, card.offsetHeight - extraHeight));
         const outerWidth = width + extraWidth;
         const outerHeight = height + extraHeight;
         return {
@@ -58,7 +62,7 @@
         if (broadcast) send({ type: 'label_position', owner_uid: label.dataset.uid, ...target });
     }
 
-    document.addEventListener('mousedown', (event) => {
+    document.addEventListener('pointerdown', (event) => {
         if (event.button !== 0) return;
         const input = event.target.closest('[data-drag="label"] textarea');
         if (input) {
@@ -80,7 +84,7 @@
         document.body.style.userSelect = 'none';
     });
 
-    document.addEventListener('mousemove', (event) => {
+    document.addEventListener('pointermove', (event) => {
         if (!drag) return;
         drag.label.style.left = px(drag.left + event.clientX - drag.x);
         drag.label.style.top = px(drag.top + event.clientY - drag.y);
@@ -101,16 +105,20 @@
         }
     }
 
-    document.addEventListener('mouseup', endInteraction);
+    document.addEventListener('pointerup', endInteraction);
+    document.addEventListener('pointercancel', endInteraction);
     window.addEventListener('blur', endInteraction);
 
     const resizeObserver = new ResizeObserver((entries) => {
         for (const { target: input } of entries) {
             const label = input.closest('[data-drag="label"]');
+            // A board re-render detaches the old textarea, which reports a 0x0 resize.
+            // Settling on that wrote a collapsed label to the server for everyone.
+            if (!label || !input.isConnected || !input.offsetWidth) continue;
             const size = `${input.offsetWidth}x${input.offsetHeight}`;
             const previous = lastSize.get(input);
             lastSize.set(input, size);
-            if (!label || previous === undefined || previous === size || Date.now() < (mutedResize.get(input) || 0)) continue;
+            if (previous === undefined || previous === size || Date.now() < (mutedResize.get(input) || 0)) continue;
             clearTimeout(label.resizeTimer);
             label.resizeTimer = setTimeout(() => settle(label), 300);
         }
@@ -137,7 +145,7 @@
         event.preventDefault();
     };
 
-    for (const event of ['DOMContentLoaded', 'pageshow', 'htmx:historyRestore', 'htmx:afterSwap']) {
+    for (const event of ['DOMContentLoaded', 'pageshow', 'htmx:historyRestore', 'htmx:afterSwap', 'htmx:oobAfterSwap']) {
         document.addEventListener(event, watchLabels);
     }
 })();

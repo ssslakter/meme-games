@@ -16,7 +16,7 @@ class WhoAmIActions(GameActions):
     async def set_topic(self, lobby: Lobby, member: LobbyMember, topic: str):
         def mutate():
             if not is_host(member) or len(topic) > TOPIC_MAX: return False
-            lobby.state.config.topic = topic
+            lobby.state.config.set_topic(topic)
             return True
         return await self._change(lobby, mutate, 'Topic updated', 'topic', 'Only the host can change the topic')
 
@@ -26,7 +26,7 @@ class WhoAmIActions(GameActions):
         target = state.next_player(member.uid, order)
         def mutate():
             if not member.is_player or not target or len(text) > CARD_MAX: return False
-            state.player(target).set_label(text)
+            state.player(target).set_label(text, state.config.topic_version)
             return True
         return await self._change(lobby, mutate, 'Card updated', f'card:{target}', 'You cannot write that card')
 
@@ -63,6 +63,13 @@ class WhoAmIActions(GameActions):
         return await self._change(
             lobby, lambda: lobby.state.answer(member, answer), 'Question answered', 'question',
             'Only the card author can answer the pending question')
+
+    async def set_guessed(self, lobby: Lobby, member: LobbyMember, target_uid: str, guessed: bool):
+        state: WhoAmIState = lobby.state
+        def mutate():
+            if not member.is_player or state.phase != WhoAmIPhase.PLAYING: return False
+            return state.set_guessed(target_uid, guessed)
+        return await self._change(lobby, mutate, 'Guess recorded', 'game', 'You cannot change that')
 
     async def end_turn(self, lobby: Lobby, member: LobbyMember):
         return await self._change(

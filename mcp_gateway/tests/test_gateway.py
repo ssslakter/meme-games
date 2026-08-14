@@ -15,9 +15,12 @@ class FakeGameClient:
     async def join(self, lobby_code, name):
         return {'player_session': HANDLE, 'lobby_id': lobby_code, 'name': name, 'cursor': 3}
 
-    async def state(self, player_session):
+    async def state(self, player_session, full=False):
         assert player_session == HANDLE
-        return {'lobby_id': 'room', 'revision': 3, 'available_actions': ['join_team']}
+        return {'full': full, 'revision': 3, 'phase': 'waiting', 'you': {'id': 'p1'},
+                'available_actions': ['codenames_join_team'],
+                'state': {'lobby_id': 'room'} if full else None,
+                'changes': {} if full else {'turn': 'red'}}
 
     async def action(self, player_session, action, arguments=None):
         assert player_session == HANDLE
@@ -26,8 +29,9 @@ class FakeGameClient:
 
     async def wait_events(self, player_session, cursor, timeout_seconds):
         assert player_session == HANDLE
-        return {'events': [{'sequence': 4, 'type': 'state_changed', 'revision': 4}],
-                'next_cursor': 4, 'hint': 'Read game state before taking an action.'}
+        return {'events': [{'sequence': 4, 'revision': 4,
+                            'topics': ['turn'], 'happened': ['the turn moved on']}],
+                'next_cursor': 4}
 
     async def leave(self, player_session):
         assert player_session == HANDLE
@@ -48,13 +52,16 @@ async def test_tools_use_independent_player_session_arguments():
             'codenames_set_role', 'codenames_give_clue', 'codenames_reveal_card',
             'codenames_end_turn', 'codenames_spectate', 'wait_for_events',
             'whoami_write_card', 'whoami_ask_question', 'whoami_answer_question',
-            'whoami_write_note', 'whoami_end_turn'}
-        assert not {'join_team', 'set_role', 'give_clue', 'reveal_card', 'end_turn', 'spectate'} & {
-            tool.name for tool in tools.tools}
+            'whoami_end_turn'}
+        # notes are a human aid; an agent already holds the whole history in context
+        assert not {'join_team', 'set_role', 'give_clue', 'reveal_card', 'end_turn', 'spectate',
+                    'whoami_write_note'} & {tool.name for tool in tools.tools}
         joined = await client.call_tool('join_lobby', {'lobby_code': 'room', 'name': 'Robot'})
         assert joined.structured_content['player_session'] == HANDLE
         state = await client.call_tool('get_game_state', {'player_session': HANDLE})
-        assert json.loads(state.content[0].text)['revision'] == 3
+        # the tool declares its output shape, so the result comes back structured
+        assert state.structured_content['revision'] == 3
+        assert state.structured_content['available_actions'] == ['codenames_join_team']
         result = await client.call_tool('codenames_join_team', {'player_session': HANDLE, 'team': 'red'})
         assert result.structured_content['ok']
         events = await client.call_tool('wait_for_events', {'player_session': HANDLE, 'cursor': 3})

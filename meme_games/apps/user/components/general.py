@@ -11,26 +11,35 @@ def get_avatar_path(u: User):
     filename = ('/user-content/' + filename) if filename else '/static/images/default-avatar.jpg'
     return filename
 
-def UserName(r: User, u: User, is_connected=True, cls='', **kwargs):
+def HostBadge():
+    """The lobby host, marked the same way in every game."""
+    return Span(UkIcon('crown', width=12, height=12), 'Host',
+                cls='mg-host-badge', data_ui='host-badge', title='Lobby host')
+
+
+def UserName(r: User, u: User, is_connected=True, is_host=False, cls='', **kwargs):
     """Renders the user's name as a styled HTML span."""
     return Span(B(u.name) if r==u else u.name,
                     Span('AI', cls='ml-2 rounded-full border px-1.5 py-0.5 text-[.65rem] font-semibold')
                         if u.kind == 'agent' else None,
+                    HostBadge() if is_host else None,
                     data_username = u.uid,
                     hx_swap_oob=f"outerHTML:span[data-username='{u.uid}']",
                     data_ui='user-name',
-                    cls=stringify((cls, 'opacity-50' if not is_connected else '')),
+                    # an agent has no websocket, so `is_connected` is never true for one -
+                    # dimming it read as "gone" when it was sitting right there playing
+                    cls=stringify((cls, 'opacity-50' if not is_connected and u.kind != 'agent' else '')),
                     **kwargs)
 
 def MemberName(r: User, m: LobbyMember, **kwargs):
-    return UserName(r, m.user, is_connected=m.is_connected, **kwargs)
+    return UserName(r, m.user, is_connected=m.is_connected, is_host=m.is_host, **kwargs)
 
 
-def UserInfo(r: User, user: User, is_connected=True, cls='', avatar_cls='h-10 w-10', **kwargs):
+def UserInfo(r: User, user: User, is_connected=True, is_host=False, cls='', avatar_cls='h-10 w-10', **kwargs):
     return Div(
         Span(Avatar(user, cls=f'aspect-square {avatar_cls}'),
              cls=f'relative flex {avatar_cls} shrink-0 overflow-hidden rounded-full bg-secondary'),
-        Span(UserName(r, user, is_connected), cls=f'min-w-0 truncate {TextT.sm} {TextT.medium} {cls}', **kwargs),
+        Span(UserName(r, user, is_connected, is_host), cls=f'min-w-0 truncate {TextT.sm} {TextT.medium} {cls}', **kwargs),
         cls='mg-user flex min-w-0 items-center gap-3', data_ui='user')
 
 

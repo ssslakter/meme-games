@@ -5,7 +5,7 @@ from meme_games.apps.user import *
 from .general import *
 
 
-__all__ = ['Settings', 'SettingsPanel', 'LobbyTools',
+__all__ = ['Settings', 'SettingsPanel', 'LobbyTools', 'Section',
            'lock_lobby', 'toggle_agents', 'switch_game', 'SwitchGame', 'GoTo']
 
 
@@ -32,13 +32,15 @@ def LockLobby(l: Lobby, cls=('uk-btn cursor-pointer', ButtonT.default, 'w-full j
 
 
 def AllowAgents(lobby: Lobby, save_preference=False):
+    # MonsterUI's Input also carries `uk-input`, which sizes it like a text field and
+    # squashes the box into a pill; CheckboxX is the plain `uk-checkbox` input.
     return Div(
         Div(
-            Input(type='checkbox', id='allow-agents-checkbox', checked=lobby.allow_agents,
-                  cls='uk-checkbox', hx_post=toggle_agents, hx_trigger='change',
-                  hx_target='#allow-agents', hx_swap='outerHTML'),
-            FormLabel('Allow agents to join', fr='allow-agents-checkbox', cls='m-0 cursor-pointer pl-2'),
-            cls='flex items-center px-3 py-2'),
+            CheckboxX(id='allow-agents-checkbox', checked=lobby.allow_agents,
+                      cls='shrink-0', hx_post=toggle_agents, hx_trigger='change',
+                      hx_target='#allow-agents', hx_swap='outerHTML'),
+            FormLabel('Allow agents to join', fr='allow-agents-checkbox', cls='m-0 cursor-pointer'),
+            cls='mg-settings-check flex items-center gap-2'),
         Script(f"localStorage.setItem('meme-games.allow-agents', '{str(lobby.allow_agents).lower()}')")
             if save_preference else None,
         id='allow-agents', data_ui='allow-agents')
@@ -48,33 +50,40 @@ def GoTo(url: str):
     return Div(hx_swap_oob="beforeend:body", _=f'init go to url "{url}"')
 
 
+def Section(title: str, *content, open=False, **kwargs):
+    '''A collapsible group inside the settings panel.'''
+    return Details(
+        Summary(UkIcon('chevron-right', width=16, height=16, cls='mg-section-caret shrink-0'), title,
+                cls='mg-settings-section-title'),
+        Div(*content, cls='mg-settings-section-body'),
+        open=open, cls='mg-settings-section-group', **kwargs)
+
+
 def SwitchGame(lobby: Lobby):
     '''Host-only: moves the whole lobby to another game, keeping everyone in it.'''
     others = [(game, name) for game, (name, _) in GAME_PAGES.items() if game != lobby.current_game]
     if not others: return None
-    return Div(
-        H6('Switch game', cls='font-semibold'),
-        DivHStacked(*[Button(name, cls=ButtonT.default, hx_post=switch_game.to(game=game), hx_swap='none')
-                      for game, name in others], cls='grid grid-cols-2 gap-2'),
-        cls='w-full space-y-3 border-t pt-5', data_ui='switch-game')
+    return Section(
+        'Switch game',
+        Div(*[Button(name, cls=(ButtonT.default, 'w-full'),
+                     hx_post=switch_game.to(game=game), hx_swap='none')
+              for game, name in others], cls='grid grid-cols-2 gap-2'),
+        data_ui='switch-game')
 
 
 def Settings(*lobby_settings, lobby: Lobby = None, member: LobbyMember = None):
     lobby_settings = tuple(lobby_settings or ())
     if lobby and is_host(member): lobby_settings += (AllowAgents(lobby), SwitchGame(lobby))
     if not any(lobby_settings): return None
-    return Div(
-        H5('Lobby', cls='mb-4'), Div(*lobby_settings, cls='space-y-6'),
-        cls='mg-lobby-settings px-5 pb-5 pt-5', data_ui='lobby-settings')
-
+    return Div(*lobby_settings, cls='mg-lobby-settings', data_ui='lobby-settings')
 
 
 def SettingsPanel(*lobby_settings, lobby: Lobby = None, member: LobbyMember = None):
     settings = Settings(*lobby_settings, lobby=lobby, member=member)
     if settings is None: return None
     return Details(
-        Summary(UkIcon('cog', cls='mr-2', width=20, height=20), 'Game settings',
-                cls='cursor-pointer list-none px-4 py-3 font-semibold'),
+        Summary(UkIcon('cog', width=18, height=18, cls='shrink-0'), 'Game settings',
+                cls='mg-settings-summary'),
         settings,
         open=True, cls='mg-settings-panel w-full rounded-lg border bg-card shadow-sm',
         data_ui='settings-panel')
@@ -83,6 +92,7 @@ def SettingsPanel(*lobby_settings, lobby: Lobby = None, member: LobbyMember = No
 def LobbyTools(reciever: LobbyMember | User, lobby: Lobby, *lobby_settings,
                cls=()):
     from .spectators import Spectators
+    from .chat import ChatPanel
     return GameRail(
         Div(
             SettingsPanel(*lobby_settings, lobby=lobby, member=reciever),
@@ -90,7 +100,7 @@ def LobbyTools(reciever: LobbyMember | User, lobby: Lobby, *lobby_settings,
                    cls=(ButtonT.destructive, 'inline-flex w-full items-center justify-center whitespace-nowrap px-4 py-2'),
                    hx_post=leave_lobby, hx_swap='none', data_ui='leave-lobby'),
             cls='w-full space-y-3'),
-        Spectators(reciever, lobby),
+        Div(Spectators(reciever, lobby), ChatPanel(reciever, lobby), cls='w-full space-y-3'),
         cls=('mg-lobby-tools justify-between', cls),
         data_ui='lobby-tools')
 
@@ -140,12 +150,14 @@ async def toggle_agents(req: Request):
 
 @rt
 async def leave_lobby(req: Request):
-    lobby: BasicLobby = req.state.lobby
+    lobby: Lobby = req.state.lobby
     uid = req.state.user.uid
     if not lobby: return
-    if lobby.locked: 
-        return add_toast(req.session, "Can't leave while lobby is locked", "error")
     lobby.remove_member(uid)
+    # a round cannot be finished a player short, so walking out ends it for everyone
+    was_playing = lobby.reset_game()
+    lobby_service.update(lobby)
     def update(*_): return UserRemover(uid)
-    asyncio.create_task(notify_all(lobby, update))
+    await notify_all(lobby, update)
+    if was_playing: await lobby_events.publish(lobby, 'roster', 'game')
     return Redirect('/')

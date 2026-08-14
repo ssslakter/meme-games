@@ -43,16 +43,20 @@ def redirect(lobby_id: str): return Redirect(index.to(lobby_id=lobby_id))
 async def play(req: Request):
     lobby, _, p = lobby_state(req, WHOAMI)
     if p.is_player: return
-    if lobby.locked:
-        add_toast(req.session, "Game is locked", "error")
-        return NewPlayerCard()
+    if lobby.locked: return add_toast(req.session, "Game is locked", "error")
     p.play()
     lobby_service.update(lobby)
-    await notify_roster_changed(lobby)  # everyone, including p, re-renders the board
-    return NotesBlock(p, lobby, hx_swap_oob='outerHTML')
+    # the board re-render below removes the card this request targeted, so the notes
+    # have to travel with it - an http response swapped into a gone target is dropped
+    await notify_roster_changed(lobby)
 
 
-register_game_view(WHOAMI, Game)
+def WhoAmIView(reciever, lobby: Lobby, **kwargs):
+    '''The board and the receiver's own notes: joining or leaving changes both.'''
+    return Game(reciever, lobby, **kwargs), NotesBlock(reciever, lobby)
+
+
+register_game_view(WHOAMI, WhoAmIView)
 
 @rt
 async def notes(req: Request, text: str):
@@ -100,6 +104,13 @@ async def answer_question(req: Request, answer: str):
 async def end_turn(req: Request):
     lobby, _, member = lobby_state(req, WHOAMI)
     try: await whoami_actions.end_turn(lobby, member)
+    except ActionRejected as error: return rejected(req, error)
+
+
+@rt
+async def set_guessed(req: Request, uid: str, guessed: bool = False):
+    lobby, _, member = lobby_state(req, WHOAMI)
+    try: await whoami_actions.set_guessed(lobby, member, uid, guessed)
     except ActionRejected as error: return rejected(req, error)
 
 
@@ -154,7 +165,7 @@ async def _render_whoami_event(event: LobbyChanged, lobby: Lobby):
     topics = event.topics
     if 'game' in topics:
         return await notify_all(lobby, lambda r, *_: (
-            Game(r, lobby, hx_swap_oob='true'),
+            *WhoAmIView(r, lobby, hx_swap_oob='true'),
             WhoAmISettings(r, lobby, hx_swap_oob='outerHTML') if is_host(r) else None))
     if 'topic' in topics:
         await notify_all(lobby, lambda *_: TopicBanner(lobby, hx_swap_oob='outerHTML'))

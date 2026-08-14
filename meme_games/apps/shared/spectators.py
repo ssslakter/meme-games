@@ -25,7 +25,7 @@ def GameView(reciever: LobbyMember | User, lobby: Lobby, **kwargs):
 def SpectatorsList(reciever: LobbyMember | User, lobby: Lobby):
     watching = [p for p in lobby.sorted_members() if not p.is_player]
     return Div(
-            *[UserInfo(reciever, p.user, is_connected=p.is_connected, avatar_cls='h-7 w-7')
+            *[UserInfo(reciever, p.user, is_connected=p.is_connected, is_host=p.is_host, avatar_cls='h-7 w-7')
               for p in watching],
             P('Nobody is watching yet.', cls=(TextT.muted, TextT.sm, 'm-0'))
             if not watching else None,

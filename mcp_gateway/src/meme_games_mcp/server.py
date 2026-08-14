@@ -17,7 +17,6 @@ class ToolResult:
     ok: bool
     message: str
     revision: int
-    hint: str = 'Read game state before taking another action.'
 
 
 @dataclass
@@ -29,10 +28,32 @@ class JoinResult:
 
 
 @dataclass
+class GameEvent:
+    """One thing that happened. `happened` reads it out in full - following these is
+    enough to follow the game, no state call needed."""
+    sequence: int
+    revision: int
+    topics: list[str]
+    happened: list[str]
+
+
+@dataclass
 class EventResult:
-    events: list[dict]
+    events: list[GameEvent]
     next_cursor: int
-    hint: str
+
+
+@dataclass
+class StateResult:
+    """`phase`, `you` and `available_actions` are always filled in. `state` carries the
+    whole snapshot on a full read, `changes` only what moved since your last read."""
+    full: bool
+    revision: int
+    phase: str | None = None
+    you: dict | None = None
+    available_actions: list[str] | None = None
+    state: dict | None = None
+    changes: dict | None = None
 
 
 class BearerMiddleware:
@@ -51,7 +72,8 @@ def build_gateway(settings: Settings, client=None):
     client = client or GameClient(settings)
     mcp = MCPServer('Meme Games', instructions=(
         'Join an existing lobby to receive a private player_session. Keep that handle secret and pass it '
-        'to every state, event, leave, and game-action tool. Read state before acting.'))
+        'to every state, event, leave, and game-action tool. Read state before acting; state reads return '
+        'only what changed since your previous read.'))
 
     @mcp.tool()
     async def join_lobby(lobby_code: str, name: str) -> JoinResult:
@@ -59,15 +81,25 @@ def build_gateway(settings: Settings, client=None):
         return JoinResult(**await client.join(lobby_code, name))
 
     @mcp.tool()
-    async def get_game_state(player_session: str) -> dict:
-        """Read receiver-specific game state and currently available actions."""
-        return await client.state(player_session)
+    async def get_game_state(player_session: str, full: bool = False) -> StateResult:
+        """Read game state. Returns only what changed since your last read
+        ({full: false, revision, changes}); pass full=true to re-read everything
+        ({full: true, revision, state}). The first read of a session is always full.
+        `phase`, `you` and `available_actions` are sent in full on every read, never
+        as a delta - an empty `changes` means nothing moved, not that nothing is open
+        to you. Anything listed in `available_actions` can be done right now."""
+        return StateResult(**await client.state(player_session, full))
 
     @mcp.tool()
-    async def wait_for_events(player_session: str, cursor: int, timeout_seconds: int = 25) -> EventResult:
-        """Wait up to 25 seconds for changes. Reuse next_cursor on the next call."""
-        return EventResult(**await client.wait_events(
-            player_session, cursor, min(max(timeout_seconds, 1), 25)))
+    async def wait_for_events(player_session: str, cursor: int = 0, timeout_seconds: int = 25) -> EventResult:
+        """Wait up to 25 seconds for changes. Reuse next_cursor on the next call.
+        Each event's `happened` lines carry the content of what occurred - the question
+        that was asked, the answer given, the text written on a card - so following this
+        stream is enough to follow the game. Only your own card is held back."""
+        payload = await client.wait_events(
+            player_session, cursor, min(max(timeout_seconds, 1), 25))
+        return EventResult(events=[GameEvent(**event) for event in payload['events']],
+                           next_cursor=payload['next_cursor'])
 
     @mcp.tool()
     async def leave_lobby(player_session: str) -> ToolResult:
@@ -76,6 +108,13 @@ def build_gateway(settings: Settings, client=None):
 
     async def act(player_session: str, name: str, arguments=None):
         return ToolResult(**await client.action(player_session, name, arguments))
+
+    @mcp.tool()
+    async def lobby_say(player_session: str, text: str) -> ToolResult:
+        """Say something to everyone in the lobby, humans and agents alike. Available at
+        any time in any game. Use it to tell a player their guess was right, to agree on
+        something, or just to talk - what you say arrives in everyone's event stream."""
+        return await act(player_session, 'lobby_say', {'text': text})
 
     @mcp.tool()
     async def codenames_join_team(player_session: str, team: str) -> ToolResult:
@@ -109,7 +148,10 @@ def build_gateway(settings: Settings, client=None):
 
     @mcp.tool()
     async def whoami_write_card(player_session: str, text: str) -> ToolResult:
-        """Write or revise the hidden identity card for your next Who Am I player."""
+        """Write or revise the hidden identity card for your next Who Am I player.
+        Allowed at any point in the game, including during another player's turn.
+        When `you.card_to_write.written_under_an_older_topic` is true the card predates
+        the current topic and no longer fits - rewrite it rather than waiting."""
         return await act(player_session, 'whoami_write_card', {'text': text})
 
     @mcp.tool()
@@ -122,11 +164,6 @@ def build_gateway(settings: Settings, client=None):
             player_session: str, answer: Literal['yes', 'no', 'not_sure']) -> ToolResult:
         """Answer the current Who Am I question with yes, no, or not_sure."""
         return await act(player_session, 'whoami_answer_question', {'answer': answer})
-
-    @mcp.tool()
-    async def whoami_write_note(player_session: str, text: str) -> ToolResult:
-        """Replace your own Who Am I deduction notes."""
-        return await act(player_session, 'whoami_write_note', {'text': text})
 
     @mcp.tool()
     async def whoami_end_turn(player_session: str) -> ToolResult:

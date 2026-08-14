@@ -6,6 +6,7 @@ from meme_games.core import *
 from meme_games.domain import *
 from meme_games.apps.shared.actions import ActionRejected
 from meme_games.apps.shared.agent import AgentGame, agent_games
+from meme_games.apps.shared.chat import say_as
 from meme_games.apps.shared.utils import register_route
 
 
@@ -72,20 +73,51 @@ async def join(req: Request):
     return {'player_session': handle, 'lobby_id': lobby.id, 'name': name, 'cursor': lobby.revision}
 
 
+# last snapshot handed to each agent, so a read can answer with what actually moved
+_last_seen: dict[str, dict] = {}
+
+# What you may do right now is never a delta: an agent that read `changes: {}` had no
+# way to tell "nothing moved" from "nothing is open to me", and sat waiting for a turn
+# while it was free to rewrite a card the whole time.
+ALWAYS_SENT = ('phase', 'you', 'available_actions')
+
+# Chat belongs to the lobby, not to whichever game it is playing, so it is offered
+# and answered here rather than in every game adapter.
+LOBBY_ACTIONS = ('lobby_say',)
+
+
+def _with_lobby_chat(snapshot: dict, lobby: Lobby) -> dict:
+    snapshot['chat'] = [message.to_dict() for message in lobby.chat[-30:]]
+    snapshot['available_actions'] = [*snapshot.get('available_actions', ()), *LOBBY_ACTIONS]
+    return snapshot
+
+
 @rt('/state', methods=['post'])
 async def state(req: Request):
     data = await _body(req)
-    _, lobby, member = _player(data.get('player_session'))
-    return _adapter(lobby).snapshot(lobby, member)
+    handle = str(data.get('player_session', ''))
+    _, lobby, member = _player(handle)
+    snapshot = _with_lobby_chat(_adapter(lobby).snapshot(lobby, member), lobby)
+    previous = None if data.get('full') else _last_seen.get(handle)
+    _last_seen[handle] = snapshot
+    # the same envelope either way, so a reader never has to branch on `full`
+    response = {'full': previous is None, 'revision': snapshot['revision'],
+                'state': snapshot if previous is None else None,
+                'changes': {} if previous is None else
+                           {key: value for key, value in snapshot.items()
+                            if key not in ALWAYS_SENT and previous.get(key) != value}}
+    response.update({key: snapshot[key] for key in ALWAYS_SENT if key in snapshot})
+    return response
 
 
 @rt('/action', methods=['post'])
 async def action(req: Request):
     data = await _body(req)
     _, lobby, member = _player(data.get('player_session'))
+    name, arguments = str(data.get('action', '')), data.get('arguments') or {}
     try:
-        result = await _adapter(lobby).action(
-            lobby, member, str(data.get('action', '')), data.get('arguments') or {})
+        result = (await say_as(lobby, member, str(arguments.get('text', ''))) if name == 'lobby_say'
+                  else await _adapter(lobby).action(lobby, member, name, arguments))
     except ActionRejected as error:
         return JSONResponse({'ok': False, 'message': str(error), 'revision': lobby.revision}, status_code=409)
     return asdict(result)
@@ -94,20 +126,23 @@ async def action(req: Request):
 @rt('/events', methods=['post'])
 async def events(req: Request):
     data = await _body(req)
-    _, lobby, _ = _player(data.get('player_session'))
+    _, lobby, member = _player(data.get('player_session'))
     try: after, timeout_seconds = int(data.get('cursor', 0)), int(data.get('timeout_seconds', 25))
     except (TypeError, ValueError): raise HTTPException(400, 'invalid_cursor_or_timeout')
     if after < 0: raise HTTPException(400, 'cursor_must_be_non_negative')
     timeout_seconds = min(max(timeout_seconds, 1), 25)
     repo = DI.get(LobbyEventRepo)
 
+    adapter = agent_games.get(lobby.current_game)
+
     def payload():
         found = repo.after(lobby.id, after)
         return {'events': [
-            {'sequence': event.revision, 'type': 'state_changed', 'revision': event.revision}
+            {'sequence': event.revision, 'revision': event.revision,
+             'topics': event.topic_list(),
+             'happened': adapter.render(member, set(event.topic_list()), event.facts()) if adapter else []}
             for event in found],
-            'next_cursor': found[-1].revision if found else after,
-            'hint': 'Read game state before taking an action.' if found else 'No new events. Wait again.'}
+            'next_cursor': found[-1].revision if found else after}
 
     result = payload()
     if result['events']: return result
@@ -130,9 +165,10 @@ async def events(req: Request):
 async def leave(req: Request):
     data = await _body(req)
     session, lobby, member = _player(data.get('player_session'))
-    if lobby.locked: raise HTTPException(409, 'lobby_locked')
     sessions.close(data['player_session'])
+    _last_seen.pop(str(data.get('player_session', '')), None)
     lobby.remove_member(member.uid)
+    lobby.reset_game()  # the round cannot continue a player short
     lobbies.update(lobby)
-    await lobby_events.publish(lobby, 'roster')
+    await lobby_events.publish(lobby, 'roster', 'game')
     return {'ok': True, 'message': 'Left lobby', 'revision': lobby.revision}

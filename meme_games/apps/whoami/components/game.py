@@ -21,9 +21,10 @@ def TurnStatus(reciever: LobbyMember | User, lobby: Lobby, **kwargs):
     from ..routes import end_turn
     state: WhoAmIState = lobby.state
     active = lobby.members.get(state.current_turn_uid)
+    idle = ('Everyone has guessed - start a new game.' if state.phase == WhoAmIPhase.PLAYING
+            else 'Set a card for every player, then start.')
     return Div(
-        P(f"{active.name}'s turn" if active else 'Set a card for every player, then start.',
-          cls='m-0 font-medium'),
+        P(f"{active.name}'s turn" if active else idle, cls='m-0 font-medium'),
         Button('End turn', hx_post=end_turn, hx_swap='none', cls=(ButtonT.primary, 'px-4 py-2'))
             if active and isinstance(reciever, LobbyMember) and reciever == active and active.user.kind != 'agent'
             else None,

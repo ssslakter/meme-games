@@ -1,6 +1,7 @@
 from .utils import *
 from .actions import *
 from .agent import *
+from .chat import *
 from .not_found import *
 from .navigation import *
 from .settings import *

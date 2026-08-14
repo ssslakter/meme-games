@@ -37,8 +37,8 @@ class GameClient:
     async def join(self, lobby_code: str, name: str):
         return await self._post('/join', {'lobby_code': lobby_code, 'name': name})
 
-    async def state(self, player_session: str):
-        return await self._post('/state', {'player_session': player_session})
+    async def state(self, player_session: str, full: bool = False):
+        return await self._post('/state', {'player_session': player_session, 'full': full})
 
     async def action(self, player_session: str, action: str, arguments=None):
         response = await self.http.post('/action', headers=self._headers(), json={

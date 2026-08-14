@@ -1,5 +1,6 @@
 from ...shared import *
 from meme_games.apps.user import *
+from meme_games.domain import Lobby, LobbyMember, User, is_player
 from ..domain import *
 from .notes import *
 from .basic import *
@@ -34,6 +35,18 @@ def PlayerLabelFT(r: LobbyMember | User, owner: LobbyMember, data: PlayerNotes, 
     )
 
 
+def GuessedToggle(reciever: LobbyMember | User, owner: LobbyMember, data: PlayerNotes, state: WhoAmIState):
+    '''Marks a player as done, so the turn order stops stopping at them.'''
+    from ..routes import set_guessed
+    if state.phase != WhoAmIPhase.PLAYING: return None
+    label = 'Guessed ✓' if data.guessed else 'Mark as guessed'
+    return Div(
+        Button(label, hx_post=set_guessed.to(uid=owner.uid, guessed=not data.guessed), hx_swap='none',
+               disabled=not is_player(reciever),
+               cls=('uk-btn', ButtonT.default, 'mg-guessed-btn w-full px-2 py-1 text-xs')),
+        cls='mg-card-actions', data_nodrag='true')
+
+
 def PlayerCard(reciever: LobbyMember | User, p: LobbyMember, lobby: Lobby):
     if not p.is_player: return
     state: WhoAmIState = lobby.state
@@ -41,11 +54,13 @@ def PlayerCard(reciever: LobbyMember | User, p: LobbyMember, lobby: Lobby):
     return PlayerCardBase(
         Div(AvatarBig(p.user, cls='h-full w-full bg-cover bg-center bg-no-repeat dark:brightness-75'),
             cls='mg-card-face'),
-        Div(MemberName(reciever, p), ' ✪' if lobby.host == p else None, cls='mg-card-name'),
+        Div(MemberName(reciever, p), cls='mg-card-name'),
+        GuessedToggle(reciever, p, data, state),
         PlayerLabelFT(reciever, p, data, lobby),
         QuestionPanel(reciever, p, lobby),
         SharedNotesCard(reciever, p, data, state),
         style=f'width:{CARD_W}px; height:{CARD_H}px;', data_card=p.uid,
+        data_guessed='true' if data.guessed else 'false',
     )
 
 
@@ -58,5 +73,5 @@ def NewPlayerCard():
         cls='mg-new-player cursor-pointer',
         id='new-player-card',
         hx_post=play,
-        hx_swap='outerHTML',
+        hx_swap='none',  # the websocket board re-render replaces this card
     )

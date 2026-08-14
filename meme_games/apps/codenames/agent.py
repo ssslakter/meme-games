@@ -24,6 +24,65 @@ class CodenamesAgentGame(AgentGame):
             return ['codenames_reveal_card', 'codenames_end_turn']
         return []
 
+    # handled below with their own wording, so the generic one-liners are dropped
+    DETAILED = frozenset({'game', 'roster', 'turn'})
+
+    def capture(self, lobby: Lobby, topics: frozenset[str]) -> dict:
+        state = lobby.state
+        name = lambda uid: lobby.members[uid].name if uid in lobby.members else 'someone'
+        facts = super().capture(lobby, topics)
+        facts.update({
+            'phase': state.phase.value,
+            'turn': state.turn.value if state.turn else None,
+            'winner': state.winner.value if state.winner else None,
+            'clue': {'word': state.clue, 'number': state.clue_number,
+                     'guesses_left': state.guesses_left} if state.clue else None,
+            'teams': {team.value: [{'name': name(uid),
+                                    'role': 'spymaster' if uid in state.spymasters else 'operative'}
+                                   for uid in state.team_uids(team) if uid in lobby.members]
+                      for team in TeamColor},
+            # a revealed card is public, and so is how many each team has left
+            'remaining': {team.value: sum(not card.revealed and card.color == team.card_color
+                                          for card in state.board)
+                          for team in TeamColor},
+        })
+        if 'clue' in topics and state.turn:
+            giver = next((uid for uid in state.team_uids(state.turn) if uid in state.spymasters), None)
+            if giver: facts['clue_by'] = name(giver)
+        if 'reveal' in topics and state.last_revealed:
+            card = next((card for card in state.board if card.id == state.last_revealed), None)
+            if card: facts['revealed'] = {'word': card.word, 'color': card.color.value,
+                                          'team': state.last_revealed_by}
+        return facts
+
+    def render(self, member: LobbyMember, topics: set[str], facts: dict) -> list[str]:
+        '''Everything a player at the table would see happen. The key stays out of it:
+        only cards already turned over are named with their colour.'''
+        lines = super().render(member, topics - self.DETAILED, facts)
+        turn, phase = facts.get('turn'), facts.get('phase')
+        if 'start' in topics: lines.append(f'the game started, {turn} team goes first')
+        if 'restart' in topics: lines.append('the game was reset, teams are open again')
+        if 'clue' in topics and facts.get('clue'):
+            clue, giver = facts['clue'], facts.get('clue_by', f'the {turn} spymaster')
+            lines.append(f'{giver} gave the {turn} team the clue "{clue["word"]}" for {clue["number"]}')
+        if revealed := facts.get('revealed'):
+            lines.append(f'the {revealed["team"]} team turned over "{revealed["word"]}"'
+                         f' - it was {revealed["color"]}')
+            # a wrong colour ends the turn inside the same event
+            if not facts.get('winner') and revealed['team'] != turn:
+                lines.append(f'that ended their turn, it passes to the {turn} team')
+        elif 'turn' in topics and not facts.get('winner'):
+            lines.append(f'it is now the {turn} team\'s turn to give a clue')
+        if facts.get('winner'): lines.append(f'the game is over - {facts["winner"]} team won')
+        if topics & {'roster', 'roles', 'start'}:
+            lines.append('teams: ' + '; '.join(
+                f'{color} - ' + (', '.join(f'{p["name"]} ({p["role"]})' for p in players) or 'nobody')
+                for color, players in facts.get('teams', {}).items()))
+        if phase in ('clue', 'guessing') and (remaining := facts.get('remaining')):
+            lines.append('cards still hidden: ' +
+                         ', '.join(f'{color} {count}' for color, count in remaining.items()))
+        return lines
+
     def snapshot(self, lobby: Lobby, member: LobbyMember):
         state = lobby.state
         knows_key = member.uid in state.spymasters

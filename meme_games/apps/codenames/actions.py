@@ -28,7 +28,8 @@ class CodenamesActions(GameActions):
         if role not in ('operative', 'spymaster'): raise ActionRejected('Unknown role')
         return await self._change(
             lobby, lambda: lobby.state.set_spymaster(member, role == 'spymaster'),
-            f'Role set to {role}', rejected='Choose a team first, or use its available spymaster seat')
+            f'Role set to {role}', ('game', 'roles'),
+            rejected='Choose a team first, or use its available spymaster seat')
 
     async def select_pack(self, lobby: Lobby, member: LobbyMember, pack_id: str):
         pack = self.wordpacks.get_by_id(pack_id)
@@ -43,22 +44,26 @@ class CodenamesActions(GameActions):
             if not is_host(member) or not lobby.state.start(): return False
             lobby.lock()
             return True
-        return await self._change(lobby, mutate, 'Game started', rejected='Game is not ready to start')
+        return await self._change(lobby, mutate, 'Game started', ('game', 'start'),
+                                  rejected='Game is not ready to start')
 
     async def give_clue(self, lobby: Lobby, member: LobbyMember, clue: str, number: int):
         return await self._change(
-            lobby, lambda: lobby.state.give_clue(member, clue, number), 'Clue submitted', rejected='Invalid clue')
+            lobby, lambda: lobby.state.give_clue(member, clue, number), 'Clue submitted', ('game', 'clue'),
+            rejected='Invalid clue')
 
     async def reveal_card(self, lobby: Lobby, member: LobbyMember, card_id: str):
         return await self._change(
-            lobby, lambda: lobby.state.reveal(member, card_id), 'Card revealed', rejected='You cannot reveal that card')
+            lobby, lambda: lobby.state.reveal(member, card_id), 'Card revealed', ('game', 'reveal'),
+            rejected='You cannot reveal that card')
 
     async def end_turn(self, lobby: Lobby, member: LobbyMember):
         state: CodenamesState = lobby.state
         def mutate():
             return (state.phase == GamePhase.GUESSING and state.team_of(member) == state.turn
                     and member.uid not in state.spymasters and state.end_turn())
-        return await self._change(lobby, mutate, 'Turn ended', rejected='You cannot end this turn')
+        return await self._change(lobby, mutate, 'Turn ended', ('game', 'turn'),
+                                  rejected='You cannot end this turn')
 
     async def spectate(self, lobby: Lobby, member: LobbyMember):
         def mutate():
@@ -73,7 +78,8 @@ class CodenamesActions(GameActions):
             lobby.state.restart()
             lobby.unlock()
             return True
-        return await self._change(lobby, mutate, 'Game restarted', rejected='Only the host can restart')
+        return await self._change(lobby, mutate, 'Game restarted', ('game', 'restart'),
+                                  rejected='Only the host can restart')
 
 
 codenames_actions = CodenamesActions(DI.get(LobbyService), DI.get(WordPackRepo))

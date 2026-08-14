@@ -22,7 +22,7 @@ def TeamCard(r: User | LobbyMember, team: gm.Team, game: gm.GameState):
                 cls='flex items-center gap-2')),
         *(
             DivFullySpaced(
-                UserInfo(r, m.user, m.is_connected, avatar_cls='h-12 w-12'),
+                UserInfo(r, m.user, m.is_connected, m.is_host, avatar_cls='h-12 w-12'),
                 Span('Ready', cls='mg-ready-badge rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800 dark:bg-green-900 dark:text-green-100') if game.has_voted(m) else None,
                 cls="mg-team-member w-full truncate",
                 data_ready=str(game.has_voted(m)).lower(),

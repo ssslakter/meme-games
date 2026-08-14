@@ -32,7 +32,7 @@ def TeamPanel(reciever: LobbyMember | User, lobby: Lobby, team: TeamColor):
         Div(*[
             Div(
                 UserInfo(reciever, member.user,
-                         member.is_connected,
+                         member.is_connected, member.is_host,
                          avatar_cls='h-11 w-11'),
                 Span('Spymaster', cls='rounded-full border px-2 py-1 text-xs') if member.uid in state.spymasters else None,
                 cls='flex items-center justify-between gap-2')

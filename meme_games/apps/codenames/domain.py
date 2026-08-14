@@ -58,6 +58,8 @@ class CodenamesState:
     clue_number: int = 0
     guesses_left: int = 0
     winner: Optional[TeamColor] = None
+    last_revealed: Optional[str] = None    # so an event can name the card that was turned
+    last_revealed_by: Optional[str] = None  # and the team that turned it, before the turn flips
 
     def team_of(self, member: LobbyMember | User | str) -> Optional[TeamColor]:
         uid = member if isinstance(member, str) else member.uid
@@ -117,7 +119,7 @@ class CodenamesState:
         self.phase = GamePhase.CLUE
         self.clue = ''
         self.clue_number = self.guesses_left = 0
-        self.winner = None
+        self.winner = self.last_revealed = self.last_revealed_by = None
         return True
 
     def give_clue(self, member: LobbyMember, clue: str, number: int):
@@ -138,7 +140,7 @@ class CodenamesState:
                 member.uid in self.spymasters): return False
         card = next((card for card in self.board if card.id == card_id and not card.revealed), None)
         if not card: return False
-        card.revealed = True
+        card.revealed, self.last_revealed, self.last_revealed_by = True, card.id, self.turn.value
         if card.color == CardColor.BOMB:
             self.winner, self.phase = self.turn.other, GamePhase.FINISHED
         elif card.color in (CardColor.RED, CardColor.BLUE) and self._all_revealed(TeamColor(card.color.value)):
@@ -161,7 +163,7 @@ class CodenamesState:
     def restart(self):
         self.phase = GamePhase.WAITING
         self.board.clear()
-        self.turn = self.winner = None
+        self.turn = self.winner = self.last_revealed = self.last_revealed_by = None
         self.clue = ''
         self.clue_number = self.guesses_left = 0
 

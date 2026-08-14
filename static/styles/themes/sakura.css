@@ -69,11 +69,15 @@ body {
   animation: mg-sakura-drift 40s linear infinite;
 }
 
-.mg-background {
+/* Tint the page background instead of replacing it: the lobby pages (Who Am I in
+   particular) carry a photo on .mg-background, and overriding background-image
+   here erased it. The overlay child is empty, so the wash goes there. */
+.mg-background { filter: none !important; }
+
+.mg-background > div {
   background-image:
     radial-gradient(ellipse at top, rgba(247, 168, 189, .24), transparent 58%),
-    linear-gradient(to bottom, transparent, rgba(102, 143, 105, .08)) !important;
-  filter: none !important;
+    linear-gradient(to bottom, transparent, rgba(102, 143, 105, .08));
 }
 
 .mg-navbar {
@@ -97,7 +101,6 @@ body {
 .mg-settings-panel,
 .mg-panel,
 .mg-settings-section,
-.mg-lobby-settings,
 .mg-spectators,
 .mg-content-card > * {
   position: relative;
