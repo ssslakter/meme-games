@@ -6,14 +6,14 @@
         document.querySelectorAll('.draggable-panel:not([data-draggable-ready])').forEach((panel) => {
             panel.dataset.draggableReady = 'true';
             panel.addEventListener('mousedown', (event) => {
-                if (event.button !== 0 || !event.target.closest('.mg-notes-drag-handle')) return;
+                if (event.button !== 0 || !event.target.closest('.mg-notes-title')) return;
                 event.preventDefault();
                 const rect = panel.getBoundingClientRect();
                 panel.style.transform = 'none';
                 panel.style.bottom = 'auto';
                 panel.style.left = `${rect.left}px`;
                 panel.style.top = `${rect.top}px`;
-                panel.style.cursor = 'grabbing';
+                panel.classList.add('mg-panel-dragging');
                 drag = { panel, x: event.clientX - rect.left, y: event.clientY - rect.top };
                 document.body.style.userSelect = 'none';
             });
@@ -30,7 +30,7 @@
 
     function stop() {
         if (!drag) return;
-        drag.panel.style.cursor = 'grab';
+        drag.panel.classList.remove('mg-panel-dragging');
         drag = null;
         document.body.style.userSelect = '';
     }

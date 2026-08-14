@@ -182,7 +182,8 @@ def test_cards_are_static_and_personal_notes_are_movable():
 
     assert 'draggable-panel' not in board
     assert 'data-drag="card"' not in board
-    assert 'draggable-panel' in notes and 'mg-notes-drag-handle' in notes
+    assert 'draggable-panel' in notes and '>Notes<' in notes
+    assert 'Drag notes' not in notes
 
 
 def test_agent_boundaries_render_controls_but_human_pair_does_not():
