@@ -5,6 +5,7 @@
     const px = (value) => `${Math.round(value)}px`;
     const coord = (el, side) => parseInt(el.style[side], 10) || 0;
     let drag = null;
+    let resizingLabel = null;
     const mutedResize = new WeakMap();
     const lastSize = new WeakMap();
 
@@ -58,7 +59,16 @@
     }
 
     document.addEventListener('mousedown', (event) => {
-        if (event.button !== 0 || !event.target.closest('.mg-label-handle')) return;
+        if (event.button !== 0) return;
+        const input = event.target.closest('[data-drag="label"] textarea');
+        if (input) {
+            const rect = input.getBoundingClientRect();
+            if (event.clientX >= rect.right - 24 && event.clientY >= rect.bottom - 24) {
+                resizingLabel = input.closest('[data-drag="label"]');
+            }
+            return;
+        }
+        if (!event.target.closest('.mg-label-handle')) return;
         const label = event.target.closest('[data-drag="label"]');
         if (!label) return;
         event.preventDefault();
@@ -76,17 +86,23 @@
         drag.label.style.top = px(drag.top + event.clientY - drag.y);
     });
 
-    function endDrag() {
-        if (!drag) return;
-        const label = drag.label;
-        drag = null;
-        label.classList.remove('mg-dragging');
-        document.body.style.userSelect = '';
-        settle(label);
+    function endInteraction() {
+        if (drag) {
+            const label = drag.label;
+            drag = null;
+            label.classList.remove('mg-dragging');
+            document.body.style.userSelect = '';
+            settle(label);
+        }
+        if (resizingLabel) {
+            const label = resizingLabel;
+            resizingLabel = null;
+            settle(label);
+        }
     }
 
-    document.addEventListener('mouseup', endDrag);
-    window.addEventListener('blur', endDrag);
+    document.addEventListener('mouseup', endInteraction);
+    window.addEventListener('blur', endInteraction);
 
     const resizeObserver = new ResizeObserver((entries) => {
         for (const { target: input } of entries) {
@@ -101,7 +117,10 @@
     });
 
     function watchLabels() {
-        document.querySelectorAll('[data-drag="label"] textarea').forEach((input) => resizeObserver.observe(input));
+        document.querySelectorAll('[data-drag="label"] textarea').forEach((input) => {
+            if (!lastSize.has(input)) lastSize.set(input, `${input.offsetWidth}x${input.offsetHeight}`);
+            resizeObserver.observe(input);
+        });
     }
 
     window.onBoardMessage = function (event) {

@@ -1,5 +1,6 @@
 """The Who Am I board: what each player is allowed to see, and what survives a restart."""
 from fasthtml.common import to_xml
+from starlette.testclient import TestClient
 
 import asyncio
 import pytest
@@ -12,6 +13,7 @@ from meme_games.apps.whoami.domain import WHOAMI, WhoAmIPhase, WhoAmIState
 from meme_games.core import DI
 from meme_games.domain import GAME_REGISTRY, LobbyService, User
 from meme_games.domain.user import UserManager
+from meme_games.main import app
 
 service = DI.get(LobbyService)
 um = DI.get(UserManager)
@@ -179,11 +181,26 @@ def test_cards_are_static_and_personal_notes_are_movable():
     lobby, host, _ = _lobby('wai-simple-board')
     board = to_xml(Game(host, lobby))
     notes = to_xml(NotesBlock(host, lobby))
+    empty_mount = to_xml(NotesBlock(User('spectator', 'Spectator'), lobby))
 
     assert 'draggable-panel' not in board
     assert 'data-drag="card"' not in board
     assert 'draggable-panel' in notes and '>Notes<' in notes
     assert 'Drag notes' not in notes
+    assert 'id="notes-block"' in empty_mount and '<textarea' not in empty_mount
+
+
+def test_join_immediately_mounts_personal_notes():
+    browser = {'user-agent': 'Mozilla/5.0 Firefox'}
+    with TestClient(app, client=('10.0.1.20', 1)) as client:
+        page = client.get('/whoami/wai-notes-join', headers=browser)
+        assert 'id="notes-block"' in page.text
+
+        joined = client.post('/whoami/play', headers=browser)
+
+    assert 'id="notes-block"' in joined.text
+    assert 'hx-swap-oob="outerHTML"' in joined.text
+    assert 'name="text"' in joined.text
 
 
 def test_agent_boundaries_render_controls_but_human_pair_does_not():

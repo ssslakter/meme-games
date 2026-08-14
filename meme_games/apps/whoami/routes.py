@@ -49,6 +49,7 @@ async def play(req: Request):
     p.play()
     lobby_service.update(lobby)
     await notify_roster_changed(lobby)  # everyone, including p, re-renders the board
+    return NotesBlock(p, lobby, hx_swap_oob='outerHTML')
 
 
 register_game_view(WHOAMI, Game)
