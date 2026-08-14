@@ -262,6 +262,13 @@
 .mg-floating-notes .mg-notes-title { cursor: grab; }
 .mg-floating-notes.mg-panel-dragging .mg-notes-title { cursor: grabbing; }
 
+.mg-floating-notes > .mg-notes {
+  min-width: 12rem;
+  min-height: 7rem;
+  resize: both;
+  overflow: auto;
+}
+
 .mg-shared-notes {
   position: absolute;
   top: .5rem;
