@@ -1,5 +1,7 @@
 /** Movable card labels and their websocket updates. Player cards stay in layout. */
 (function () {
+    const RING = 80;
+    const ANIMATION_MS = 500;
     const px = (value) => `${Math.round(value)}px`;
     const coord = (el, side) => parseInt(el.style[side], 10) || 0;
     let drag = null;
@@ -21,13 +23,38 @@
         };
     }
 
-    function clamp(label, x, y) {
+    function magnetTarget(label, wanted = transform(label)) {
         const card = label.closest('[data-card]');
-        if (!card) return { x, y };
+        const input = label.querySelector('textarea');
+        if (!card || !input) return wanted;
+        const extraWidth = label.offsetWidth - input.offsetWidth;
+        const extraHeight = label.offsetHeight - input.offsetHeight;
+        const width = Math.min(wanted.width, card.offsetWidth - extraWidth);
+        const height = Math.min(wanted.height, card.offsetHeight - extraHeight);
+        const outerWidth = width + extraWidth;
+        const outerHeight = height + extraHeight;
         return {
-            x: Math.max(-label.offsetWidth + 32, Math.min(x, card.offsetWidth - 32)),
-            y: Math.max(-label.offsetHeight + 24, Math.min(y, card.offsetHeight - 24)),
+            x: Math.max(-RING, Math.min(wanted.x, card.offsetWidth + RING - outerWidth)),
+            y: Math.max(-RING, Math.min(wanted.y, card.offsetHeight + RING - outerHeight)),
+            width, height,
         };
+    }
+
+    function settle(label, wanted, broadcast = true) {
+        const input = label.querySelector('textarea');
+        const target = magnetTarget(label, wanted);
+        mutedResize.set(input, Date.now() + ANIMATION_MS + 200);
+        label.classList.add('mg-anim');
+        input.classList.add('mg-anim');
+        label.style.left = px(target.x);
+        label.style.top = px(target.y);
+        input.style.width = px(target.width);
+        input.style.height = px(target.height);
+        setTimeout(() => {
+            label.classList.remove('mg-anim');
+            input.classList.remove('mg-anim');
+        }, ANIMATION_MS);
+        if (broadcast) send({ type: 'label_position', owner_uid: label.dataset.uid, ...target });
     }
 
     document.addEventListener('mousedown', (event) => {
@@ -35,6 +62,8 @@
         const label = event.target.closest('[data-drag="label"]');
         if (!label) return;
         event.preventDefault();
+        label.classList.remove('mg-anim');
+        label.querySelector('textarea').classList.remove('mg-anim');
         drag = { label, x: event.clientX, y: event.clientY,
                  left: coord(label, 'left'), top: coord(label, 'top') };
         label.classList.add('mg-dragging');
@@ -43,9 +72,8 @@
 
     document.addEventListener('mousemove', (event) => {
         if (!drag) return;
-        const at = clamp(drag.label, drag.left + event.clientX - drag.x, drag.top + event.clientY - drag.y);
-        drag.label.style.left = px(at.x);
-        drag.label.style.top = px(at.y);
+        drag.label.style.left = px(drag.left + event.clientX - drag.x);
+        drag.label.style.top = px(drag.top + event.clientY - drag.y);
     });
 
     function endDrag() {
@@ -54,7 +82,7 @@
         drag = null;
         label.classList.remove('mg-dragging');
         document.body.style.userSelect = '';
-        send({ type: 'label_position', owner_uid: label.dataset.uid, ...transform(label) });
+        settle(label);
     }
 
     document.addEventListener('mouseup', endDrag);
@@ -68,8 +96,7 @@
             lastSize.set(input, size);
             if (!label || previous === undefined || previous === size || Date.now() < (mutedResize.get(input) || 0)) continue;
             clearTimeout(label.resizeTimer);
-            label.resizeTimer = setTimeout(
-                () => send({ type: 'label_position', owner_uid: label.dataset.uid, ...transform(label) }), 300);
+            label.resizeTimer = setTimeout(() => settle(label), 300);
         }
     });
 
@@ -86,15 +113,7 @@
         } else if (message.type === 'label_position') {
             const label = document.querySelector(`[data-label="${message.owner_uid}"]`);
             if (!label || drag?.label === label) return;
-            const input = label.querySelector('textarea');
-            const at = clamp(label, message.x, message.y);
-            label.style.left = px(at.x);
-            label.style.top = px(at.y);
-            if (message.width && message.height) {
-                mutedResize.set(input, Date.now() + 500);
-                input.style.width = px(message.width);
-                input.style.height = px(message.height);
-            }
+            settle(label, message, false);
         } else return;
         event.preventDefault();
     };
