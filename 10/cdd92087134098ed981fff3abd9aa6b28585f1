@@ -1,0 +1,24 @@
+static/scripts/whoami/board.js
+  s_0ded5a56d630fe::t_1ee8779a8f8cc0 3-4,26,28-35,37-39,43-59,65-66,75-76,85,99,116
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "10cdd92087134098ed981fff3abd9aa6b28585f1",
+  "prompts": {},
+  "humans": {
+    "h_cec284cdd16cba": {
+      "author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_0ded5a56d630fe": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffd32-e084-7e41-84cc-3f5b3e631757",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
