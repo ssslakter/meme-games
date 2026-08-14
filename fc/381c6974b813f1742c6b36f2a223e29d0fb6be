@@ -1,0 +1,171 @@
+meme_games/apps/user/components/general.py
+  s_1ddc9e813d88e8::t_b67dce7cfc6873 29-31
+  s_1ddc9e813d88e8::t_c597fb888ad657 14-20,25
+  s_1ddc9e813d88e8::t_f2445118e14d7e 35,38,42
+meme_games/domain/lobby/lobby.py
+  s_1ddc9e813d88e8::t_1399602fc085b5 2-3,31-45,60,73,127-134
+  s_1ddc9e813d88e8::t_5dcb30687db3cb 139-145
+  s_1ddc9e813d88e8::t_f8241a87a99712 135
+meme_games/apps/codenames/components/game.py
+  s_1ddc9e813d88e8::t_fe82c622b08bb6 35
+static/styles/app.css
+  s_1ddc9e813d88e8::t_4235bb559dfc2f 222-223,228-230
+  s_1ddc9e813d88e8::t_7b6e14afc6f7f7 459-481
+  s_1ddc9e813d88e8::t_9f7fae8920c796 390-392,396-397
+  s_1ddc9e813d88e8::t_407f1d5b1145a6 69-72
+  s_1ddc9e813d88e8::t_133a22afe29424 77-78,89-90,93-94,96,98-99,106,119-123
+  s_1ddc9e813d88e8::t_c067fe686edc99 36-66
+  s_1ddc9e813d88e8::t_6323a3741053e8 14-35,67-68,73-76,79-88,91-92,95,97,100-105,107-118,124
+  s_1ddc9e813d88e8::t_da322a9e825826 301
+  s_1ddc9e813d88e8::t_1775f73a358e26 311-314
+  s_1ddc9e813d88e8::t_0b457021237e49 402-403
+  s_1ddc9e813d88e8::t_135afd39231918 434-458,482
+  s_1ddc9e813d88e8::t_a18dd9f59cd51d 233-237
+  s_1ddc9e813d88e8::t_aadfb432c07070 250-260
+mcp_gateway/tests/test_gateway.py
+  s_1ddc9e813d88e8::t_ac0feeea440d3e 18
+  s_1ddc9e813d88e8::t_e9d4539adad9a6 33-34
+  s_1ddc9e813d88e8::t_6517479609bcd5 20-23,62-64
+  s_1ddc9e813d88e8::t_8f24d843bb4ec2 32
+  s_1ddc9e813d88e8::t_e138f092c199d5 55-58
+meme_games/apps/shared/agent.py
+  s_1ddc9e813d88e8::t_9580dbbb53240b 51-58
+  s_1ddc9e813d88e8::t_d7a9ed3e69b83d 1,18-19,25-30
+  s_1ddc9e813d88e8::t_79a98b5e0609fe 20-24,31-34
+  s_1ddc9e813d88e8::t_10ec648754c77a 9-17,35
+meme_games/apps/shared/spectators.py
+  s_1ddc9e813d88e8::t_fe82c622b08bb6 28
+meme_games/apps/shared/actions.py
+  s_1ddc9e813d88e8::t_2855536d0d66b0 30,33,37
+meme_games/apps/codenames/agent.py
+  s_1ddc9e813d88e8::t_294d560932636e 27-32,35-47,52-53,56-65,68,75-85
+  s_1ddc9e813d88e8::t_79a98b5e0609fe 33-34,48
+  s_1ddc9e813d88e8::t_b6be5452204c21 49-51,54-55,66-67,69-74
+meme_games/apps/shared/settings.py
+  s_1ddc9e813d88e8::t_5b4519f71bf849 162
+  s_1ddc9e813d88e8::t_beb490fa81c40f 43
+  s_1ddc9e813d88e8::t_5d016f34c4499d 53-61,66-71,78,85-86
+  s_1ddc9e813d88e8::t_70d02f9a9ebbe1 95,103
+  s_1ddc9e813d88e8::t_ed21195031e2bd 8
+  s_1ddc9e813d88e8::t_d10d140130e45f 35-36,39-42
+  s_1ddc9e813d88e8::t_f06cbf477ef1c0 153,157-159,161
+meme_games/apps/whoami/agent.py
+  s_1ddc9e813d88e8::t_79a98b5e0609fe 39-41
+  s_1ddc9e813d88e8::t_837bf0ca1fea46 45-46,83-86,88,127
+  s_1ddc9e813d88e8::t_077ba7b40fe6a2 36-37,51-52,54,58,103
+  s_1ddc9e813d88e8::t_2c2873d792238b 113
+  s_1ddc9e813d88e8::t_03bfe628661360 128-132
+  s_1ddc9e813d88e8::t_44e3949b2acfca 32-35,38,42-44,47-50,53,55-57,59-82,87,89-102
+mcp_gateway/src/meme_games_mcp/client.py
+  s_1ddc9e813d88e8::t_36892f5be83751 40-41
+mcp_gateway/src/meme_games_mcp/server.py
+  s_1ddc9e813d88e8::t_8bd3ec2787f9d6 96-98
+  s_1ddc9e813d88e8::t_58139a407e3298 152-154
+  s_1ddc9e813d88e8::t_73f4bd08974a48 113-118
+  s_1ddc9e813d88e8::t_1fbf2bca3e184f 30-39,42,44-56,84,91,94,99-102
+  s_1ddc9e813d88e8::t_36892f5be83751 75-76,85-86
+  s_1ddc9e813d88e8::t_b536bbe880f95c 87-90
+  s_1ddc9e813d88e8::t_46c2c40e6332e8 95,151
+  s_1ddc9e813d88e8::t_5405fe3fdfb089 112
+meme_games/apps/whoami/components/cards.py
+  s_1ddc9e813d88e8::t_a86c1908529fdc 76
+  s_1ddc9e813d88e8::t_de6944cafe6c09 3
+  s_1ddc9e813d88e8::t_74722e5652d727 38-49,57-58,63
+meme_games/apps/shared/chat.py
+  s_1ddc9e813d88e8::t_7c7ffe3bc810b3 1-56,62-65
+  s_1ddc9e813d88e8::t_905c0075de59c8 57-61
+static/scripts/whoami/draggable.js
+  s_1ddc9e813d88e8::t_9ddeccd62e912c 1-3,8-20
+  s_1ddc9e813d88e8::t_9dc028488b6950 7,22,37-38
+static/scripts/whoami/board.js
+  s_1ddc9e813d88e8::t_bda0437a3c8e95 5-6,32-34,37-38,65,87,108-109,115-117,121,148
+tests/test_agent_api.py
+  s_1ddc9e813d88e8::t_f2105422729983 7,470-506
+  s_1ddc9e813d88e8::t_97d2ba81ba0aa2 257-277,285-302
+  s_1ddc9e813d88e8::t_9461975d3ddd7f 303-341
+  s_1ddc9e813d88e8::t_bcd2074536724a 281
+  s_1ddc9e813d88e8::t_8c22c1f1e28857 342-387
+  s_1ddc9e813d88e8::t_0d84deb53374dc 114-117,124
+  s_1ddc9e813d88e8::t_4abf5f1d1092e0 431-469
+  s_1ddc9e813d88e8::t_e2a3fac6657326 175-176
+  s_1ddc9e813d88e8::t_c6020df8c75e0e 388-430
+  s_1ddc9e813d88e8::t_5fdd4f3bda281a 104-113,118-123,125-128
+  s_1ddc9e813d88e8::t_f156d7dedcbcee 174,278-280,282-284
+  s_1ddc9e813d88e8::t_14fae13095f342 48-49,51-52,67-68,139-140,155,171,188,196,203,215,217,219,222
+  s_1ddc9e813d88e8::t_d03187dcdad4cb 50
+meme_games/apps/whoami/components/settings.py
+  s_1ddc9e813d88e8::t_51e217e6d441f4 31-36
+meme_games/apps/shared/__init__.py
+  s_1ddc9e813d88e8::t_70d02f9a9ebbe1 4
+static/styles/themes/sakura.css
+  s_1ddc9e813d88e8::t_443ec0c6126197 72-77,80
+meme_games/apps/whoami/routes.py
+  s_1ddc9e813d88e8::t_b4db7d0bd4c19e 111-116
+  s_1ddc9e813d88e8::t_cc927f595d7b0d 168
+  s_1ddc9e813d88e8::t_9e403e90cc2e11 46
+  s_1ddc9e813d88e8::t_ae42a4637ab8e1 49-51,54-59
+  s_1ddc9e813d88e8::t_56718a198f6261 110
+meme_games/apps/whoami/actions.py
+  s_1ddc9e813d88e8::t_91a27a3a8e62eb 19,29
+  s_1ddc9e813d88e8::t_3016b72d1de617 67-73
+meme_games/apps/whoami/components/game.py
+  s_1ddc9e813d88e8::t_2b6745d75350da 24-25,27
+tests/test_whoami.py
+  s_1ddc9e813d88e8::t_5b8b3caaaebef1 12-13,289-296,299-303
+  s_1ddc9e813d88e8::t_b1bf58d47794d4 297-298
+  s_1ddc9e813d88e8::t_3a027ed6b977a4 194-197,199-202,204-207
+  s_1ddc9e813d88e8::t_5ceb60836d39d2 265-288
+meme_games/apps/whoami/domain.py
+  s_1ddc9e813d88e8::t_df98cba0a8b941 3
+  s_1ddc9e813d88e8::t_9964c6c234efff 48
+  s_1ddc9e813d88e8::t_648bff6a7bab62 63-71
+  s_1ddc9e813d88e8::t_232ad8132dadd4 24-26,35-39
+  s_1ddc9e813d88e8::t_c19b424c81ecbd 126-131
+  s_1ddc9e813d88e8::t_13aaccb5c05192 96-113
+  s_1ddc9e813d88e8::t_94aef274548584 49,52-54
+  s_1ddc9e813d88e8::t_8daa6a3646bb6f 169
+  s_1ddc9e813d88e8::t_d52232a1b62c63 157
+  s_1ddc9e813d88e8::t_f9259bd8aff5d2 40
+meme_games/domain/events.py
+  s_1ddc9e813d88e8::t_d3adfed2a04461 4-5,7,14,34,38,41-44,51,54-55,72-80,89
+  s_1ddc9e813d88e8::t_3a2d4283974336 27,33,39-40
+  s_1ddc9e813d88e8::t_fbfe8c32242849 53
+  s_1ddc9e813d88e8::t_34abe849375f21 15
+meme_games/apps/codenames/actions.py
+  s_1ddc9e813d88e8::t_9aba612b21b612 31-32,47-48,52-53,57-58,65-66,81-82
+meme_games/apps/agent_api/routes.py
+  s_1ddc9e813d88e8::t_8db32f10cfe0b9 141,143
+  s_1ddc9e813d88e8::t_e36d80c9ff2d25 129
+  s_1ddc9e813d88e8::t_73f4bd08974a48 9,84-86,88-94,100,117,119-120
+  s_1ddc9e813d88e8::t_5e9cb0e1ccf5df 145
+  s_1ddc9e813d88e8::t_4f84cc2464a7bd 136-137,142
+  s_1ddc9e813d88e8::t_abfb450fd4dd3c 76-78,83,98-99,101-102
+  s_1ddc9e813d88e8::t_a1e3041f0a850d 169,171,173
+  s_1ddc9e813d88e8::t_c460febd1d11a2 79-82,87,108-110
+  s_1ddc9e813d88e8::t_8f24d843bb4ec2 103-107
+meme_games/apps/alias/components/team.py
+  s_1ddc9e813d88e8::t_fe82c622b08bb6 25
+meme_games/apps/codenames/domain.py
+  s_1ddc9e813d88e8::t_7102d7a3fc21a8 61-62,122,143,166
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "fc381c6974b813f1742c6b36f2a223e29d0fb6be",
+  "prompts": {},
+  "humans": {
+    "h_cec284cdd16cba": {
+      "author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_1ddc9e813d88e8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "955912fa-9be5-43c6-aeb3-2d3ff126a956",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
