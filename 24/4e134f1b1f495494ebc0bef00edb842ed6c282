@@ -1,0 +1,31 @@
+meme_games/apps/whoami/routes.py
+  s_0ded5a56d630fe::t_49f0b7f2a216a8 52
+tests/test_whoami.py
+  s_0ded5a56d630fe::t_e66503ad03000a 3,16,191-203
+  s_0ded5a56d630fe::t_49f0b7f2a216a8 184,190
+meme_games/apps/whoami/components/notes.py
+  s_0ded5a56d630fe::t_49f0b7f2a216a8 31-33,35
+static/scripts/whoami/board.js
+  s_0ded5a56d630fe::t_49f0b7f2a216a8 8,62-71,89-101,104-105,120-123
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "244e134f1b1f495494ebc0bef00edb842ed6c282",
+  "prompts": {},
+  "humans": {
+    "h_cec284cdd16cba": {
+      "author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_0ded5a56d630fe": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffd32-e084-7e41-84cc-3f5b3e631757",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
