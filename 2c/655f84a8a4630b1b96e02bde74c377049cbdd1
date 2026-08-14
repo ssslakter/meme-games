@@ -1,0 +1,34 @@
+meme_games/apps/whoami/components/game.py
+  s_0ded5a56d630fe::t_7689da37f5517e 62
+static/scripts/whoami/draggable.js
+  s_0ded5a56d630fe::t_7689da37f5517e 9
+  s_0ded5a56d630fe::t_dc49ad8e5c7501 13
+meme_games/apps/whoami/components/notes.py
+  s_0ded5a56d630fe::t_7689da37f5517e 34-35
+tests/test_whoami.py
+  s_0ded5a56d630fe::t_7689da37f5517e 10,180-181,183-185
+static/styles/app.css
+  s_0ded5a56d630fe::t_7689da37f5517e 256-257,262-276
+  s_0ded5a56d630fe::t_674d863c2a6587 277
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "2c655f84a8a4630b1b96e02bde74c377049cbdd1",
+  "prompts": {},
+  "humans": {
+    "h_cec284cdd16cba": {
+      "author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_0ded5a56d630fe": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffd32-e084-7e41-84cc-3f5b3e631757",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
