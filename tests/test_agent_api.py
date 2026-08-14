@@ -177,6 +177,12 @@ def test_whoami_agent_boundary_flow_is_personalized(monkeypatch):
         assert {'whoami_ask_question', 'whoami_end_turn'} <= set(state['available_actions'])
         assert post(client, 'action', handle, action='whoami_ask_question',
                     arguments={'question': 'Am I electronic?'}).json()['ok']
+        asyncio.run(whoami_actions.answer_question(lobby, host, 'no'))
+        blocked = post(client, 'action', handle, action='whoami_ask_question',
+                       arguments={'question': 'Am I alive?'})
+        assert blocked.status_code == 409
+        assert blocked.json()['message'] == 'Your turn must end after a no answer'
+        assert 'whoami_ask_question' not in post(client, 'state', handle).json()['available_actions']
         assert post(client, 'action', handle, action='whoami_write_note',
                     arguments={'text': 'Possibly a machine'}).json()['ok']
         asyncio.run(whoami_actions.write_note(lobby, host, 'Shared human deduction'))

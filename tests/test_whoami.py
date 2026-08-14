@@ -2,10 +2,11 @@
 from fasthtml.common import to_xml
 
 import asyncio
+import pytest
 
-from meme_games.apps.whoami.actions import whoami_actions
+from meme_games.apps.whoami.actions import ActionRejected, whoami_actions
 from meme_games.apps.whoami.components.cards import PlayerCard, PlayerLabelText
-from meme_games.apps.whoami.components.game import Game, TopicBanner
+from meme_games.apps.whoami.components.game import Game, TopicBanner, TurnStatus
 from meme_games.apps.whoami.components.notes import NotesCard, QuestionPanel
 from meme_games.apps.whoami.domain import WHOAMI, WhoAmIPhase, WhoAmIState
 from meme_games.core import DI
@@ -25,15 +26,13 @@ def _lobby(id):
     return lobby, host_member, other
 
 
-def test_card_and_label_positions_survive_a_restart():
+def test_label_position_survives_persistence():
     lobby, host, _ = _lobby('wai1')
-    lobby.state.player(host.uid).set_card_pos(410, 120)
     lobby.state.player(host.uid).set_label_transform(dict(x=-30, y=-90, width=200, height=90))
 
     spec = GAME_REGISTRY[WHOAMI]
     restored: WhoAmIState = spec.from_dict(spec.to_dict(lobby.state))
 
-    assert restored.player(host.uid).card_pos.x == 410
     assert restored.player(host.uid).label_tfm.y == -90
     assert restored.player(host.uid).label_tfm.width == 200
 
@@ -61,14 +60,14 @@ def test_turn_and_question_survive_persistence():
     assert restored.question.text == 'Am I fictional?'
 
 
-def test_state_written_before_positions_existed_still_loads():
+def test_old_state_and_retired_card_positions_still_load():
     spec = GAME_REGISTRY[WHOAMI]
-    old = {'players': {'u1': {'label_text': 'Shrek', 'label_tfm': None, 'notes': 'green'}}}
+    old = {'players': {'u1': {'label_text': 'Shrek', 'label_tfm': None,
+                              'card_pos': {'x': 10, 'y': 20}, 'notes': 'green'}}}
 
     restored: WhoAmIState = spec.from_dict(old)
 
     assert restored.player('u1').label_text == 'Shrek'
-    assert restored.player('u1').card_pos is None
     assert not restored.config.private_notes
 
 
@@ -152,7 +151,7 @@ def test_host_joining_last_asks_last_and_locked_board_has_no_join_card():
     assert 'Join the game' not in to_xml(Game(User('spectator', 'Spectator'), lobby))
 
 
-def test_question_permissions_latest_only_and_manual_turn_end():
+def test_question_limits_and_manual_turn_end():
     lobby, first, second = _lobby('wai-questions')
     lobby.state.player(first.uid).set_label('First')
     lobby.state.player(second.uid).set_label('Second')
@@ -161,11 +160,27 @@ def test_question_permissions_latest_only_and_manual_turn_end():
     assert lobby.state.ask(first, 'Am I alive?')
     assert not lobby.state.ask(first, 'Another?')
     assert not lobby.state.answer(first, 'yes')
-    assert lobby.state.answer(second, 'no')
+    assert lobby.state.answer(second, 'yes')
     assert lobby.state.ask(first, 'Am I fictional?')
-    assert lobby.state.question.text == 'Am I fictional?'
+    assert lobby.state.answer(second, 'not_sure')
+    assert lobby.state.ask(first, 'Am I an animal?')
+    assert lobby.state.answer(second, 'yes')
+    with pytest.raises(ActionRejected, match='already asked 3 questions'):
+        asyncio.run(whoami_actions.ask_question(lobby, first, 'One more?'))
     assert lobby.state.end_turn(first)
-    assert lobby.state.current_turn_uid == second.uid and lobby.state.question is None
+    assert lobby.state.current_turn_uid == second.uid and lobby.state.questions_asked == 0
+    assert lobby.state.ask(second, 'Am I alive?')
+    assert lobby.state.answer(first, 'no')
+    with pytest.raises(ActionRejected, match='must end after a no answer'):
+        asyncio.run(whoami_actions.ask_question(lobby, second, 'One more?'))
+
+
+def test_cards_are_static_and_personal_notes_are_movable():
+    lobby, host, _ = _lobby('wai-simple-board')
+    markup = to_xml(Game(host, lobby))
+
+    assert 'draggable-panel' in markup
+    assert 'data-drag="card"' not in markup
 
 
 def test_agent_boundaries_render_controls_but_human_pair_does_not():
@@ -178,6 +193,7 @@ def test_agent_boundaries_render_controls_but_human_pair_does_not():
     human_turn = to_xml(QuestionPanel(human, human, lobby))
     assert 'Ask a yes/no question' in human_turn
     lobby.state.current_turn_uid = agent.uid
+    assert 'End turn' not in to_xml(TurnStatus(agent, lobby))
     lobby.state.ask(agent, 'Am I a person?')
     agent_turn_for_answerer = to_xml(QuestionPanel(human, agent, lobby))
     assert '>Yes<' in agent_turn_for_answerer and '>Not sure<' in agent_turn_for_answerer
@@ -207,12 +223,11 @@ def test_topic_banner_uses_everything_fallback():
     assert '>Movie characters<' in to_xml(TopicBanner(lobby))
 
 
-def test_restart_preserves_topic_positions_and_settings_only():
+def test_restart_preserves_topic_and_settings_only():
     lobby, host, other = _lobby('wai-restart')
     state = lobby.state
     state.config.topic = 'Cartoon characters'
     state.config.private_notes = True
-    state.player(host.uid).set_card_pos(20, 30)
     state.player(host.uid).set_label('Shrek')
     state.player(host.uid).set_notes('green')
     state.player(other.uid).set_label('Donkey')
@@ -222,5 +237,4 @@ def test_restart_preserves_topic_positions_and_settings_only():
 
     assert state.phase == WhoAmIPhase.WAITING and not lobby.locked
     assert state.config.topic == 'Cartoon characters' and state.config.private_notes
-    assert state.player(host.uid).card_pos.x == 20
     assert state.player(host.uid).label_text == state.player(host.uid).notes == ''

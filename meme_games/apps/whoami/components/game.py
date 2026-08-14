@@ -37,13 +37,13 @@ def QuestionUpdates(reciever, lobby):
 
 def Game(reciever: LobbyMember | User, lobby: Lobby, **kwargs):
     players = [p for p in lobby.sorted_members() if p.is_player]
-    cards = [PlayerCard(reciever, p, lobby, i) for i, p in enumerate(players)]
-    if not is_player(reciever) and not lobby.locked: cards.append(NewPlayerCard(len(players)))
+    cards = [PlayerCard(reciever, player, lobby) for player in players]
+    if not is_player(reciever) and not lobby.locked: cards.append(NewPlayerCard())
     return Div(
         Div(TopicBanner(lobby), TurnStatus(reciever, lobby),
-            cls='mg-whoami-header sticky top-16 z-30 space-y-2 py-3'),
-        Div(*cards, id='players', cls='mg-board', data_ui='board',
-            style=f'height:{board_height(len(cards))}px'),
+            cls='mg-whoami-header space-y-1'),
+        Div(*cards, id='players', cls='mg-board', data_ui='board'),
+        NotesBlock(reciever, lobby),
         BoardTransform(),
         id='game',
         cls=stringify(('mg-game mg-game-whoami', kwargs.pop('cls', ''))),

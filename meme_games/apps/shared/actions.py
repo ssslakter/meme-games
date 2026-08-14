@@ -31,7 +31,7 @@ class GameActions:
         rejected='Action is not legal now',
     ) -> ActionResult:
         async with self._locks[lobby.id]:
-            if not mutate(): raise ActionRejected(rejected)
+            if not mutate(): raise ActionRejected(rejected() if callable(rejected) else rejected)
             self.lobbies.update(lobby)
             event = await lobby_events.publish(lobby, topic)
             return ActionResult(True, message, event.revision)

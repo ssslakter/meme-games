@@ -54,9 +54,10 @@ class WhoAmIActions(GameActions):
         return await self._change(lobby, mutate, 'Game restarted', 'game', 'Only the host can restart')
 
     async def ask_question(self, lobby: Lobby, member: LobbyMember, text: str):
+        state: WhoAmIState = lobby.state
         return await self._change(
-            lobby, lambda: lobby.state.ask(member, text), 'Question asked', 'question',
-            'Only the active player can ask, and the current question must be answered first')
+            lobby, lambda: state.ask(member, text), 'Question asked', 'question',
+            lambda: state.ask_rejection(member, text) or 'Question is not legal now')
 
     async def answer_question(self, lobby: Lobby, member: LobbyMember, answer: str):
         return await self._change(

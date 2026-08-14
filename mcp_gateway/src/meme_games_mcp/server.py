@@ -114,7 +114,7 @@ def build_gateway(settings: Settings, client=None):
 
     @mcp.tool()
     async def whoami_ask_question(player_session: str, question: str) -> ToolResult:
-        """Ask a yes/no question when it is your Who Am I turn."""
+        """Ask up to three yes/no questions on your turn. A no answer ends further questioning."""
         return await act(player_session, 'whoami_ask_question', {'question': question})
 
     @mcp.tool()
@@ -130,7 +130,7 @@ def build_gateway(settings: Settings, client=None):
 
     @mcp.tool()
     async def whoami_end_turn(player_session: str) -> ToolResult:
-        """End your Who Am I turn and advance to the next player."""
+        """Advance after a no answer, three questions, or whenever you choose to end your turn."""
         return await act(player_session, 'whoami_end_turn')
 
     security = TransportSecuritySettings(

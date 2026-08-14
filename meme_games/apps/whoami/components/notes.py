@@ -6,7 +6,6 @@ from .basic import *
 
 
 def NotesCard(reciever: LobbyMember | User, owner: LobbyMember, data: PlayerNotes, state: WhoAmIState):
-    '''A fixed-size pad clipped to the card; hovering it lifts the pad to show the whole note.'''
     from ..routes import notes
     if not notes_visible(reciever, owner, state): return None
     own = reciever == owner
@@ -17,9 +16,22 @@ def NotesCard(reciever: LobbyMember | User, owner: LobbyMember, data: PlayerNote
     return Div(
         Div('Notes' if own else Span(MemberName(reciever, owner), "'s notes"), cls='mg-notes-title'),
         body,
-        style=f'top:{CARD_H + 8}px; width:{NOTES_W}px; height:{NOTES_H}px;',
         cls='mg-notes', data_notes=owner.uid, data_ui='player-notes', data_nodrag='true',
     )
+
+
+def SharedNotesCard(reciever: LobbyMember | User, owner: LobbyMember, data: PlayerNotes, state: WhoAmIState):
+    if reciever == owner: return None
+    note = NotesCard(reciever, owner, data, state)
+    if not note: return None
+    return Div(UkIcon('file-text', width=24, height=24), note,
+               cls='mg-shared-notes', title=f"{owner.name}'s notes", data_nodrag='true')
+
+
+def NotesBlock(reciever: LobbyMember | User, lobby: Lobby):
+    if not isinstance(reciever, LobbyMember) or not reciever.is_player: return None
+    note = NotesCard(reciever, reciever, lobby.state.player(reciever.uid), lobby.state)
+    return Div(note, id='notes-block', cls='draggable-panel mg-floating-notes')
 
 
 def QuestionPanel(reciever: LobbyMember | User, owner: LobbyMember, lobby: Lobby, **kwargs):
@@ -33,7 +45,7 @@ def QuestionPanel(reciever: LobbyMember | User, owner: LobbyMember, lobby: Lobby
         question = state.question
         can_type = (structured and isinstance(reciever, LobbyMember) and reciever == owner and
                     owner.user.kind != 'agent' and answerer and answerer.user.kind == 'agent' and
-                    (not question or question.answer is not None))
+                    not state.ask_rejection(owner, '?'))
         ask_form = (Form(
             Input(name='text', required=True, maxlength=QUESTION_MAX, autocomplete='off', placeholder='Ask a yes/no question',
                   cls='uk-input min-w-0 flex-1'),

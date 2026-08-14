@@ -23,7 +23,7 @@ class WhoAmIAgentGame(AgentGame):
         if target_uid: actions.append('whoami_write_card')
         actions.append('whoami_write_note')
         if state.phase == WhoAmIPhase.PLAYING and member.uid == state.current_turn_uid:
-            if not state.question or state.question.answer is not None:
+            if not state.ask_rejection(member, '?'):
                 actions.append('whoami_ask_question')
             actions.append('whoami_end_turn')
         if state.question and state.question.answer is None and state.question.answerer_uid == member.uid:
@@ -56,6 +56,7 @@ class WhoAmIAgentGame(AgentGame):
                                       'text': state.player(target_uid).label_text} if target_uid else None},
             'players': [player_data(uid) for uid in order if uid in lobby.members],
             'question': asdict(state.question) if state.question else None,
+            'questions_asked': state.questions_asked,
             'available_actions': self.available_actions(member, state, target_uid),
         }
 

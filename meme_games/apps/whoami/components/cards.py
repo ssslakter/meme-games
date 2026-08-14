@@ -34,30 +34,27 @@ def PlayerLabelFT(r: LobbyMember | User, owner: LobbyMember, data: PlayerNotes, 
     )
 
 
-def PlayerCard(reciever: LobbyMember | User, p: LobbyMember, lobby: Lobby, index: int = 0):
+def PlayerCard(reciever: LobbyMember | User, p: LobbyMember, lobby: Lobby):
     if not p.is_player: return
     state: WhoAmIState = lobby.state
     data = state.player(p.uid)
-    pos = data.card_pos or default_card_pos(index)
     return PlayerCardBase(
         Div(AvatarBig(p.user, cls='h-full w-full bg-cover bg-center bg-no-repeat dark:brightness-75'),
             cls='mg-card-face'),
         Div(MemberName(reciever, p), ' ✪' if lobby.host == p else None, cls='mg-card-name'),
         PlayerLabelFT(reciever, p, data, lobby),
         QuestionPanel(reciever, p, lobby),
-        NotesCard(reciever, p, data, state),
-        style=f'left:{pos.x}px; top:{pos.y}px; width:{CARD_W}px; height:{CARD_H}px;',
-        data_drag='card', data_uid=p.uid, data_card=p.uid,
+        SharedNotesCard(reciever, p, data, state),
+        style=f'width:{CARD_W}px; height:{CARD_H}px;', data_card=p.uid,
     )
 
 
-def NewPlayerCard(index: int = 0):
+def NewPlayerCard():
     from ..routes import play
-    pos = default_card_pos(index)
     return PlayerCardBase(
         Div('+', cls='mg-new-player-icon'),
         Div('Join the game', cls='mg-card-name'),
-        style=f'left:{pos.x}px; top:{pos.y}px; width:{CARD_W}px; height:{CARD_H}px;',
+        style=f'width:{CARD_W}px; height:{CARD_H}px;',
         cls='mg-new-player cursor-pointer',
         id='new-player-card',
         hx_post=play,

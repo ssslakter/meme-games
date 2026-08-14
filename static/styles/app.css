@@ -23,7 +23,6 @@
 
 [data-page="whoami"] .mg-page-content {
   padding-inline: 0;
-  padding-bottom: 10rem; /* room for an expanded note to paint into, fixed so it never reflows */
 }
 
 @media (min-width: 1280px) {
@@ -40,14 +39,25 @@
 }
 
 .mg-board {
-  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4rem 2rem;
   width: 100%;
   min-height: calc(100vh - 8rem);
+  padding: 11rem 1rem 4rem;
 }
 
 .mg-whoami-header {
-  background: linear-gradient(to bottom, hsl(var(--background) / .95), hsl(var(--background) / .72), transparent);
+  position: fixed;
+  top: 3.5rem;
+  right: 0;
+  left: 0;
+  z-index: 30;
+  padding: .5rem 1rem;
   pointer-events: none;
+  text-shadow: 0 1px 3px hsl(var(--background)), 0 0 8px hsl(var(--background));
 }
 
 .mg-whoami-header button { pointer-events: auto; }
@@ -59,7 +69,7 @@
 
 .mg-question-bubble {
   position: absolute;
-  bottom: calc(100% + 7rem);
+  bottom: calc(100% + .75rem);
   left: 50%;
   z-index: 12;
   width: min(24rem, 90vw);
@@ -92,14 +102,11 @@
   border-radius: var(--radius, .75rem);
   background-color: hsl(var(--card));
   box-shadow: 0 8px 24px rgb(0 0 0 / .18);
-  cursor: grab;
   user-select: none;
 }
 
 .mg-player-card:hover { z-index: 20; }
-.mg-player-card.mg-dragging,
 .mg-player-card:has(.mg-dragging) { z-index: 100; }
-.mg-player-card.mg-dragging { cursor: grabbing; box-shadow: 0 16px 36px rgb(0 0 0 / .3); }
 
 .mg-card-face {
   flex: 1;
@@ -199,24 +206,15 @@
 /*--------------------------------- Notes -----------------------------------*/
 
 .mg-notes {
-  position: absolute;
-  left: 0;
-  z-index: 4;
   display: flex;
   flex-direction: column;
+  width: 17.5rem;
+  height: 11rem;
   overflow: hidden;
   border: 1px solid hsl(var(--border));
   border-radius: .5rem;
   background: hsl(var(--card));
   cursor: default;
-}
-
-.mg-notes:hover,
-.mg-notes:focus-within {
-  z-index: 40;
-  height: auto !important;
-  min-height: 9rem;
-  box-shadow: 0 12px 28px rgb(0 0 0 / .28);
 }
 
 .mg-notes-title {
@@ -252,3 +250,35 @@
 }
 
 .mg-notes .mg-notes-input:focus { outline: none; }
+
+.mg-floating-notes {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 45;
+  transform: translate(-50%, -50%);
+  cursor: grab;
+  box-shadow: 0 12px 28px rgb(0 0 0 / .28);
+}
+
+.mg-shared-notes {
+  position: absolute;
+  top: .5rem;
+  right: .5rem;
+  z-index: 30;
+  padding: .35rem;
+  border-radius: .4rem;
+  background: hsl(var(--background) / .85);
+  cursor: default;
+}
+
+.mg-shared-notes > .mg-notes {
+  position: absolute;
+  top: 0;
+  right: 100%;
+  display: none;
+  box-shadow: 0 12px 28px rgb(0 0 0 / .28);
+}
+
+.mg-shared-notes:hover > .mg-notes,
+.mg-shared-notes:focus-within > .mg-notes { display: flex; }

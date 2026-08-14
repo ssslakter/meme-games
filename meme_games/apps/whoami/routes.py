@@ -140,21 +140,11 @@ async def edit_label_position(sess, owner_uid: str, **kwargs):
     await notify_all(lobby, update, json=True, but=p)
 
 
-async def move_card(sess, owner_uid: str, x: int, y: int):
-    lobby, p, owner = _board_member(sess, owner_uid)
-    if not lobby: return
-    lobby.state.player(owner.uid).set_card_pos(x, y)
-    lobby_service.update(lobby)
-    def update(*_): return dict(type='card_position', owner_uid=owner.uid, x=x, y=y)
-    await notify_all(lobby, update, json=True, but=p)
-
-
 async def on_message(sess, data):
     try:
         msg_type = data.pop('type')
         if msg_type == 'label_text': await edit_label_text(sess, **data)
         elif msg_type == 'label_position': await edit_label_position(sess, **data)
-        elif msg_type == 'card_position': await move_card(sess, **data)
     except Exception as e: logger.error(e)
 
 
