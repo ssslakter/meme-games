@@ -7,7 +7,7 @@ import pytest
 from meme_games.apps.whoami.actions import ActionRejected, whoami_actions
 from meme_games.apps.whoami.components.cards import PlayerCard, PlayerLabelText
 from meme_games.apps.whoami.components.game import Game, TopicBanner, TurnStatus
-from meme_games.apps.whoami.components.notes import NotesCard, QuestionPanel
+from meme_games.apps.whoami.components.notes import NotesBlock, NotesCard, QuestionPanel
 from meme_games.apps.whoami.domain import WHOAMI, WhoAmIPhase, WhoAmIState
 from meme_games.core import DI
 from meme_games.domain import GAME_REGISTRY, LobbyService, User
@@ -177,10 +177,12 @@ def test_question_limits_and_manual_turn_end():
 
 def test_cards_are_static_and_personal_notes_are_movable():
     lobby, host, _ = _lobby('wai-simple-board')
-    markup = to_xml(Game(host, lobby))
+    board = to_xml(Game(host, lobby))
+    notes = to_xml(NotesBlock(host, lobby))
 
-    assert 'draggable-panel' in markup
-    assert 'data-drag="card"' not in markup
+    assert 'draggable-panel' not in board
+    assert 'data-drag="card"' not in board
+    assert 'draggable-panel' in notes and 'mg-notes-drag-handle' in notes
 
 
 def test_agent_boundaries_render_controls_but_human_pair_does_not():

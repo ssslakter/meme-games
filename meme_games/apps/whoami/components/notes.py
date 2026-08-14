@@ -31,7 +31,8 @@ def SharedNotesCard(reciever: LobbyMember | User, owner: LobbyMember, data: Play
 def NotesBlock(reciever: LobbyMember | User, lobby: Lobby):
     if not isinstance(reciever, LobbyMember) or not reciever.is_player: return None
     note = NotesCard(reciever, reciever, lobby.state.player(reciever.uid), lobby.state)
-    return Div(note, id='notes-block', cls='draggable-panel mg-floating-notes')
+    return Div(Div(UkIcon('move', width=18, height=18), ' Drag notes', cls='mg-notes-drag-handle'),
+               note, id='notes-block', cls='draggable-panel mg-floating-notes')
 
 
 def QuestionPanel(reciever: LobbyMember | User, owner: LobbyMember, lobby: Lobby, **kwargs):

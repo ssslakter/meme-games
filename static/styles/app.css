@@ -253,13 +253,27 @@
 
 .mg-floating-notes {
   position: fixed;
-  top: 50%;
-  left: 50%;
+  bottom: 1rem;
+  left: 1rem;
   z-index: 45;
-  transform: translate(-50%, -50%);
-  cursor: grab;
   box-shadow: 0 12px 28px rgb(0 0 0 / .28);
 }
+
+.mg-notes-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: .35rem .5rem;
+  border: 1px solid hsl(var(--border));
+  border-bottom: 0;
+  border-radius: .5rem .5rem 0 0;
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+  cursor: grab;
+  user-select: none;
+}
+
+.mg-floating-notes > .mg-notes { border-radius: 0 0 .5rem .5rem; }
 
 .mg-shared-notes {
   position: absolute;

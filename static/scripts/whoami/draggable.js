@@ -6,10 +6,11 @@
         document.querySelectorAll('.draggable-panel:not([data-draggable-ready])').forEach((panel) => {
             panel.dataset.draggableReady = 'true';
             panel.addEventListener('mousedown', (event) => {
-                if (event.button !== 0 || event.target.closest('textarea, input, button, a')) return;
+                if (event.button !== 0 || !event.target.closest('.mg-notes-drag-handle')) return;
                 event.preventDefault();
                 const rect = panel.getBoundingClientRect();
                 panel.style.transform = 'none';
+                panel.style.bottom = 'auto';
                 panel.style.left = `${rect.left}px`;
                 panel.style.top = `${rect.top}px`;
                 panel.style.cursor = 'grabbing';

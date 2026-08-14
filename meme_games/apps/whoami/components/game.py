@@ -43,7 +43,6 @@ def Game(reciever: LobbyMember | User, lobby: Lobby, **kwargs):
         Div(TopicBanner(lobby), TurnStatus(reciever, lobby),
             cls='mg-whoami-header space-y-1'),
         Div(*cards, id='players', cls='mg-board', data_ui='board'),
-        NotesBlock(reciever, lobby),
         BoardTransform(),
         id='game',
         cls=stringify(('mg-game mg-game-whoami', kwargs.pop('cls', ''))),
@@ -60,6 +59,7 @@ def MainBlock(reciever: LobbyMember | User, lobby: Lobby):
         GameShell(
             Game(reciever, lobby),
             LobbyTools(reciever, lobby, WhoAmISettings(reciever, lobby))),
+        NotesBlock(reciever, lobby),
         navbar_args=[A("Monitor", href=monitor.to(), cls=AT.text)],
         hx_ext="ws",
         ws_connect=ws_url,
