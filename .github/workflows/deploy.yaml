@@ -21,6 +21,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository_owner }}/meme-games
+          tags: type=raw,value=latest
       - uses: docker/build-push-action@v6
         with:
           context: .
@@ -33,6 +34,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository_owner }}/meme-games-mcp
+          tags: type=raw,value=latest
       - uses: docker/build-push-action@v6
         with:
           context: ./mcp_gateway
