@@ -1,4 +1,4 @@
-name: Build and Deploy
+name: Build
 
 on:
   push:
@@ -29,29 +29,14 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Upload docker-compose.yml
-        uses: actions/upload-artifact@v4
+      - id: mcp_meta
+        uses: docker/metadata-action@v5
         with:
-          name: docker-compose.yml
-          path: docker-compose.yml
-
-  deploy:
-    needs: build
-    if: ${{ ! contains(github.event.head_commit.message, '[no-deploy]') }}
-    runs-on: self-hosted
-    steps:
-      - name: Download docker-compose.yml
-        uses: actions/download-artifact@v4
+          images: ghcr.io/${{ github.repository_owner }}/meme-games-mcp
+      - uses: docker/build-push-action@v6
         with:
-          name: docker-compose.yml
-
-      - name: Stop and remove old containers
-        run: docker compose down --remove-orphans
-
-      - name: Deploy with Docker Compose
-        run: docker compose up -d
-
-      - name: Clean up
-        if: always()
-        run: |
-          docker image prune -af
+          context: ./mcp_gateway
+          push: true
+          tags: ${{ steps.mcp_meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

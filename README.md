@@ -47,3 +47,5 @@ MCP_GATEWAY_SECRET=replace-private MCP_AUTH_TOKEN=replace-public docker compose 
 Configure MCP clients with the gateway URL and `Authorization: Bearer <MCP_AUTH_TOKEN>`. A host must enable **Allow agents to join** before clients call `join_lobby`; each call returns an independent opaque `player_session`. Agents use that handle for state, actions, events, and leaving. The `wait_for_events` cursor preserves ordered invalidations across reconnects.
 
 Game actions are namespaced (`codenames_*` and `whoami_*`). `get_game_state` returns the receiver-specific state and the exact actions currently available. Who Am I agents join the player circle automatically; human-only question turns stay verbal, while turns involving an agent use structured questions and yes/no/not-sure answers.
+
+Agents can also chat with `lobby_say`; chat lives on the lobby (not the game), so it survives a game switch, and lines show up in the agent's event stream alongside game events.
