@@ -28,10 +28,23 @@ style = Style(
 )
 
 hdrs = [
+    Meta(charset="utf-8"),
+    Meta(name="viewport", content="width=device-width, initial-scale=1, viewport-fit=cover"),
     Meta(name="robots", content="noindex, nofollow"),
     Script('htmx.config.allowNestedOobSwaps=false;'),
     Link(rel="icon", href="/static/images/favicon.ico"),
-    Theme.yellow.headers(radii=ThemeRadii.lg, shadows=ThemeShadows.lg),
+    Theme.yellow._create_headers({
+        'franken_css': '/static/scripts/imports/franken-ui-core.css',
+        'franken_js_core': '/static/scripts/imports/franken-ui-core.js',
+        'franken_icons': '/static/scripts/imports/franken-ui-icon.js',
+        'tailwind': '/static/scripts/imports/tailwind.js',
+        'daisyui': '/static/scripts/imports/daisyui.css',
+    }, radii=ThemeRadii.lg, shadows=ThemeShadows.lg),
+    Script(src='/static/scripts/imports/htmx.js'),
+    Script(src='/static/scripts/imports/fasthtml.js'),
+    Script(src='/static/scripts/imports/surreal.js'),
+    Script(src='/static/scripts/imports/css-scope-inline.js'),
+    Script(src='/static/scripts/imports/htmx-ext-ws.js'),
     Script(src='/static/scripts/imports/_hyperscript.min.js'),
     Script(src='/static/scripts/imports/live2d/live2dcubismcore.min.js'),
     Script(src='/static/scripts/imports/live2d/live2d.min.js'),
@@ -58,7 +71,7 @@ async def lifespan(app):
 
 app = FastHTML(before=bwares, hdrs=hdrs,
                    lifespan=lifespan,
-                   exts='ws',
+                   default_hdrs=False,
                    sess_cls=middlware_cls,
                    key_fname=str(data_dir/'.sesskey'),
                    exception_handlers=exception_handlers,
