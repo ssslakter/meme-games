@@ -1,0 +1,41 @@
+static/scripts/imports/fasthtml.js
+  s_ad0d51ce049c8a::t_7fae6882249bd4 1-52
+static/scripts/imports/surreal.js
+  s_ad0d51ce049c8a::t_7fae6882249bd4 1-328
+static/scripts/imports/htmx.js
+  s_ad0d51ce049c8a::t_7fae6882249bd4 1-5332
+meme_games/main.py
+  s_ad0d51ce049c8a::t_db94c5f2f3c0c9 31-32,43-47
+  s_ad0d51ce049c8a::t_a4408abd1666fc 36-42
+  s_ad0d51ce049c8a::t_eadaa1f2c8a2df 74
+static/scripts/imports/css-scope-inline.js
+  s_ad0d51ce049c8a::t_7fae6882249bd4 1-15
+static/scripts/imports/daisyui.css
+  s_ad0d51ce049c8a::t_5104fc6daefa2a 1-20
+static/scripts/imports/franken-ui-core.css
+  s_ad0d51ce049c8a::t_5104fc6daefa2a 1
+static/scripts/imports/franken-ui-icon.js
+  s_ad0d51ce049c8a::t_5104fc6daefa2a 1-4
+static/scripts/imports/franken-ui-core.js
+  s_ad0d51ce049c8a::t_5104fc6daefa2a 1-406
+static/scripts/imports/tailwind.js
+  s_ad0d51ce049c8a::t_5104fc6daefa2a 1-83
+static/scripts/imports/htmx-ext-ws.js
+  s_ad0d51ce049c8a::t_7fae6882249bd4 1-472
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "9e8c1ade2449924d71101fe9f3334c9a785c0d09",
+  "prompts": {},
+  "sessions": {
+    "s_ad0d51ce049c8a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fee561f7-21a5-4f4e-93cd-f6ebbf985a21",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
