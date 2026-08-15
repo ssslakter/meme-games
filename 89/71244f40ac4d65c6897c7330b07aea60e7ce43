@@ -1,0 +1,24 @@
+README.md
+  s_ad0d51ce049c8a::t_c8d8b4f78b1da2 50-51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "8971244f40ac4d65c6897c7330b07aea60e7ce43",
+  "prompts": {},
+  "humans": {
+    "h_cec284cdd16cba": {
+      "author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_ad0d51ce049c8a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fee561f7-21a5-4f4e-93cd-f6ebbf985a21",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
