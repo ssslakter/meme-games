@@ -58,7 +58,7 @@
 .mg-lobby-talk .mg-chat-messages {
   flex: 1;
   max-height: none;
-  min-height: 8rem;
+  min-height: 12rem;
 }
 
 /* A face per line turns the roster into the tallest thing in the rail, and the name
@@ -72,8 +72,8 @@
   display: flex;
   flex-direction: column;
   gap: .35rem;
-  max-height: 14rem;
-  min-height: 4rem;
+  max-height: 20rem;
+  min-height: 6rem;
   overflow-y: auto;
   padding: .5rem;
   border: 1px solid hsl(var(--border));
@@ -211,10 +211,10 @@
     left: 1rem;
     z-index: 40;
     width: 20rem;
-    max-height: 45vh;
+    max-height: 55vh;
   }
 
-  [data-page="whoami"] .mg-lobby-talk .mg-chat-messages { min-height: 5rem; }
+  [data-page="whoami"] .mg-lobby-talk .mg-chat-messages { min-height: 8rem; }
 }
 
 .mg-board {

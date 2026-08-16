@@ -15,8 +15,8 @@ def ChatLine(reciever, message: ChatMessage, **kwargs):
     return Div(
         # server-local time to start with; localTimes() restates it in the reader's own
         # zone, which is not the server's once the lobby link travels
-        Time(message.at.strftime('%H:%M'), datetime=message.at.isoformat(),
-             cls='mg-chat-time', title=message.at.strftime('%Y-%m-%d %H:%M')),
+        Time(message.at.strftime('%H:%M:%S'), datetime=message.at.isoformat(),
+             cls='mg-chat-time', title=message.at.strftime('%Y-%m-%d %H:%M:%S')),
         Span(message.name, cls='mg-chat-author'),
         Span(message.text, cls='mg-chat-text'),
         cls=f"mg-chat-line{' mg-chat-own' if own else ''}", data_ui='chat-line', **kwargs)

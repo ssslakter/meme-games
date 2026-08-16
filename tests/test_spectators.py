@@ -85,7 +85,7 @@ def test_chat_lines_carry_a_readable_and_a_machine_timestamp():
 
     markup = to_xml(ChatLine(speaker, message))
 
-    assert message.at.strftime('%H:%M') in markup
+    assert message.at.strftime('%H:%M:%S') in markup
     # the ISO stamp is what lets the reader's browser restate it in their own zone
     assert f'datetime="{message.at.isoformat()}"' in markup
     assert 'mg-chat-time' in markup

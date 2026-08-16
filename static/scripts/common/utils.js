@@ -18,8 +18,8 @@ function localTimes() {
         const at = new Date(el.dateTime);
         if (isNaN(at)) continue;
         // 24h regardless of locale: it matches the server-rendered fallback, so the
-        // stamp does not visibly reshuffle on load, and it stays five characters wide
-        el.textContent = at.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+        // stamp does not visibly reshuffle on load
+        el.textContent = at.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
         el.title = at.toLocaleString();
     }
 }
