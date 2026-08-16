@@ -32,7 +32,6 @@ hdrs = [
     Meta(charset="utf-8"),
     Meta(name="viewport", content="width=device-width, initial-scale=1, viewport-fit=cover"),
     Meta(name="robots", content="noindex, nofollow"),
-    Script('htmx.config.allowNestedOobSwaps=false;'),
     Link(rel="icon", href="/static/images/favicon.ico"),
     Theme.yellow._create_headers({
         'franken_css': '/static/scripts/imports/franken-ui-core.css',
@@ -42,6 +41,7 @@ hdrs = [
         'daisyui': '/static/scripts/imports/daisyui.css',
     }, radii=ThemeRadii.lg, shadows=ThemeShadows.lg),
     Script(src='/static/scripts/imports/htmx.js'),
+    Script('htmx.config.allowNestedOobSwaps=false;'),
     Script(src='/static/scripts/imports/fasthtml.js'),
     Script(src='/static/scripts/imports/surreal.js'),
     Script(src='/static/scripts/imports/css-scope-inline.js'),
