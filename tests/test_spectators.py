@@ -74,3 +74,18 @@ def test_host_can_return_to_spectators_after_joining_whoami():
 
     service.spectate(host, lobby)
     assert not host.is_player
+
+
+def test_chat_lines_carry_a_readable_and_a_machine_timestamp():
+    from meme_games.apps.shared.chat import ChatLine
+
+    lobby = service.create_lobby(DI.get(UserManager).create(name='talker'), 'chat-clock', BASIC_GAME)
+    speaker = lobby.host
+    message = lobby.say(speaker, 'hello there')
+
+    markup = to_xml(ChatLine(speaker, message))
+
+    assert message.at.strftime('%H:%M') in markup
+    # the ISO stamp is what lets the reader's browser restate it in their own zone
+    assert f'datetime="{message.at.isoformat()}"' in markup
+    assert 'mg-chat-time' in markup

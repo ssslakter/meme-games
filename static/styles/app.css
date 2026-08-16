@@ -87,6 +87,14 @@
   line-height: 1.35;
 }
 
+.mg-chat-time {
+  margin-right: .35rem;
+  color: hsl(var(--muted-foreground));
+  font-size: .7rem;
+  font-variant-numeric: tabular-nums;
+  opacity: .75;
+}
+
 .mg-chat-author {
   margin-right: .35rem;
   color: hsl(var(--muted-foreground));
