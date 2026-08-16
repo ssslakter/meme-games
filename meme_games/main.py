@@ -2,6 +2,7 @@ import contextlib
 from meme_games.core import *
 from meme_games.services import db, data_dir
 from meme_games.domain import *
+from starlette.middleware.gzip import GZipMiddleware
 from starlette.routing import compile_path
 from starlette_prometheus import PrometheusMiddleware
 from .metrics import metrics
@@ -83,6 +84,7 @@ app.add_middleware(PrometheusMiddleware, filter_unhandled_paths=True)
 # Rate limiting is handled by nginx + crowdsec. This only stops crawlers/unfurlers
 # (and serves robots.txt) before they can create lobbies nobody joins.
 app.add_middleware(BotFilterMiddleware, patterns=LOBBY_PATTERNS)
+app.add_middleware(GZipMiddleware, minimum_size=500)
 app.route('/metrics')(metrics)
 
 setup_app_toasts(app, duration=2500)
