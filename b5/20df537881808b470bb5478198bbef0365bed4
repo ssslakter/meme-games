@@ -1,0 +1,109 @@
+mcp_gateway/src/meme_games_mcp/client.py
+  s_b3404be0ccded1::t_daeb2ca7dede7e 40-42
+mcp_gateway/src/meme_games_mcp/server.py
+  s_b3404be0ccded1::t_ddc45a7c283319 46-51,89-98,184-193
+mcp_gateway/tests/test_gateway.py
+  s_b3404be0ccded1::t_f4ea76fea34950 18-20,58,72-73
+meme_games/apps/codenames/actions.py
+  s_b3404be0ccded1::t_52c35979892440 1-2,8-9,20-44,70-94,100-103,106,109-119,122,125-126,133-136
+meme_games/apps/codenames/agent.py
+  s_b3404be0ccded1::t_265093b64e9af2 49-52,72-74,99-102,142
+meme_games/apps/codenames/domain.py
+  s_5acf458e315b05::t_ca38a13a0b5006 7-22,78-88,115,120-135,166-169,172-186,190,195-207,210-218,228-230,232,234,242-246,253-256,265-268
+meme_games/apps/codenames/routes.py
+  s_b3404be0ccded1::t_818bd698203956 4,81-91,99-119,135,137
+meme_games/apps/home/routes.py
+  s_b3404be0ccded1::t_1987705fbb00e9 12,60,63
+meme_games/apps/shared/navigation.py
+  s_b3404be0ccded1::t_98495ebfd4b8de 28-34,36,47-48
+meme_games/apps/user/routes.py
+  s_b3404be0ccded1::t_d2b13972089f0d 27,35,40-44,47-48,50-55,59-61,66-69
+meme_games/apps/whoami/agent.py
+  s_b3404be0ccded1::t_4d1d7c443bf659 22,148-149
+meme_games/apps/whoami/domain.py
+  s_b3404be0ccded1::t_cca1a4a2fdd95f 155-159
+static/scripts/common/custom_css.js
+  s_b3404be0ccded1::t_399786ca069646 12,46-48,53-54,57,61-62,92
+static/scripts/whoami/draggable.js
+  s_b3404be0ccded1::t_87fed1e6a8705d 3-5,7,9-32,55-56,64,70-85
+static/styles/responsive.css
+  s_b3404be0ccded1::t_fc9759967a266f 1-78
+static/styles/themes/cyberpunk-2077.css
+  s_5acf458e315b05::t_1b0d364eda4109 132,153,189,249,333-341,438,460
+static/styles/themes/sakura.css
+  s_5acf458e315b05::t_74393c0f9d5782 147-148,151,277
+tests/test_switch_game.py
+  s_b3404be0ccded1::t_1349fbe9df1fff 17-27
+meme_games/apps/agent_api/routes.py
+  s_5acf458e315b05::t_fac790465fea80 10,96-105
+meme_games/apps/codenames/components/game.py
+  s_5acf458e315b05::t_fd895f78b82149 7,31-33,53-77,83,88,90,95-96,98-104,107-113,133-134,154-161,169-184,186,188-189,192,194-211
+meme_games/apps/shared/__init__.py
+  s_5077db1f1d8a8e::t_a496c8a850d0a2 6
+meme_games/apps/shared/rules.py
+  s_5077db1f1d8a8e::t_c462fc11ee461e 1-181
+meme_games/apps/shared/settings.py
+  s_b3404be0ccded1::t_b38eed4f618581 6,9,51-53,95-106,114,119-120
+meme_games/apps/user/components/general.py
+  s_5acf458e315b05::t_0cb68704e45545 57-64,66,72,76-79,81-86,89-90,99-100,104,107,109,113,125,128-138
+meme_games/apps/whoami/actions.py
+  s_b6be3c46b3bc32::t_037bcfe23e0bd8 1-3,8-10,16,69-71,73-87
+static/styles/app.css
+  s_5acf458e315b05::t_020decb1c4a625 38-70,100-105,189-209
+static/styles/codenames.css
+  s_5acf458e315b05::t_0acea6b52e17fa 1-153
+static/styles/themes/autumn-grove.css
+  s_5acf458e315b05::t_0624362bfa5598 1-325
+static/styles/themes/deep-sea.css
+  s_5acf458e315b05::t_5df8201fbdfb9d 1-327
+tests/test_agent_api.py
+  s_5acf458e315b05::t_42b92857189e5b 2,6,220-223,411,425-426,429-430,518-535
+tests/test_codenames.py
+  s_5acf458e315b05::t_f278fbb74f82b7 1,7-11,64,115-219
+tests/test_routes.py
+  s_5acf458e315b05::t_b85902b965387d 11,28-39,111-119
+tests/test_user_settings.py
+  s_5acf458e315b05::t_2ee877f36b74cb 24-30,39-45,47-67,71-72,76,82-84
+tests/test_whoami.py
+  s_b6be3c46b3bc32::t_f76ab75a1231ea 181-234
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "b520df537881808b470bb5478198bbef0365bed4",
+  "prompts": {},
+  "sessions": {
+    "s_5077db1f1d8a8e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a693ceb85c4fa5f0e",
+        "model": "unknown"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    },
+    "s_5acf458e315b05": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d7fa99f8-50a7-4d55-ba32-6545723e0cf7",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    },
+    "s_b3404be0ccded1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cb3b5ee4-ce8c-4c8e-8ed6-a4d7cde0264b",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    },
+    "s_b6be3c46b3bc32": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a52b15cdf46e75a91",
+        "model": "unknown"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
