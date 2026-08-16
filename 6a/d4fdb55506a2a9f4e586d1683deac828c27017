@@ -1,0 +1,35 @@
+meme_games/apps/shared/settings.py
+  s_5acf458e315b05::t_7fc87ec521e56e 179-181
+meme_games/apps/whoami/routes.py
+  s_5acf458e315b05::t_f9c3c483bb103e 104-109
+  s_5acf458e315b05::t_bd355f5e7c4b43 103
+meme_games/domain/lobby/lobby.py
+  s_5acf458e315b05::t_16bd5f5ef79996 137
+  s_5acf458e315b05::t_a3d597bba1d5ca 206
+  s_5acf458e315b05::t_c6dfb206659255 110-120,125
+  s_5acf458e315b05::t_240fe3b323cb0f 136,138-139
+meme_games/apps/whoami/components/notes.py
+  s_5acf458e315b05::t_da93f170193042 45-48,54,57
+meme_games/apps/whoami/components/game.py
+  s_5acf458e315b05::t_a72e0b1a77c1ab 21,26-27,30-35
+tests/test_whoami.py
+  s_5acf458e315b05::t_1748ef9ad3f541 228-229,231-234,266-283,290,292-293
+tests/test_lobby_games.py
+  s_5acf458e315b05::t_e9b7612be63eaf 89-112
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "6ad4fdb55506a2a9f4e586d1683deac828c27017",
+  "prompts": {},
+  "sessions": {
+    "s_5acf458e315b05": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d7fa99f8-50a7-4d55-ba32-6545723e0cf7",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
