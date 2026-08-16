@@ -107,10 +107,22 @@ class Lobby(Model):
         self.add_member(m)
         return m
 
+    def ensure_host(self) -> Optional[LobbyMember]:
+        '''Fill a vacant host seat with the longest-standing member.
+
+        Every control in the lobby - start, restart, settings, switch game - is
+        host-only, so a lobby whose host walked out could not be played or even
+        reset by the people still sitting in it.'''
+        if self.host and self.host.uid in self.members: return self.host
+        self.host = None
+        if successor := next(self.sorted_members(), None): self.set_host(successor)
+        return self.host
+
     def add_member(self, member: LobbyMember):
         '''Adds a member to the lobby.'''
         member.lobby_id = self.id
         self.members[member.uid] = member
+        self.ensure_host()
 
     def get_member(self, uid: str) -> Optional[LobbyMember]:
         self.last_active = dt.datetime.now()
@@ -121,8 +133,10 @@ class Lobby(Model):
         self.last_active = dt.datetime.now()
         for state in self.states.values():
             if hasattr(state, 'remove_player'): state.remove_player(uid)
-        if self.host and self.host.uid == uid: self.host = None
-        return self.members.pop(uid, None)
+        gone = self.members.pop(uid, None)
+        if gone: gone.is_host_ = False
+        self.ensure_host()
+        return gone
 
     def say(self, member, text: str) -> Optional[ChatMessage]:
         '''Everyone in the lobby hears this, whichever game is being played.'''
@@ -189,6 +203,7 @@ class LobbyRepo(DataRepository[Lobby]):
         lobby.members = {m.user_uid: m for m in DI.get(MemberRepo).get_all(id)}
         hosts = [m for m in lobby.members.values() if m.is_host]
         if hosts: lobby.host = hosts[0]
+        lobby.ensure_host()
         lobby.load_states()
         return lobby
 

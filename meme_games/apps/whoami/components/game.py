@@ -18,12 +18,21 @@ def TopicBanner(lobby: Lobby, **kwargs):
 
 
 def TurnStatus(reciever: LobbyMember | User, lobby: Lobby, **kwargs):
+    from ..routes import end_turn
     state: WhoAmIState = lobby.state
     active = lobby.members.get(state.current_turn_uid)
     idle = ('Everyone has guessed - start a new game.' if state.phase == WhoAmIPhase.PLAYING
             else 'Set a card for every player, then start.')
+    left = state.questions_left(state.current_turn_uid or '')
+    mine = active and isinstance(reciever, LobbyMember) and reciever == active
     return Div(
         P(f"{active.name}'s turn" if active else idle, cls='m-0 font-medium'),
+        P(f"{left} question{'' if left == 1 else 's'} left", cls=(TextT.muted, TextT.sm, 'm-0'))
+            if active and left else None,
+        # a no answer or the third question ends the turn on its own; this is only for
+        # leaving early, so it never has to be pressed
+        Button('Skip turn', hx_post=end_turn, hx_swap='none', cls=(ButtonT.default, 'px-4 py-2'))
+            if mine and reciever.user.kind != 'agent' else None,
         id='whoami-turn', cls='flex items-center justify-center gap-4', **kwargs)
 
 

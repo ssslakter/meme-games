@@ -225,11 +225,13 @@ def test_the_third_answered_question_ends_the_turn():
     assert lobby.state.questions_asked == 0
 
 
-def test_the_active_player_is_never_offered_an_end_turn_button():
-    lobby, first, _ = _playing('wai-no-end-button')
+def test_only_the_active_player_can_leave_their_turn_early():
+    lobby, first, second = _playing('wai-skip-button')
 
-    assert 'End turn' not in to_xml(TurnStatus(first, lobby))
-    assert f"{first.name}'s turn" in to_xml(TurnStatus(first, lobby))
+    mine = to_xml(TurnStatus(first, lobby))
+    assert 'Skip turn' in mine, 'a turn must be leavable before the third question'
+    assert f"{first.name}'s turn" in mine
+    assert 'Skip turn' not in to_xml(TurnStatus(second, lobby))
 
 
 def test_cards_are_static_and_personal_notes_are_movable():
@@ -261,23 +263,37 @@ def test_board_render_carries_the_receivers_own_notes():
     assert 'name="text"' not in watching
 
 
-def test_agent_boundaries_render_controls_but_human_pair_does_not():
+def test_everyone_asks_and_answers_through_the_same_panel():
+    '''The panel used to render only when an agent sat on one side of the turn, so a
+    table of humans got no question field and no answer buttons at all.'''
+    lobby, first, second = _playing('wai-unified-panel')
+
+    asking = to_xml(QuestionPanel(first, first, lobby))
+    assert 'Ask a yes/no question' in asking
+    assert 'Ask a yes/no question' not in to_xml(QuestionPanel(second, first, lobby))
+
+    lobby.state.ask(first, 'Am I fictional?')
+    for_answerer = to_xml(QuestionPanel(second, first, lobby))
+    assert 'Am I fictional?' in for_answerer
+    assert '>Yes<' in for_answerer and '>No<' in for_answerer and '>Not sure<' in for_answerer
+    # only the player whose card it is may answer
+    assert '>Yes<' not in to_xml(QuestionPanel(first, first, lobby))
+
+
+def test_an_agent_never_gets_the_typed_controls():
     lobby, human, agent = _lobby('wai-boundary')
     agent.user.kind = 'agent'
     lobby.state.player(human.uid).set_label('Human')
     lobby.state.player(agent.uid).set_label('Agent')
     lobby.state.start([human.uid, agent.uid])
 
-    human_turn = to_xml(QuestionPanel(human, human, lobby))
-    assert 'Ask a yes/no question' in human_turn
+    assert 'Ask a yes/no question' in to_xml(QuestionPanel(human, human, lobby))
     lobby.state.current_turn_uid = agent.uid
-    assert 'End turn' not in to_xml(TurnStatus(agent, lobby))
+    assert 'Skip turn' not in to_xml(TurnStatus(agent, lobby)), 'agents act over MCP'
+    assert 'Ask a yes/no question' not in to_xml(QuestionPanel(agent, agent, lobby))
     lobby.state.ask(agent, 'Am I a person?')
     agent_turn_for_answerer = to_xml(QuestionPanel(human, agent, lobby))
     assert '>Yes<' in agent_turn_for_answerer and '>Not sure<' in agent_turn_for_answerer
-
-    agent.user.kind = 'human'
-    assert 'Ask a yes/no question' not in to_xml(QuestionPanel(human, agent, lobby))
 
 
 def test_agent_to_agent_question_is_fully_domain_driven():

@@ -101,6 +101,13 @@ async def answer_question(req: Request, answer: str):
 
 
 @rt
+async def end_turn(req: Request):
+    lobby, _, member = lobby_state(req, WHOAMI)
+    try: await whoami_actions.end_turn(lobby, member)
+    except ActionRejected as error: return rejected(req, error)
+
+
+@rt
 async def set_guessed(req: Request, uid: str, guessed: bool = False):
     lobby, _, member = lobby_state(req, WHOAMI)
     try: await whoami_actions.set_guessed(lobby, member, uid, guessed)

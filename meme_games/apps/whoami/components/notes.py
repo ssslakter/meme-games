@@ -41,22 +41,20 @@ def QuestionPanel(reciever: LobbyMember | User, owner: LobbyMember, lobby: Lobby
     content = None
     if state.phase == WhoAmIPhase.PLAYING and owner.uid == state.current_turn_uid:
         answerer_uid = state.previous_player(owner.uid)
-        answerer = lobby.members.get(answerer_uid)
-        structured = owner.user.kind == 'agent' or answerer and answerer.user.kind == 'agent'
         question = state.question
-        can_type = (structured and isinstance(reciever, LobbyMember) and reciever == owner and
-                    owner.user.kind != 'agent' and answerer and answerer.user.kind == 'agent' and
-                    not state.ask_rejection(owner, '?'))
+        # Everyone asks and answers through the same panel: a table of humans used to
+        # get no controls at all, because this only rendered when an agent was involved.
+        human = isinstance(reciever, LobbyMember) and reciever.user.kind != 'agent'
+        can_type = human and reciever == owner and not state.ask_rejection(owner, '?')
         ask_form = (Form(
             Input(name='text', required=True, maxlength=QUESTION_MAX, autocomplete='off', placeholder='Ask a yes/no question',
                   cls='uk-input min-w-0 flex-1'),
             Button('Ask', cls=(ButtonT.primary, 'shrink-0 px-3')),
             hx_post=ask_question, hx_swap='none', cls='flex gap-2') if can_type else None)
-        if structured and question:
+        if question:
             answer = question.answer.replace('_', ' ').title() if question.answer else None
             buttons = None
-            if (question.answer is None and isinstance(reciever, LobbyMember) and
-                    reciever.uid == answerer_uid and owner.user.kind == 'agent'):
+            if question.answer is None and human and reciever.uid == answerer_uid:
                 buttons = Div(*[
                     Button(label, hx_post=answer_question.to(answer=value), hx_swap='none',
                            cls=(ButtonT.default, 'px-3 py-1.5'))

@@ -176,5 +176,7 @@ async def leave_lobby(req: Request):
     lobby_service.update(lobby)
     def update(*_): return UserRemover(uid)
     await notify_all(lobby, update)
-    if was_playing: await lobby_events.publish(lobby, 'roster', 'game')
+    # always a roster event: someone leaving can hand the host seat to whoever is left,
+    # and the controls that come with it have to appear without a reload
+    await lobby_events.publish(lobby, *(('roster', 'game') if was_playing else ('roster',)))
     return Redirect('/')

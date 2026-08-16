@@ -86,3 +86,27 @@ def test_stale_websocket_cannot_disconnect_the_new_connection():
     member.disconnect(old_ws)
 
     assert member.ws is new_ws
+
+
+def test_the_host_seat_is_never_left_empty():
+    users = DI.get(UserManager)
+    leader, guest = users.create(name='leader'), users.create(name='guest')
+    lobby = service.create_lobby(leader, 'host-succession', WHOAMI, persistent=True)
+    lobby.create_member(guest)
+    assert lobby.host.uid == leader.uid
+
+    lobby.remove_member(leader.uid)
+
+    assert lobby.host is not None, 'a lobby with no host has no controls at all'
+    assert lobby.host.uid == guest.uid and lobby.host.is_host
+
+
+def test_the_leader_who_leaves_and_comes_back_is_host_again():
+    solo = DI.get(UserManager).create(name='boomerang')
+    lobby = service.create_lobby(solo, 'host-rejoin', WHOAMI, persistent=True)
+
+    lobby.remove_member(solo.uid)
+    assert lobby.host is None and not lobby.members
+    lobby.create_member(solo)
+
+    assert lobby.host is not None and lobby.host.uid == solo.uid
