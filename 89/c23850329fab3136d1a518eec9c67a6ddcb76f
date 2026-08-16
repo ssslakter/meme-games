@@ -1,0 +1,28 @@
+static/scripts/common/utils.js
+  s_5acf458e315b05::t_eec318f427c340 22
+  s_5acf458e315b05::t_dd17be555c6b0d 21
+static/styles/app.css
+  s_5acf458e315b05::t_16ac5a742bb52b 214,217
+  s_5acf458e315b05::t_fc820943d941fb 75-76
+  s_5acf458e315b05::t_77f9787a8e41d8 61
+meme_games/apps/shared/chat.py
+  s_5acf458e315b05::t_eec318f427c340 18-19
+tests/test_spectators.py
+  s_5acf458e315b05::t_eec318f427c340 88
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "89c23850329fab3136d1a518eec9c67a6ddcb76f",
+  "prompts": {},
+  "sessions": {
+    "s_5acf458e315b05": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d7fa99f8-50a7-4d55-ba32-6545723e0cf7",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
