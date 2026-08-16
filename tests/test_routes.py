@@ -8,7 +8,7 @@ from meme_games.apps.alias.domain.game import StateMachine
 service = DI.get(LobbyService)
 
 ACTION_PATHS = ['/alias/vote', '/alias/guess', '/alias/start_game', '/whoami/play', '/whoami/notes',
-                '/codenames/join_team', '/codenames/start_game', '/codenames/reveal_card']
+                '/codenames/join_team', '/codenames/start_game', '/codenames/vote_card']
 
 
 def test_action_routes_do_not_create_lobbies():
@@ -23,6 +23,18 @@ def test_lobby_route_still_works():
     with TestClient(app, client=("10.0.0.2", 1)) as c:
         assert c.get('/alias/abc12', headers={'user-agent': 'Mozilla/5.0 Firefox'}).status_code == 200
         assert 'abc12' in service.lobbies
+
+
+def test_word_packs_is_a_navbar_button_not_a_game():
+    from meme_games.apps.shared.utils import GAME_PAGES, PAGES_REGISTRY
+
+    assert 'Word Packs' not in PAGES_REGISTRY, 'the dropdown lists games only'
+    assert all(name != 'Word Packs' for name, _ in GAME_PAGES.values())
+    with TestClient(app, client=("10.0.0.9", 1)) as c:
+        page = c.get('/', headers={'user-agent': 'Mozilla/5.0 Firefox'})
+        assert page.status_code == 200
+        assert 'Word Packs' in page.text, 'it still needs its own way in'
+        assert c.get('/word_packs', headers={'user-agent': 'Mozilla/5.0 Firefox'}).status_code == 200
 
 
 def test_no_route_shadows_a_later_one():
@@ -94,6 +106,15 @@ def test_static_files_keep_their_own_caching():
         css = c.get('/static/styles/app.css')
         assert css.status_code == 200
         assert 'max-age' in css.headers['cache-control']
+
+
+def test_word_packs_is_a_navbar_button_not_a_game():
+    from meme_games.apps.shared.utils import PAGES_REGISTRY
+    assert 'Word Packs' not in PAGES_REGISTRY
+    with TestClient(app, client=("10.0.0.6", 1)) as c:
+        home = c.get('/', headers={'user-agent': 'Mozilla/5.0 Firefox'})
+        assert 'Word Packs' in home.text
+        assert c.get('/word_packs/', headers={'user-agent': 'Mozilla/5.0 Firefox'}).status_code == 200
 
 
 def test_public_404_is_the_normal_html_page():

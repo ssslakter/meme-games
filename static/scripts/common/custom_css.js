@@ -3,17 +3,13 @@
   const ENABLED_KEY = 'meme-games.custom-css-enabled';
   const STYLE_ID = 'custom-css';
 
-  function settingsPage() {
-    return location.pathname === '/me' || location.pathname === '/me/';
-  }
-
   function enabled() {
     return localStorage.getItem(ENABLED_KEY) !== 'false';
   }
 
   function applyCustomCss() {
     let style = document.getElementById(STYLE_ID);
-    if (settingsPage() || !enabled()) {
+    if (!enabled()) {
       style?.remove();
       return;
     }
@@ -47,18 +43,23 @@
   }
 
   window.saveCustomCss = function () {
-    const css = document.getElementById('custom-css-editor').value;
+    const editor = document.getElementById('custom-css-editor');
+    if (!editor) return true;
+    const css = editor.value;
     const error = document.getElementById('custom-css-error');
     const status = document.getElementById('custom-css-status');
     error.textContent = '';
     status.textContent = '';
+    const saveStatus = document.getElementById('settings-status');
+    if (saveStatus) saveStatus.textContent = '';
     if (containsImport(css)) {
       error.textContent = '@import is not supported. Paste the theme CSS directly.';
-      return;
+      return false;
     }
     localStorage.setItem(CSS_KEY, css);
     localStorage.setItem(ENABLED_KEY, String(document.getElementById('custom-css-enabled').checked));
-    status.textContent = 'Saved. Open another page to see your changes.';
+    applyCustomCss();
+    return true;
   };
 
   window.loadCustomCssTemplate = async function (url, name) {
@@ -88,6 +89,7 @@
     document.getElementById('custom-css-editor').value = '';
     document.getElementById('custom-css-error').textContent = '';
     document.getElementById('custom-css-status').textContent = 'Custom CSS cleared.';
+    applyCustomCss();
   };
 
   window.applyCustomCss = applyCustomCss;

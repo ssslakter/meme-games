@@ -1,10 +1,14 @@
+import asyncio
 from collections import Counter
 
 from fasthtml.common import to_xml
 from starlette.testclient import TestClient
 
-from meme_games.apps.codenames.components.game import BoardCard
-from meme_games.apps.codenames.domain import CardColor, CODENAMES, CodenamesState, GamePhase, TeamColor, WordCard
+from meme_games.apps.codenames import domain as codenames_domain
+from meme_games.apps.codenames.actions import codenames_actions
+from meme_games.apps.codenames.components.game import BoardCard, EventLog
+from meme_games.apps.codenames.domain import (CardColor, CODENAMES, CodenamesState, GamePhase,
+                                              LogEntry, TeamColor, WordCard)
 from meme_games.core import DI
 from meme_games.domain import LobbyService
 from meme_games.domain.user import UserManager
@@ -57,7 +61,7 @@ def test_clue_and_guess_advance_turn_without_leaking_roles():
     operative = members[1] if state.turn == TeamColor.RED else members[3]
     assert not state.give_clue(operative, 'signal', 2)
     assert not state.give_clue(spymaster, state.board[0].word, 2)
-    assert not state.give_clue(spymaster, 'two words', 2)
+    assert not state.give_clue(spymaster, '   ', 2)
     assert state.give_clue(spymaster, 'signal', 2)
     assert state.guesses_left == 3
 
@@ -108,3 +112,108 @@ def test_join_team_route_moves_member_out_of_spectators():
     assert response.status_code == 200
     assert lobby.host.is_player
     assert lobby.state.team_of(lobby.host) == TeamColor.RED
+
+
+def _extra_operative(lobby, state, team, name):
+    member = lobby.create_member(users.create(name=name))
+    member.play()
+    assert state.join(member, team)
+    return member
+
+
+def _clued_lobby(lobby_id, extra_operatives=0):
+    lobby, members, state = ready_lobby(lobby_id)
+    extras = {team: [_extra_operative(lobby, state, team, f'{lobby_id}-extra-{team.value}-{n}')
+                     for n in range(extra_operatives)]
+              for team in TeamColor}
+    assert state.start()
+    spymaster = members[0] if state.turn == TeamColor.RED else members[2]
+    operatives = [members[1] if state.turn == TeamColor.RED else members[3], *extras[state.turn]]
+    assert state.give_clue(spymaster, 'signal', 3)
+    return lobby, state, spymaster, operatives
+
+
+def test_a_single_pick_is_not_consensus_and_reveals_nothing():
+    _, state, _, operatives = _clued_lobby('codenames-vote-partial', extra_operatives=1)
+    card = state.board[0]
+    assert state.vote(operatives[0], card.id)
+    assert state.consensus() is None
+    assert not card.revealed
+
+
+def test_agreeing_operatives_commit_and_the_card_turns_over(monkeypatch):
+    monkeypatch.setattr(codenames_domain, 'COMMIT_SECONDS', 0.05)
+    lobby, state, _, operatives = _clued_lobby('codenames-vote-commit', extra_operatives=1)
+    card = next(c for c in state.board if c.color == CardColor.NEUTRAL)
+
+    async def play():
+        for operative in operatives: await codenames_actions.vote(lobby, operative, card.id)
+        await asyncio.sleep(0.4)
+
+    asyncio.run(play())
+    assert card.revealed
+    assert not state.votes
+
+
+def test_changing_a_pick_during_the_countdown_cancels_the_reveal(monkeypatch):
+    monkeypatch.setattr(codenames_domain, 'COMMIT_SECONDS', 0.4)
+    lobby, state, _, operatives = _clued_lobby('codenames-vote-reset', extra_operatives=1)
+    first, second = state.board[0], state.board[1]
+
+    async def play():
+        for operative in operatives: await codenames_actions.vote(lobby, operative, first.id)
+        await asyncio.sleep(0.05)
+        await codenames_actions.vote(lobby, operatives[-1], second.id)
+        await asyncio.sleep(0.6)
+
+    asyncio.run(play())
+    assert not first.revealed and not second.revealed
+    assert state.consensus() is None
+
+
+def test_a_clue_may_contain_several_words():
+    _, members, state = ready_lobby('codenames-multiword')
+    assert state.start()
+    spymaster = members[0] if state.turn == TeamColor.RED else members[2]
+    assert state.give_clue(spymaster, 'jules verne', 2)
+    assert state.clue == 'jules verne'
+
+
+def test_a_finished_board_is_open_to_everyone():
+    _, state, _, operatives = _clued_lobby('codenames-finished')
+    bomb = next(card for card in state.board if card.color == CardColor.BOMB)
+    hidden = next(card for card in state.board if not card.revealed and card is not bomb)
+    assert state.reveal(operatives[0], bomb.id)
+    assert state.phase == GamePhase.FINISHED
+    assert not hidden.revealed
+    assert f'data-color="{hidden.color.value}"' in to_xml(BoardCard(operatives[0], state, hidden))
+
+
+def test_the_event_log_narrates_play_without_naming_hidden_colours():
+    _, state, _, operatives = _clued_lobby('codenames-log')
+    neutral = next(card for card in state.board if card.color == CardColor.NEUTRAL)
+    turn = state.turn
+    assert state.reveal(operatives[0], neutral.id)
+    assert LogEntry('clue', team=turn.value, word='signal', number=3) in state.log
+    assert LogEntry('reveal', team=turn.value, word=neutral.word, card='neutral') in state.log
+    assert LogEntry('turn', team=turn.other.value) in state.log
+
+    markup = to_xml(EventLog(state))
+    # the log quotes every word it names, and 'code' is a board word that is also a
+    # substring of 'codenames-log' - the quotes are what make this check mean anything
+    hidden = {card.word for card in state.board if not card.revealed}
+    assert not [word for word in hidden if f'"{word}"' in markup]
+    assert f'"{neutral.word}"' in markup
+    # the colours are what makes the log readable at a glance, so they are part of it
+    assert f'data-team="{turn.value}"' in markup and 'mg-log-card' in markup
+
+
+def test_shuffle_teams_keeps_sizes_and_clears_spymasters():
+    _, members, state = ready_lobby('codenames-shuffle')
+    before = {team: len(state.team_uids(team)) for team in TeamColor}
+    assert state.shuffle_teams()
+    assert {team: len(state.team_uids(team)) for team in TeamColor} == before
+    assert not state.spymasters
+    assert set(state.players) == {member.uid for member in members}
+    state.phase = GamePhase.CLUE
+    assert not state.shuffle_teams()

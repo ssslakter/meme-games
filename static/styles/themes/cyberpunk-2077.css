@@ -129,7 +129,7 @@ body::after {
   border-radius: 0 !important;
   box-shadow: 5px 5px 0 rgba(255, 52, 95, .72), 0 0 18px rgba(0, 240, 255, .22) !important;
   background-color: color-mix(in srgb, hsl(var(--card)) 94%, transparent) !important;
-  color: var(--mg-cyber-white) !important;
+  color: hsl(var(--card-foreground)) !important;
   background-image:
     linear-gradient(var(--mg-cyber-cyan), var(--mg-cyber-cyan)),
     linear-gradient(var(--mg-cyber-cyan), var(--mg-cyber-cyan)),
@@ -150,7 +150,7 @@ body::after {
 
 .mg-settings-panel > summary {
   border-bottom: 1px solid transparent;
-  color: var(--mg-cyber-white) !important;
+  color: hsl(var(--card-foreground)) !important;
   font-style: normal;
   letter-spacing: .02em;
   text-transform: none;
@@ -186,7 +186,7 @@ body::after {
   background: rgba(0, 240, 255, .04) !important;
   box-shadow: none !important;
   clip-path: none;
-  color: var(--mg-cyber-white) !important;
+  color: hsl(var(--card-foreground)) !important;
   font-weight: 600 !important;
   letter-spacing: .01em;
   text-transform: none;
@@ -246,7 +246,7 @@ body::after {
 
 /* Game semantics must stay legible even though the generic neon card rule wins
    over Tailwind utility colors. Operatives still receive only "hidden". */
-[data-page="codenames"] .mg-word-card::after { display: none; }
+[data-page="codenames"] .mg-word-card:not([data-commit])::after { display: none; }
 [data-page="codenames"] .mg-word-card[data-color="red"] {
   border-color: var(--mg-cyber-red) !important;
   background-color: rgba(104, 9, 29, .94) !important;
@@ -328,6 +328,15 @@ h1, h2, h3, h4, h5,
   color: var(--mg-cyber-cyan) !important;
   caret-color: var(--mg-cyber-red);
   box-shadow: inset 3px 0 0 var(--mg-cyber-red) !important;
+}
+
+/* Daylight runs on the same neon, not on a black terminal pane: an ink-dark field
+   in the middle of a pale card read as a hole punched in the page. */
+html:not(.dark) .uk-input,
+html:not(.dark) .uk-textarea,
+html:not(.dark) .uk-select {
+  background: rgba(255, 255, 255, .92) !important;
+  color: hsl(var(--foreground)) !important;
 }
 
 .mg-avatar,
@@ -426,7 +435,7 @@ h1, h2, h3, h4, h5,
 .mg-score {
   border-radius: 0 !important;
   background: rgba(232, 251, 255, .1) !important;
-  color: var(--mg-cyber-white) !important;
+  color: hsl(var(--card-foreground)) !important;
 }
 
 .mg-score[data-sign="positive"] { color: var(--mg-cyber-cyan) !important; }
@@ -448,7 +457,7 @@ h1, h2, h3, h4, h5,
   border-left: 3px solid var(--mg-cyber-cyan) !important;
   border-radius: 0 !important;
   background: rgba(5, 10, 14, .96) !important;
-  color: var(--mg-cyber-white) !important;
+  color: hsl(var(--card-foreground)) !important;
   box-shadow: 4px 4px 0 var(--mg-cyber-red), 0 0 18px rgba(0, 240, 255, .28) !important;
 }
 .mg-toast-success { border-left-color: var(--mg-cyber-cyan) !important; }

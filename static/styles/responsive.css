@@ -1,0 +1,78 @@
+/*--------------------------- Narrow-screen layout ---------------------------*/
+
+/* main.py sets --uk-global-font-size: 1.3rem in a <style> that lands after this
+   file, so the override needs the extra specificity to win. */
+@media (max-width: 767px) {
+  :root:root { --uk-global-font-size: 1rem; }
+}
+
+/* NavBar duplicates its actions into a hamburger menu (the second .mg-navbar-content,
+   hidden until the toggle clears its `hidden` class). Centred auto-width buttons read
+   as items that failed to fit a row, so the panel is made to look like a menu. */
+@media (max-width: 767px) {
+  .mg-navbar-content + .mg-navbar-content {
+    align-items: stretch;
+    max-height: calc(100vh - 4rem);
+    overflow-y: auto;
+    border-top: 1px solid hsl(var(--border));
+  }
+
+  .mg-navbar-content + .mg-navbar-content > *,
+  .mg-navbar-content + .mg-navbar-content .uk-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .mg-navbar-content + .mg-navbar-content .mg-theme-switcher { display: flex; }
+  .mg-navbar-content + .mg-navbar-content .mg-theme-switcher > * { flex: 1; }
+}
+
+/* A lobby rail is a sidebar on desktop and a stack of full-width cards below the
+   shell's breakpoint; unbounded it stretched to the viewport on a phone.
+   `!important` because min-h-[calc(100vh-7rem)] and justify-between are Tailwind
+   utilities, and the JIT injects its sheet after every static stylesheet. */
+@media (max-width: 1279px) {
+  .mg-game-rail {
+    width: 100%;
+    max-width: 34rem;
+    margin-inline: auto;
+    min-height: 0 !important;
+    justify-content: flex-start !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .mg-page-content { padding-inline: .75rem; }
+
+  .mg-settings-summary { padding: .6rem .75rem; font-size: .95rem; }
+  .mg-lobby-settings { gap: .6rem; padding: .75rem; }
+
+  .mg-lobby-tools .uk-btn,
+  .mg-lobby-tools button,
+  .mg-lobby-tools .uk-input,
+  .mg-lobby-tools .uk-textarea,
+  .mg-lobby-tools .uk-select {
+    padding: .4rem .7rem;
+    font-size: .9rem;
+    min-height: 0;
+  }
+
+  .mg-spectators, .mg-chat { padding: .75rem; }
+  .mg-chat-messages { max-height: 10rem; }
+}
+
+/* `items-start` sizes a stacked child to its content, so the profile form kept its
+   two-column width and ran off the screen once the row turned into a column. */
+@media (max-width: 639px) {
+  [data-page="settings"] .mg-settings-section .items-start > * {
+    align-self: stretch;
+    min-width: 0;
+  }
+}
+
+/* Nothing in a lobby is wide enough to justify a sideways scrollbar; a single
+   overflowing child (a board, a long word) would otherwise shift every page. */
+@media (max-width: 767px) {
+  html, body { overflow-x: hidden; }
+  .mg-page, .mg-page-content, .mg-game-shell, .mg-game-rail { max-width: 100vw; }
+}

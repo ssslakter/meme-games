@@ -1,0 +1,153 @@
+.mg-word-card {
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+}
+
+.mg-word-card[data-revealed='true'] {
+  filter: saturate(0.45);
+  opacity: 0.55;
+}
+
+.mg-word-card[data-revealed='true']::before {
+  content: '✓';
+  position: absolute;
+  top: 0.25rem;
+  right: 0.4rem;
+  font-size: 0.85rem;
+  line-height: 1;
+  opacity: 0.85;
+}
+
+.mg-vote-dots {
+  display: flex;
+  gap: 0.25rem;
+  justify-content: center;
+}
+
+.mg-vote-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: currentColor;
+  opacity: 0.5;
+}
+
+.mg-vote-dot[data-mine='true'] {
+  opacity: 1;
+  box-shadow: 0 0 0 2px currentColor;
+}
+
+.mg-word-card[data-commit]::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  background: currentColor;
+  opacity: 0.18;
+  pointer-events: none;
+  animation: mg-commit-fill var(--mg-commit, 3s) linear forwards;
+}
+
+@keyframes mg-commit-fill {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+/* Which team is which is game state, not decoration, so it has to survive a theme.
+   Both bundled themes repaint `.mg-game-card` and `.mg-panel` wholesale with
+   `!important` and are injected after this file - only higher specificity wins. */
+:root {
+  --mg-cn-red: 0 72% 51%;
+  --mg-cn-blue: 217 91% 60%;
+  --mg-cn-neutral: 30 6% 55%;
+  --mg-cn-bomb: 0 0% 12%;
+}
+
+html.dark {
+  --mg-cn-red: 0 84% 68%;
+  --mg-cn-blue: 213 94% 72%;
+  --mg-cn-neutral: 30 6% 68%;
+  --mg-cn-bomb: 0 0% 80%;
+}
+
+[data-page="codenames"] .mg-codenames-team[data-team] {
+  border-left: 4px solid hsl(var(--mg-cn-team)) !important;
+}
+
+[data-page="codenames"] .mg-codenames-team[data-team="red"] { --mg-cn-team: var(--mg-cn-red); }
+[data-page="codenames"] .mg-codenames-team[data-team="blue"] { --mg-cn-team: var(--mg-cn-blue); }
+
+[data-page="codenames"] .mg-codenames-team[data-team] .mg-codenames-team-name,
+[data-page="codenames"] .mg-codenames-team[data-team] .mg-codenames-team-count {
+  color: hsl(var(--mg-cn-team)) !important;
+}
+
+/* Themes hang an ornament in the card's top-right corner, right where the count sits. */
+[data-page="codenames"] .mg-codenames-team-head { padding-right: 1.7rem; }
+
+[data-page="codenames"] .mg-codenames-remaining[data-team="red"],
+[data-page="codenames"] .mg-codenames-turn[data-team="red"] { color: hsl(var(--mg-cn-red)) !important; }
+
+[data-page="codenames"] .mg-codenames-remaining[data-team="blue"],
+[data-page="codenames"] .mg-codenames-turn[data-team="blue"] { color: hsl(var(--mg-cn-blue)) !important; }
+
+[data-page="codenames"] .mg-codenames-remaining {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Both themes switch `.mg-word-card::after` off to drop their own corner ornament;
+   the commit countdown rides the same pseudo-element and must not go with it. */
+[data-page="codenames"] .mg-word-card[data-commit]::after {
+  display: block !important;
+}
+
+/*-------------------------------- Event log ---------------------------------*/
+
+.mg-codenames-log-panel { flex: 1; min-height: 14rem; }
+
+.mg-codenames-log {
+  display: flex;
+  flex-direction: column;
+  gap: .3rem;
+  max-height: 26rem;
+}
+
+.mg-log-line {
+  margin: 0;
+  padding: .15rem .5rem;
+  border-left: 3px solid transparent;
+  border-radius: .25rem;
+  background: hsl(var(--muted) / .35);
+  font-size: .82rem;
+  line-height: 1.35;
+}
+
+[data-page="codenames"] .mg-log-line[data-team="red"] { border-left-color: hsl(var(--mg-cn-red)); }
+[data-page="codenames"] .mg-log-line[data-team="blue"] { border-left-color: hsl(var(--mg-cn-blue)); }
+
+[data-page="codenames"] .mg-log-line[data-team="red"] .mg-log-team { color: hsl(var(--mg-cn-red)); }
+[data-page="codenames"] .mg-log-line[data-team="blue"] .mg-log-team { color: hsl(var(--mg-cn-blue)); }
+
+.mg-log-team {
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.mg-log-word { font-weight: 600; }
+
+.mg-log-number {
+  margin-left: .35rem;
+  padding: 0 .35rem;
+  border-radius: 999px;
+  background: hsl(var(--primary) / .2);
+  font-weight: 700;
+}
+
+.mg-log-card { font-weight: 700; text-transform: uppercase; font-size: .72rem; }
+
+[data-page="codenames"] .mg-log-card[data-card="red"] { color: hsl(var(--mg-cn-red)); }
+[data-page="codenames"] .mg-log-card[data-card="blue"] { color: hsl(var(--mg-cn-blue)); }
+[data-page="codenames"] .mg-log-card[data-card="neutral"] { color: hsl(var(--mg-cn-neutral)); }
+[data-page="codenames"] .mg-log-card[data-card="bomb"] { color: hsl(var(--mg-cn-bomb)); }

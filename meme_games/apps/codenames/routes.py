@@ -1,6 +1,7 @@
 from meme_games.core import *
 from meme_games.domain import *
 from meme_games.apps.word_packs.domain import WordPackRepo
+from meme_games.apps.word_packs.components import WordPackEditor
 from meme_games.apps.shared import *
 from meme_games.apps.shared.spectators import Spectators
 from meme_games.apps.shared.ws_route import lobby_ws
@@ -78,9 +79,41 @@ async def toggle_spymaster(req: Request):
 
 
 @rt
+def editor_readonly(req: Request, id: str):
+    _, _, member = pre_init(req)
+    pack = wordpack_manager.get_by_id(id)
+    return WordPackEditor(pack, readonly=True,
+                          form_kwargs=dict(hx_post=select_pack.to(pack_id=id), hx_swap='none'),
+                          submit_button=Button('Select wordpack' if is_host(member) else 'Must be host to select',
+                                               disabled=not is_host(member)),
+                          hx_on__after_request="UIkit.modal('#pack-select').hide()")
+
+
+@rt
 async def select_pack(req: Request, pack_id: str):
     lobby, _, member = pre_init(req)
     try: await codenames_actions.select_pack(lobby, member, pack_id)
+    except ActionRejected as error: return rejected(req, error)
+
+
+@rt
+async def update_settings(req: Request, clue_seconds: int = 0, guess_seconds: int = 0):
+    lobby, _, member = pre_init(req)
+    try: await codenames_actions.update_settings(lobby, member, clue_seconds, guess_seconds)
+    except ActionRejected as error: return rejected(req, error)
+
+
+@rt
+async def shuffle_teams(req: Request):
+    lobby, _, member = pre_init(req)
+    try: await codenames_actions.shuffle_teams(lobby, member)
+    except ActionRejected as error: return rejected(req, error)
+
+
+@rt
+async def pause_game(req: Request):
+    lobby, _, member = pre_init(req)
+    try: await codenames_actions.pause(lobby, member)
     except ActionRejected as error: return rejected(req, error)
 
 
@@ -99,9 +132,9 @@ async def submit_clue(req: Request, clue: str, number: int):
 
 
 @rt
-async def reveal_card(req: Request, card_id: str):
+async def vote_card(req: Request, card_id: str):
     lobby, _, member = pre_init(req)
-    try: await codenames_actions.reveal_card(lobby, member, card_id)
+    try: await codenames_actions.vote(lobby, member, card_id)
     except ActionRejected as error: return rejected(req, error)
 
 

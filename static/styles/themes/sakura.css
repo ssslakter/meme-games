@@ -144,9 +144,11 @@ h1::after {
   transition: transform .15s ease, box-shadow .15s ease;
 }
 
+/* White on the pale end of the old gradient came out at roughly 1.9:1 - the label was
+   there but you had to hunt for it. The blossom pink stays as the glow, not the ground. */
 .uk-btn-primary {
   border-color: var(--mg-sakura-deep) !important;
-  background: linear-gradient(135deg, var(--mg-sakura), var(--mg-sakura-deep)) !important;
+  background: linear-gradient(135deg, var(--mg-sakura-deep), #9d3352) !important;
   color: white !important;
   box-shadow: 0 4px 12px rgba(190, 71, 104, .25) !important;
 }
@@ -272,7 +274,7 @@ h1::after {
 .mg-word-entry[data-result="guessed"] { background-color: rgba(102, 143, 105, .14) !important; }
 .mg-word-entry[data-result="skipped"] { background-color: rgba(190, 71, 104, .12) !important; }
 
-[data-page="codenames"] .mg-word-card::after { display: none; }
+[data-page="codenames"] .mg-word-card:not([data-commit])::after { display: none; }
 [data-page="codenames"] .mg-word-card[data-color="red"] {
   border-color: #b93f59 !important;
   background: #f7c5cd !important;

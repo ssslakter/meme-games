@@ -152,6 +152,11 @@ class WhoAmIState:
         self.question.answer = answer
         return True
 
+    def turn_is_over(self) -> bool:
+        '''A no, or the third answered question, leaves the active player nothing left to do.'''
+        return bool(self.phase == WhoAmIPhase.PLAYING and self.current_turn_uid and self.question
+                    and self.question.answer and not self.questions_left(self.current_turn_uid))
+
     def end_turn(self, member: LobbyMember) -> bool:
         if self.phase != WhoAmIPhase.PLAYING or member.uid != self.current_turn_uid: return False
         self.current_turn_uid = self.next_active(member.uid)

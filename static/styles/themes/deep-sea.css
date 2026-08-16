@@ -1,0 +1,327 @@
+/* Abyssal water theme for Meme Games */
+:root {
+  --mg-sea-glow: #4fe3d0;
+  --mg-sea-lume: #7fd6ff;
+  --mg-sea-deep: #06323f;
+  --mg-sea-abyss: #02121a;
+  --mg-sea-foam: #e4f8f5;
+  --mg-sea-coral: #ff8f6b;
+  --radius: 1.25rem;
+  --mg-label-bg: var(--mg-sea-foam);
+  --mg-label-fg: var(--mg-sea-deep);
+  --mg-label-border: var(--mg-sea-glow);
+  --mg-label-handle: var(--mg-sea-deep);
+}
+
+.mg-label {
+  border-radius: 1rem 1rem .35rem 1rem !important;
+  box-shadow: 0 10px 26px rgba(2, 18, 26, .35), 0 0 18px rgba(79, 227, 208, .22) !important;
+}
+
+html:not(.dark) {
+  --background: 187 52% 94% !important;
+  --foreground: 197 46% 14% !important;
+  --card: 186 60% 98% !important;
+  --card-foreground: 197 46% 14% !important;
+  --popover: 186 60% 98% !important;
+  --popover-foreground: 197 46% 14% !important;
+  --primary: 184 64% 34% !important;
+  --primary-foreground: 186 60% 98% !important;
+  --secondary: 195 44% 86% !important;
+  --secondary-foreground: 197 46% 18% !important;
+  --muted: 187 40% 89% !important;
+  --muted-foreground: 197 26% 36% !important;
+  --accent: 172 58% 78% !important;
+  --accent-foreground: 197 46% 16% !important;
+  --border: 188 34% 74% !important;
+  --input: 188 34% 74% !important;
+  --ring: 184 64% 34% !important;
+}
+
+html.dark {
+  --background: 200 62% 5% !important;
+  --foreground: 176 44% 88% !important;
+  --card: 199 48% 10% !important;
+  --card-foreground: 176 44% 88% !important;
+  --popover: 199 48% 10% !important;
+  --popover-foreground: 176 44% 88% !important;
+  --primary: 172 68% 56% !important;
+  --primary-foreground: 200 62% 6% !important;
+  --secondary: 199 40% 17% !important;
+  --secondary-foreground: 176 44% 88% !important;
+  --muted: 199 36% 15% !important;
+  --muted-foreground: 179 26% 66% !important;
+  --accent: 196 74% 62% !important;
+  --accent-foreground: 200 62% 6% !important;
+  --border: 191 40% 28% !important;
+  --input: 191 40% 28% !important;
+  --ring: 172 68% 56% !important;
+}
+
+body {
+  background-color: hsl(var(--background)) !important;
+  background-image:
+    radial-gradient(ellipse at 20% -10%, rgba(127, 214, 255, .16), transparent 62%),
+    radial-gradient(circle at 12% 40%, rgba(79, 227, 208, .10) 0 3px, transparent 4px),
+    radial-gradient(circle at 78% 66%, rgba(127, 214, 255, .10) 0 4px, transparent 5px),
+    linear-gradient(160deg, transparent 46%, rgba(79, 227, 208, .05) 47% 53%, transparent 54%) !important;
+  background-size: 100% 100%, 220px 220px, 300px 300px, 160px 160px !important;
+  font-family: "Avenir Next", "Segoe UI", system-ui, sans-serif !important;
+  animation: mg-sea-drift 52s linear infinite;
+}
+
+/* Tint the page background instead of replacing it: the lobby pages carry a photo on
+   .mg-background, and overriding background-image here erased it. */
+.mg-background { filter: none !important; }
+
+.mg-background > div {
+  background-image:
+    radial-gradient(ellipse at top, rgba(127, 214, 255, .22), transparent 60%),
+    linear-gradient(to bottom, rgba(2, 18, 26, .10), rgba(6, 50, 63, .32));
+}
+
+.mg-navbar {
+  background: color-mix(in srgb, hsl(var(--card)) 90%, transparent) !important;
+  border: 0 !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--mg-sea-glow) 55%, transparent) !important;
+  box-shadow: 0 6px 26px rgba(2, 18, 26, .22) !important;
+  backdrop-filter: blur(14px);
+}
+
+.mg-navbar h3::before {
+  content: "≈ ";
+  color: var(--mg-sea-glow);
+}
+
+.mg-game-card,
+.mg-round-history,
+.mg-round-center,
+.mg-settings-panel,
+.mg-panel,
+.mg-settings-section,
+.mg-spectators,
+.mg-content-card > * {
+  position: relative;
+  border: 1px solid color-mix(in srgb, var(--mg-sea-glow) 30%, hsl(var(--border))) !important;
+  border-radius: 1.25rem !important;
+  background: color-mix(in srgb, hsl(var(--card)) 92%, transparent) !important;
+  box-shadow: 0 12px 32px rgba(2, 18, 26, .22), 0 0 20px rgba(79, 227, 208, .10) !important;
+  backdrop-filter: blur(9px);
+}
+
+/* Kept inside the 1.7rem the Codenames team header reserves, so it never lands on
+   top of the member count sitting in the same corner. */
+.mg-game-card::after,
+.mg-settings-section::after {
+  content: "◦";
+  position: absolute;
+  top: .3rem;
+  right: .5rem;
+  color: var(--mg-sea-glow);
+  font-size: .95rem;
+  pointer-events: none;
+  animation: mg-sea-pulse 5s ease-in-out infinite;
+}
+
+h1, h2, h3, h4, h5,
+.uk-h1, .uk-h2, .uk-h3, .uk-h4 {
+  color: hsl(var(--foreground)) !important;
+  letter-spacing: .012em;
+}
+
+.uk-btn {
+  border-radius: 999px !important;
+  font-family: inherit !important;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.uk-btn-primary {
+  border-color: transparent !important;
+  background: linear-gradient(135deg, #0f7f86, #14b8a6) !important;
+  color: #f2fffd !important;
+  box-shadow: 0 6px 18px rgba(15, 127, 134, .35) !important;
+}
+
+.uk-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(15, 127, 134, .3), 0 0 16px rgba(79, 227, 208, .25) !important;
+}
+
+.uk-btn:active { transform: translateY(0) scale(.97); }
+
+.uk-input,
+.uk-textarea,
+.uk-select {
+  border: 1px solid color-mix(in srgb, var(--mg-sea-glow) 40%, hsl(var(--border))) !important;
+  border-radius: .9rem !important;
+  background: color-mix(in srgb, hsl(var(--card)) 94%, transparent) !important;
+  color: hsl(var(--foreground)) !important;
+  box-shadow: inset 0 2px 8px rgba(2, 18, 26, .12) !important;
+}
+
+.uk-input:focus,
+.uk-textarea:focus,
+.uk-select:focus {
+  border-color: var(--mg-sea-glow) !important;
+  box-shadow: 0 0 0 3px rgba(79, 227, 208, .25) !important;
+}
+
+.mg-avatar,
+.mg-avatar-big {
+  border: 3px solid color-mix(in srgb, var(--mg-sea-glow) 70%, transparent) !important;
+  box-shadow: 0 0 0 4px rgba(79, 227, 208, .14), 0 10px 22px rgba(2, 18, 26, .28);
+}
+
+.mg-game-controls {
+  background: color-mix(in srgb, hsl(var(--card)) 92%, transparent) !important;
+  border-color: color-mix(in srgb, var(--mg-sea-glow) 40%, transparent) !important;
+  box-shadow: 0 -10px 26px rgba(2, 18, 26, .2);
+  backdrop-filter: blur(12px);
+}
+
+.mg-timer {
+  color: var(--mg-sea-glow) !important;
+  filter: drop-shadow(0 0 6px rgba(79, 227, 208, .45));
+}
+
+.uk-checkbox {
+  position: relative;
+  border-color: var(--mg-sea-glow) !important;
+  border-radius: .4rem !important;
+  accent-color: var(--mg-sea-glow);
+}
+
+/* The tick is a baked-in SVG background tied to the swatch class, so it has to be
+   switched off before a themed one can be drawn. */
+.uk-checkbox:checked {
+  background-image: none !important;
+  background-color: #14b8a6 !important;
+  border-color: #14b8a6 !important;
+}
+
+.uk-checkbox:checked::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid var(--mg-sea-foam);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.uk-range {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  width: 100%;
+  height: 1.25rem;
+  background: transparent !important;
+  accent-color: var(--mg-sea-glow);
+  cursor: pointer;
+}
+
+.uk-range::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--mg-sea-glow), rgba(127, 214, 255, .3));
+}
+
+.uk-range::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--mg-sea-glow), rgba(127, 214, 255, .3));
+}
+
+.uk-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -6px;
+  border: 2px solid var(--mg-sea-foam);
+  border-radius: 50%;
+  background: #0f7f86;
+  box-shadow: 0 0 8px rgba(79, 227, 208, .6);
+  cursor: pointer;
+}
+
+.uk-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--mg-sea-foam);
+  border-radius: 50%;
+  background: #0f7f86;
+  box-shadow: 0 0 8px rgba(79, 227, 208, .6);
+  cursor: pointer;
+}
+
+.mg-ready-badge,
+[data-ui="ready-button"][data-ready="true"] {
+  background: rgba(79, 227, 208, .2) !important;
+  color: #0b6b72 !important;
+  animation: mg-sea-pop .3s ease-out;
+}
+
+.mg-word-entry[data-result="guessed"] { background-color: rgba(79, 227, 208, .14) !important; }
+.mg-word-entry[data-result="skipped"] { background-color: rgba(255, 143, 107, .14) !important; }
+
+/* Scoped past [data-commit]: that pseudo-element carries the consensus countdown fill,
+   and switching the whole thing off took the countdown with it. */
+[data-page="codenames"] .mg-word-card:not([data-commit])::after { display: none; }
+
+[data-page="codenames"] .mg-word-card[data-color="red"] {
+  border-color: #d4586a !important;
+  background: #ffe0e2 !important;
+  color: #4d1420 !important;
+}
+
+[data-page="codenames"] .mg-word-card[data-color="blue"] {
+  border-color: #3f9fb8 !important;
+  background: #d3f0f6 !important;
+  color: #0b3844 !important;
+}
+
+[data-page="codenames"] .mg-word-card[data-color="neutral"] {
+  border-color: #8fa3a8 !important;
+  background: #e6eef0 !important;
+  color: #2f3d41 !important;
+}
+
+[data-page="codenames"] .mg-word-card[data-color="bomb"] {
+  border-color: #02121a !important;
+  background: #02121a !important;
+  color: var(--mg-sea-foam) !important;
+  box-shadow: 0 10px 28px rgba(2, 18, 26, .5), inset 0 0 24px rgba(79, 227, 208, .18) !important;
+}
+
+.mg-toast {
+  border-radius: 1rem !important;
+  background: color-mix(in srgb, hsl(var(--card)) 95%, transparent) !important;
+  box-shadow: 0 12px 30px rgba(2, 18, 26, .3) !important;
+  backdrop-filter: blur(10px);
+}
+
+::selection {
+  background: var(--mg-sea-glow);
+  color: var(--mg-sea-deep);
+}
+
+@keyframes mg-sea-drift {
+  to { background-position: 0 0, 220px -220px, -300px 300px, 160px 160px; }
+}
+
+@keyframes mg-sea-pulse {
+  0%, 100% { opacity: .45; transform: scale(.9); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+@keyframes mg-sea-pop {
+  0% { transform: scale(.85); }
+  60% { transform: scale(1.07); }
+  100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body, .mg-game-card::after, .mg-settings-section::after,
+  .mg-ready-badge, [data-ui="ready-button"][data-ready="true"] { animation: none !important; }
+}

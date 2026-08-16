@@ -24,6 +24,7 @@ def index(req: Request):
             IdentitySettings(req.state.user),
             Card(H3('Color mode'), ThemeSwitcher(), cls='mg-settings-section', data_ui='theme-settings'),
             CustomCssSettings(),
+            SettingsSaveBar(),
             cls='max-w-4xl py-12 space-y-6'),
         title='User settings',
         no_image=True,
@@ -31,40 +32,38 @@ def index(req: Request):
     )
 
 
-@rt('/name', methods=['put'])
-async def edit_name(req: Request, name: str):
+async def sync_user(req: Request, u: User, avatar: bool = False) -> None:
+    user_manager.update(u)
+    lobby_service = DI.get(LobbyService)
+    lobby_service.sync_active_lobbies_user(u)
+    if lobby := lobby_service.get_lobby(req.session.get('lobby_id')):
+        def update(r, *_):
+            avatars = (Avatar(u)(hx_swap_oob=f"outerHTML:[data-avatar='{u.uid}']"),
+                       AvatarBig(u)(hx_swap_oob=f"outerHTML:[data-avatar-big='{u.uid}']")) if avatar else ()
+            return (UserName(r, u), *avatars)
+        await notify_all(lobby, update)
+
+
+@rt('/profile', methods=['post'])
+async def save_profile(req: Request, name: str, file: Optional[UploadFile] = None):
     u: User = req.state.user
     name = ' '.join(name.split())
     if not name: raise HTTPException(400, 'Nickname cannot be empty')
     u.name, u.named = name, True
-    user_manager.update(u)
-    lobby_service = DI.get(LobbyService)
-    lobby_service.sync_active_lobbies_user(u)
-    if lobby := lobby_service.get_lobby(req.session.get('lobby_id')):
-        await notify_all(lobby, lambda r, *_: UserName(r, u))
+    picked = bool(file and getattr(file, 'filename', ''))
+    if picked: await u.set_picture(file)
+    await sync_user(req, u, avatar=picked)
     return IdentitySettings(u)
 
 
-async def modify_avatar(req: Request, file: Optional[UploadFile] = None):
-    u: User = req.state.user
-    if file: await u.set_picture(file)
-    else: u.reset_picture()
-    user_manager.update(u)
-    lobby_service = DI.get(LobbyService)
-    lobby_service.sync_active_lobbies_user(u)
-    if lobby := lobby_service.get_lobby(req.session.get('lobby_id')):
-        def update(*_):
-            return (Avatar(u)(hx_swap_oob=f"outerHTML:[data-avatar='{u.uid}']"),
-                    AvatarBig(u)(hx_swap_oob=f"outerHTML:[data-avatar-big='{u.uid}']"))
-        await notify_all(lobby, update)
-    return IdentitySettings(u)
-
-
-@rt('/avatar', methods=['post'])
-async def edit_avatar(req: Request, file: UploadFile):
-    return await modify_avatar(req, file)
+@rt('/name', methods=['put'])
+async def edit_name(req: Request, name: str):
+    return await save_profile(req, name)
 
 
 @rt('/avatar', methods=['delete'])
 async def reset_avatar(req: Request):
-    return await modify_avatar(req)
+    u: User = req.state.user
+    u.reset_picture()
+    await sync_user(req, u, avatar=True)
+    return IdentitySettings(u)

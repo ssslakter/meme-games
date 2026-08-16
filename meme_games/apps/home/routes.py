@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 GAME_BLURBS = {
     "Alias": "Guess the words before time runs out!",
-    "Code Names 🚧": "Give clever clues to find your team's words.",
+    "Codenames": "Give clever clues to find your team's words.",
     "Who Am I": "Ask yes/no questions to guess your identity.",
     "Videos 🚧": "Sync videos and enjoy them with friends.",
 }
@@ -57,10 +57,10 @@ def index():
                     "Play fun party games with friends or enjoy streaming together — all in one place.",
                     cls="text-lg mb-12 text-center text-gray-700 dark:text-[color:var(--muted-foreground)]"
                 ),
-                Slider(
+                Div(
                     *[GameCard(name, desc, page_url(PAGES_REGISTRY[name]))
                       for name, desc in GAME_BLURBS.items() if name in PAGES_REGISTRY],
-                    cls="grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
+                    cls="mg-game-cards grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
                 ),
                 cls=(
                     "max-w-5xl mx-auto px-4 py-12 "

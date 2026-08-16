@@ -1,13 +1,19 @@
+import asyncio
+import logging
+
 from meme_games.core import DI
 from meme_games.domain import Lobby, LobbyMember, LobbyService, is_host
 from meme_games.apps.shared.actions import ActionRejected, ActionResult, GameActions
 
-from .domain import CARD_MAX, NOTES_MAX, TOPIC_MAX, WhoAmIPhase, WhoAmIState
+from .domain import CARD_MAX, NOTES_MAX, TOPIC_MAX, WHOAMI, WhoAmIPhase, WhoAmIState
+
+logger = logging.getLogger(__name__)
 
 __all__ = ['ActionRejected', 'ActionResult', 'WhoAmIActions', 'whoami_actions']
 
 
 class WhoAmIActions(GameActions):
+    turn_flip_delay: float = 2.5
 
     @staticmethod
     def order(lobby: Lobby) -> list[str]:
@@ -60,9 +66,25 @@ class WhoAmIActions(GameActions):
             lambda: state.ask_rejection(member, text) or 'Question is not legal now')
 
     async def answer_question(self, lobby: Lobby, member: LobbyMember, answer: str):
-        return await self._change(
-            lobby, lambda: lobby.state.answer(member, answer), 'Question answered', 'question',
+        state: WhoAmIState = lobby.state
+        result = await self._change(
+            lobby, lambda: state.answer(member, answer), 'Question answered', 'question',
             'Only the card author can answer the pending question')
+        if state.turn_is_over():
+            asyncio.create_task(self._end_turn_later(lobby, state, state.current_turn_uid))
+        return result
+
+    async def _end_turn_later(self, lobby: Lobby, state: WhoAmIState, uid: str) -> None:
+        '''The answer needs a beat on screen before the turn flips out from under it,
+        and the lobby is free to move on to another game while we wait.'''
+        try:
+            await asyncio.sleep(self.turn_flip_delay)
+            if lobby.current_game != WHOAMI or lobby.state is not state: return
+            member = lobby.members.get(uid)
+            if not member or state.current_turn_uid != uid or not state.turn_is_over(): return
+            await self.end_turn(lobby, member)
+        except (ActionRejected, asyncio.CancelledError): pass
+        except Exception as error: logger.error(error)
 
     async def set_guessed(self, lobby: Lobby, member: LobbyMember, target_uid: str, guessed: bool):
         state: WhoAmIState = lobby.state

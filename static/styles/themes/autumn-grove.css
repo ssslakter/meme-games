@@ -1,0 +1,325 @@
+/* Late-October woodland theme for Meme Games */
+:root {
+  --mg-autumn-amber: #c9761f;
+  --mg-autumn-rust: #9c3f22;
+  --mg-autumn-ochre: #d9a441;
+  --mg-autumn-olive: #5f6f38;
+  --mg-autumn-bark: #3a2618;
+  --mg-autumn-paper: #fbf2e2;
+  --radius: .85rem;
+  --mg-label-bg: var(--mg-autumn-paper);
+  --mg-label-fg: var(--mg-autumn-bark);
+  --mg-label-border: var(--mg-autumn-amber);
+  --mg-label-handle: var(--mg-autumn-rust);
+}
+
+.mg-label {
+  border-radius: 1.1rem .3rem 1.1rem .3rem !important;
+  box-shadow: 0 8px 20px rgba(58, 38, 24, .26) !important;
+}
+
+html:not(.dark) {
+  --background: 38 52% 93% !important;
+  --foreground: 25 40% 17% !important;
+  --card: 40 62% 97% !important;
+  --card-foreground: 25 40% 17% !important;
+  --popover: 40 62% 97% !important;
+  --popover-foreground: 25 40% 17% !important;
+  --primary: 27 72% 42% !important;
+  --primary-foreground: 40 62% 97% !important;
+  --secondary: 78 24% 84% !important;
+  --secondary-foreground: 82 26% 22% !important;
+  --muted: 38 38% 88% !important;
+  --muted-foreground: 26 24% 38% !important;
+  --accent: 36 66% 82% !important;
+  --accent-foreground: 25 40% 19% !important;
+  --border: 32 34% 73% !important;
+  --input: 32 34% 73% !important;
+  --ring: 27 72% 42% !important;
+}
+
+html.dark {
+  --background: 24 32% 8% !important;
+  --foreground: 36 52% 88% !important;
+  --card: 23 28% 12% !important;
+  --card-foreground: 36 52% 88% !important;
+  --popover: 23 28% 12% !important;
+  --popover-foreground: 36 52% 88% !important;
+  --primary: 29 82% 58% !important;
+  --primary-foreground: 24 32% 9% !important;
+  --secondary: 80 20% 22% !important;
+  --secondary-foreground: 70 30% 85% !important;
+  --muted: 23 22% 18% !important;
+  --muted-foreground: 34 30% 68% !important;
+  --accent: 20 48% 30% !important;
+  --accent-foreground: 36 52% 88% !important;
+  --border: 27 28% 34% !important;
+  --input: 27 28% 34% !important;
+  --ring: 29 82% 58% !important;
+}
+
+body {
+  background-color: hsl(var(--background)) !important;
+  background-image:
+    radial-gradient(circle at 12% 18%, rgba(201, 118, 31, .13) 0 5px, transparent 6px),
+    radial-gradient(circle at 82% 34%, rgba(156, 63, 34, .11) 0 4px, transparent 5px),
+    radial-gradient(circle at 58% 76%, rgba(95, 111, 56, .10) 0 6px, transparent 7px),
+    repeating-linear-gradient(102deg, rgba(58, 38, 24, .035) 0 2px, transparent 2px 7px) !important;
+  background-size: 260px 260px, 320px 320px, 290px 290px, auto !important;
+  font-family: "Iowan Old Style", Palatino, Georgia, serif !important;
+  animation: mg-autumn-fall 60s linear infinite;
+}
+
+/* Tint the page background instead of replacing it: the lobby pages carry a photo on
+   .mg-background, and overriding background-image here erased it. */
+.mg-background { filter: none !important; }
+
+.mg-background > div {
+  background-image:
+    radial-gradient(ellipse at top, rgba(217, 164, 65, .22), transparent 58%),
+    linear-gradient(to bottom, rgba(58, 38, 24, .08), rgba(95, 111, 56, .14));
+}
+
+.mg-navbar {
+  background: color-mix(in srgb, hsl(var(--card)) 92%, transparent) !important;
+  border: 0 !important;
+  border-bottom: 2px solid var(--mg-autumn-amber) !important;
+  box-shadow: 0 5px 18px rgba(58, 38, 24, .16) !important;
+  backdrop-filter: blur(12px);
+}
+
+.mg-navbar h3::before {
+  content: "🍂 ";
+  font-size: .85em;
+}
+
+.mg-game-card,
+.mg-round-history,
+.mg-round-center,
+.mg-settings-panel,
+.mg-panel,
+.mg-settings-section,
+.mg-spectators,
+.mg-content-card > * {
+  position: relative;
+  border: 1px solid color-mix(in srgb, var(--mg-autumn-amber) 34%, hsl(var(--border))) !important;
+  border-radius: 1.1rem .35rem 1.1rem .35rem !important;
+  background: color-mix(in srgb, hsl(var(--card)) 95%, transparent) !important;
+  box-shadow: 0 9px 24px rgba(58, 38, 24, .16) !important;
+}
+
+/* Kept inside the 1.7rem the Codenames team header reserves, so it never lands on
+   top of the member count sitting in the same corner. */
+.mg-game-card::after,
+.mg-settings-section::after {
+  content: "❧";
+  position: absolute;
+  top: .28rem;
+  right: .5rem;
+  color: var(--mg-autumn-rust);
+  font-size: .95rem;
+  opacity: .7;
+  pointer-events: none;
+  animation: mg-autumn-sway 6s ease-in-out infinite;
+}
+
+h1, h2, h3, h4, h5,
+.uk-h1, .uk-h2, .uk-h3, .uk-h4 {
+  color: hsl(var(--foreground)) !important;
+  letter-spacing: .015em;
+}
+
+.uk-btn {
+  border-radius: .8rem .25rem .8rem .25rem !important;
+  font-family: inherit !important;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.uk-btn-primary {
+  border-color: var(--mg-autumn-rust) !important;
+  background: linear-gradient(135deg, var(--mg-autumn-rust), var(--mg-autumn-amber)) !important;
+  color: #fff6e8 !important;
+  box-shadow: 0 4px 12px rgba(156, 63, 34, .3) !important;
+}
+
+.uk-btn:hover {
+  transform: translateY(-2px) rotate(-.5deg);
+  box-shadow: 0 7px 18px rgba(156, 63, 34, .28) !important;
+}
+
+.uk-btn:active { transform: translateY(0) scale(.97) rotate(0deg); }
+
+.uk-input,
+.uk-textarea,
+.uk-select {
+  border: 1px solid color-mix(in srgb, var(--mg-autumn-amber) 40%, hsl(var(--border))) !important;
+  border-radius: .6rem !important;
+  background: color-mix(in srgb, hsl(var(--card)) 95%, transparent) !important;
+  color: hsl(var(--foreground)) !important;
+  box-shadow: inset 0 1px 4px rgba(58, 38, 24, .1) !important;
+}
+
+.uk-input:focus,
+.uk-textarea:focus,
+.uk-select:focus {
+  border-color: var(--mg-autumn-rust) !important;
+  box-shadow: 0 0 0 3px rgba(201, 118, 31, .26) !important;
+}
+
+.mg-avatar,
+.mg-avatar-big {
+  border: 3px solid var(--mg-autumn-ochre) !important;
+  box-shadow: 0 0 0 4px rgba(217, 164, 65, .18), 0 8px 20px rgba(58, 38, 24, .22);
+}
+
+.mg-game-controls {
+  background: color-mix(in srgb, hsl(var(--card)) 94%, transparent) !important;
+  border-color: var(--mg-autumn-amber) !important;
+  box-shadow: 0 -8px 22px rgba(58, 38, 24, .14);
+}
+
+.mg-timer {
+  color: var(--mg-autumn-rust) !important;
+  filter: drop-shadow(0 3px 5px rgba(156, 63, 34, .24));
+}
+
+.uk-checkbox {
+  position: relative;
+  border-color: var(--mg-autumn-rust) !important;
+  border-radius: .3rem !important;
+  accent-color: var(--mg-autumn-rust);
+}
+
+/* The tick is a baked-in SVG background tied to the swatch class, so it has to be
+   switched off before a themed one can be drawn. */
+.uk-checkbox:checked {
+  background-image: none !important;
+  background-color: var(--mg-autumn-rust) !important;
+  border-color: var(--mg-autumn-rust) !important;
+}
+
+.uk-checkbox:checked::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid var(--mg-autumn-paper);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.uk-range {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  width: 100%;
+  height: 1.25rem;
+  background: transparent !important;
+  accent-color: var(--mg-autumn-rust);
+  cursor: pointer;
+}
+
+.uk-range::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--mg-autumn-amber), rgba(217, 164, 65, .3));
+}
+
+.uk-range::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--mg-autumn-amber), rgba(217, 164, 65, .3));
+}
+
+.uk-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -6px;
+  border: 2px solid var(--mg-autumn-paper);
+  border-radius: 50%;
+  background: var(--mg-autumn-rust);
+  box-shadow: 0 2px 6px rgba(156, 63, 34, .4);
+  cursor: pointer;
+}
+
+.uk-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--mg-autumn-paper);
+  border-radius: 50%;
+  background: var(--mg-autumn-rust);
+  box-shadow: 0 2px 6px rgba(156, 63, 34, .4);
+  cursor: pointer;
+}
+
+.mg-ready-badge,
+[data-ui="ready-button"][data-ready="true"] {
+  background: rgba(95, 111, 56, .2) !important;
+  color: #3f4b25 !important;
+  animation: mg-autumn-pop .3s ease-out;
+}
+
+.mg-word-entry[data-result="guessed"] { background-color: rgba(95, 111, 56, .16) !important; }
+.mg-word-entry[data-result="skipped"] { background-color: rgba(156, 63, 34, .13) !important; }
+
+/* Scoped past [data-commit]: that pseudo-element carries the consensus countdown fill,
+   and switching the whole thing off took the countdown with it. */
+[data-page="codenames"] .mg-word-card:not([data-commit])::after { display: none; }
+
+[data-page="codenames"] .mg-word-card[data-color="red"] {
+  border-color: #a8422a !important;
+  background: #f6d3c4 !important;
+  color: #4a1a0f !important;
+}
+
+[data-page="codenames"] .mg-word-card[data-color="blue"] {
+  border-color: #4a6f86 !important;
+  background: #d3e2ea !important;
+  color: #16303e !important;
+}
+
+[data-page="codenames"] .mg-word-card[data-color="neutral"] {
+  border-color: #a89372 !important;
+  background: #ece0cb !important;
+  color: #43372a !important;
+}
+
+[data-page="codenames"] .mg-word-card[data-color="bomb"] {
+  border-color: #1e150e !important;
+  background: #1e150e !important;
+  color: #f7ead6 !important;
+  box-shadow: 0 10px 26px rgba(30, 21, 14, .38) !important;
+}
+
+.mg-toast {
+  border-radius: 1.1rem .35rem 1.1rem .35rem !important;
+  background: color-mix(in srgb, hsl(var(--card)) 96%, transparent) !important;
+  box-shadow: 0 10px 26px rgba(58, 38, 24, .22) !important;
+}
+
+::selection {
+  background: var(--mg-autumn-ochre);
+  color: var(--mg-autumn-bark);
+}
+
+@keyframes mg-autumn-fall {
+  to { background-position: 260px 260px, -320px 320px, 290px -290px, 0 0; }
+}
+
+@keyframes mg-autumn-sway {
+  0%, 100% { transform: rotate(-6deg); }
+  50% { transform: rotate(6deg); }
+}
+
+@keyframes mg-autumn-pop {
+  0% { transform: scale(.85); }
+  60% { transform: scale(1.07); }
+  100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body, .mg-navbar h3::before, .mg-game-card::after, .mg-settings-section::after,
+  .mg-ready-badge, [data-ui="ready-button"][data-ready="true"] { animation: none !important; }
+}

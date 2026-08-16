@@ -1,7 +1,9 @@
 import asyncio
+import time
 
 from starlette.testclient import TestClient
 
+from meme_games.apps.codenames import domain as codenames_domain
 from meme_games.apps.codenames.actions import ActionRejected, codenames_actions
 from meme_games.apps.codenames.domain import CODENAMES, CardColor, GamePhase, TeamColor, WordCard
 from meme_games.apps.shared.chat import say_as
@@ -215,6 +217,10 @@ def test_whoami_agent_boundary_flow_is_personalized(monkeypatch):
         assert 'whoami_ask_question' not in read_state(client, handle)['available_actions']
         assert post(client, 'action', handle, action='whoami_write_note',
                     arguments={'text': 'Possibly a machine'}).status_code == 409
+        assert 'whoami_write_notes' in read_state(client, handle)['available_actions']
+        assert post(client, 'action', handle, action='whoami_write_notes',
+                    arguments={'text': 'Possibly a machine'}).json()['ok']
+        assert lobby.state.player(agent_uid).notes == 'Possibly a machine'
         asyncio.run(whoami_actions.write_note(lobby, host, 'Shared human deduction'))
         shared = read_state(client, handle)
         assert next(player for player in shared['players'] if player['id'] == host.uid)['notes'] == 'Shared human deduction'
@@ -402,6 +408,7 @@ def _ready_codenames(lobby_id):
 
 def test_codenames_events_carry_the_clue_the_card_and_the_turn(monkeypatch):
     monkeypatch.setenv('MCP_GATEWAY_SECRET', 'test-gateway')
+    monkeypatch.setattr(codenames_domain, 'COMMIT_SECONDS', 0.05)
     lobby, host = _ready_codenames('cn-events')
     with TestClient(app, raise_server_exceptions=False) as client:
         joined = join(client, lobby, 'Robot').json()
@@ -415,8 +422,12 @@ def test_codenames_events_carry_the_clue_the_card_and_the_turn(monkeypatch):
         cursor = lobby.revision
         asyncio.run(codenames_actions.give_clue(lobby, host, 'animal', 2))
         neutral = next(card for card in state.board if card.color == CardColor.NEUTRAL)
+        # the agent is the only operative on its team, so its pick is consensus and
+        # the card turns over once the commit countdown elapses
         assert post(client, 'action', handle, action='codenames_reveal_card',
                     arguments={'card_id': neutral.id}).json()['ok']
+        time.sleep(0.5)
+        assert neutral.revealed
 
         payload = post(client, 'events', handle, cursor=cursor, timeout_seconds=1).json()
         hidden = {card.word for card in state.board if not card.revealed}
@@ -504,3 +515,21 @@ def test_an_empty_chat_message_is_refused(monkeypatch):
         blocked = post(client, 'action', handle, action='lobby_say', arguments={'text': '   '})
         assert blocked.status_code == 409
     assert not lobby.chat
+
+
+def test_rules_are_public_to_an_authenticated_gateway(monkeypatch):
+    monkeypatch.setenv('MCP_GATEWAY_SECRET', 'test-gateway')
+    with TestClient(app, raise_server_exceptions=False) as client:
+        for game in ('codenames', 'alias', 'whoami'):
+            answer = client.post('/internal/agents/rules', headers=headers(), json={'game': game})
+            assert answer.status_code == 200 and answer.json()['game'] == game
+            assert len(answer.json()['rules']) > 500
+
+        unknown = client.post('/internal/agents/rules', headers=headers(), json={'game': 'chess'})
+        assert unknown.status_code == 404
+        assert unknown.json()['detail'] == 'unknown_game:chess'
+        assert unknown.json()['valid_games'] == ['codenames', 'alias', 'whoami']
+
+        assert client.post('/internal/agents/rules', headers=headers('wrong'),
+                           json={'game': 'alias'}).status_code == 401
+        assert client.post('/internal/agents/rules', json={'game': 'alias'}).status_code == 401

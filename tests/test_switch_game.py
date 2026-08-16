@@ -14,6 +14,17 @@ BROWSER = {'user-agent': 'Mozilla/5.0 Firefox'}
 def _client(ip): return TestClient(app, client=(ip, 1), raise_server_exceptions=False)
 
 
+def test_goto_carries_the_navigation_on_a_child():
+    from fasthtml.common import to_xml
+    from meme_games.apps.shared.settings import GoTo
+
+    markup = to_xml(GoTo('/alias/x'))
+
+    # a childless beforeend carrier is read as an empty template and inserts nothing
+    assert '<div' in markup.split('>', 1)[1], 'the navigating element must be a child of the carrier'
+    assert 'go to url "/alias/x"' in markup
+
+
 def test_host_switch_keeps_the_lobby_and_the_other_games_state():
     with _client('172.16.0.1') as host:
         host.get('/whoami/sw-a', headers=BROWSER)

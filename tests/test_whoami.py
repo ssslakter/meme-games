@@ -178,6 +178,60 @@ def test_question_limits_and_manual_turn_end():
         asyncio.run(whoami_actions.ask_question(lobby, second, 'One more?'))
 
 
+def _playing(id):
+    lobby, first, second = _lobby(id)
+    lobby.state.player(first.uid).set_label('First')
+    lobby.state.player(second.uid).set_label('Second')
+    assert lobby.state.start([first.uid, second.uid])
+    return lobby, first, second
+
+
+def _answer(lobby, asker, answerer, question, answer):
+    '''Runs the answer and lets the deferred turn flip land, without the on-screen pause.'''
+    async def run():
+        await whoami_actions.ask_question(lobby, asker, question)
+        await whoami_actions.answer_question(lobby, answerer, answer)
+        await asyncio.sleep(.05)
+    previous, whoami_actions.turn_flip_delay = whoami_actions.turn_flip_delay, 0
+    try: asyncio.run(run())
+    finally: whoami_actions.turn_flip_delay = previous
+
+
+def test_a_no_answer_ends_the_turn_by_itself():
+    lobby, first, second = _playing('wai-auto-no')
+
+    _answer(lobby, first, second, 'Am I alive?', 'no')
+
+    assert lobby.state.current_turn_uid == second.uid
+    assert lobby.state.question is None and lobby.state.questions_asked == 0
+
+
+def test_a_yes_with_questions_left_keeps_the_turn():
+    lobby, first, second = _playing('wai-auto-yes')
+
+    _answer(lobby, first, second, 'Am I alive?', 'yes')
+
+    assert lobby.state.current_turn_uid == first.uid
+    assert lobby.state.questions_asked == 1
+
+
+def test_the_third_answered_question_ends_the_turn():
+    lobby, first, second = _playing('wai-auto-third')
+
+    for question in ('One?', 'Two?', 'Three?'):
+        _answer(lobby, first, second, question, 'yes')
+
+    assert lobby.state.current_turn_uid == second.uid
+    assert lobby.state.questions_asked == 0
+
+
+def test_the_active_player_is_never_offered_an_end_turn_button():
+    lobby, first, _ = _playing('wai-no-end-button')
+
+    assert 'End turn' not in to_xml(TurnStatus(first, lobby))
+    assert f"{first.name}'s turn" in to_xml(TurnStatus(first, lobby))
+
+
 def test_cards_are_static_and_personal_notes_are_movable():
     lobby, host, _ = _lobby('wai-simple-board')
     board = to_xml(Game(host, lobby))

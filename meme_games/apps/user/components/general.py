@@ -54,32 +54,40 @@ def AvatarBig(u: User, cls="w-full h-full bg-cover bg-center bg-no-repeat dark:b
                data_ui='avatar-big', **kwargs)
 
 
+AVATAR_PICKED_JS = (
+    "const f = this.files[0];"
+    "document.getElementById('avatar-file-name').textContent = f ? f.name : 'No file chosen';"
+    # inline handlers run inside `with (document)`, where a bare `URL` is the document's own URL string
+    "if (f) document.getElementById('avatar-preview').src = window.URL.createObjectURL(f);"
+)
+
+
 def IdentitySettings(u: User):
-    from ..routes import edit_avatar, edit_name, reset_avatar
+    from ..routes import reset_avatar, save_profile
 
     return Card(
         H3('Profile'),
         Div(
             Div(
-                Avatar(u, cls='h-28 w-28 rounded-full object-cover'),
+                Avatar(u, id='avatar-preview', cls='h-28 w-28 rounded-full object-cover'),
                 Button('Remove avatar', cls=(ButtonT.destructive, 'whitespace-nowrap'), hx_delete=reset_avatar,
                        hx_confirm='Remove your avatar?', hx_target='#identity-settings', hx_swap='outerHTML'),
                 cls='w-48 shrink-0 flex flex-col items-center gap-3'),
-            Div(
-                Form(
-                    LabelInput('Nickname', name='name', value=u.name, required=True, cls='flex-1'),
-                    Button('Save', cls=(ButtonT.primary, 'w-28 shrink-0'), type='submit'),
-                    hx_put=edit_name, hx_target='#identity-settings', hx_swap='outerHTML',
-                    cls='flex flex-col sm:flex-row sm:items-end gap-3'),
-                Form(
-                    FormLabel('Avatar'),
+            Form(
+                LabelInput('Nickname', name='name', value=u.name, required=True),
+                Div(
+                    FormLabel('Avatar', cls='block'),
                     Div(
-                        Upload('Choose image', name='file', accept='image/*',
-                               cls='min-w-0 flex-1', button_cls=(ButtonT.default, 'w-full justify-start')),
-                        Button('Upload', cls=(ButtonT.primary, 'w-28 shrink-0'), type='submit'),
+                        Div(fh.Input(type='file', name='file', accept='image/*', id='avatar-file',
+                                     onchange=AVATAR_PICKED_JS),
+                            Button('Choose image', cls=(ButtonT.default, 'w-full justify-start'),
+                                   submit=False, tabindex='-1'),
+                            cls='w-full js-upload min-w-0 sm:max-w-xs', uk_form_custom=True),
+                        Span('No file chosen', id='avatar-file-name', cls=(TextT.muted, 'min-w-0 truncate')),
                         cls='flex flex-col sm:flex-row sm:items-center gap-3'),
-                    hx_post=edit_avatar, hx_target='#identity-settings', hx_swap='outerHTML',
                     cls='space-y-2'),
+                id='profile-form', hx_post=save_profile, hx_encoding='multipart/form-data',
+                hx_target='#identity-settings', hx_swap='outerHTML',
                 cls='min-w-0 flex-1 space-y-5'),
             cls='flex flex-col sm:flex-row gap-6 items-start'),
         id='identity-settings', cls='mg-settings-section', data_ui='identity-settings')
@@ -88,18 +96,21 @@ def IdentitySettings(u: User):
 def CustomCssSettings():
     return Card(
         H3('Custom CSS'),
-        P('Stored only in this browser. This page never applies custom CSS, so you can always return here to disable it.',
+        P('Stored only in this browser and applied everywhere, including this page. '
+          'Untick "Enable custom CSS" and save to go back to the default look.',
           cls=TextT.muted),
         Div(
             Div(
-                FormLabel('Template', fr='custom-css-template'),
+                FormLabel('Template', fr='custom-css-template', cls='block'),
                 fh.Select(
                     fh.Option('Choose a template…', value='', selected=True),
+                    fh.Option('Autumn Grove', value='/static/styles/themes/autumn-grove.css'),
                     fh.Option('Cyberpunk 2077', value='/static/styles/themes/cyberpunk-2077.css'),
+                    fh.Option('Deep Sea', value='/static/styles/themes/deep-sea.css'),
                     fh.Option('Sakura', value='/static/styles/themes/sakura.css'),
                     id='custom-css-template', cls='uk-select w-full sm:max-w-sm',
                     onchange="if (this.value) { loadCustomCssTemplate(this.value, this.options[this.selectedIndex].text); this.value = ''; }"),
-                P('Loading a template only places its contents in the editor. Edit it freely, then press Save.',
+                P('Loading a template only places its contents in the editor. Edit it freely, then press Save changes.',
                   cls=TextT.muted),
                 cls='space-y-2'),
             Div(
@@ -111,21 +122,17 @@ def CustomCssSettings():
                      cls='w-full resize-y font-mono whitespace-pre'),
             P(id='custom-css-error', cls='text-destructive', role='alert'),
             P(id='custom-css-status', cls=TextT.muted, role='status'),
-            Div(
-                Button('Save CSS', cls=ButtonT.primary, type='button', onclick='saveCustomCss()'),
-                Button('Clear CSS', type='button', onclick='clearCustomCss()'),
-                cls='flex flex-wrap gap-2'),
+            Button('Clear CSS', type='button', onclick='clearCustomCss()'),
             cls='space-y-4'),
-        Details(
-            Summary('Selector reference and starter CSS'),
-            Pre(Code('''html:not(.dark) { --background: 45 60% 96%; }
-html.dark { --background: 260 25% 8%; }
-
-[data-page="alias"] .mg-game-card { border-radius: 1.5rem; }
-[data-ui="navbar"] { backdrop-filter: blur(12px); }
-[data-ui="player-card"] { box-shadow: 0 0 1rem hotpink; }'''),
-                cls='overflow-auto p-3'),
-            P('Stable hooks: .mg-page, .mg-page-content, .mg-navbar, .mg-background, .mg-game, .mg-game-card, .mg-user, .mg-avatar, .mg-spectators, .mg-lobby-tools, .mg-settings-panel, .mg-team-card, .mg-round-history, .mg-current-word-card, .mg-timer, .mg-game-controls, and [data-page].',
-              cls=TextT.muted),
-            cls='pt-2'),
         cls='mg-settings-section', data_ui='custom-css-settings')
+
+
+def SettingsSaveBar():
+    return Div(
+        Button('Save changes', cls=(ButtonT.primary, 'whitespace-nowrap'), type='submit', form='profile-form',
+               onclick='if (!saveCustomCss()) event.preventDefault()',
+               _="""on htmx:afterRequest from body
+                    if event.detail.successful put 'Saved.' into #settings-status
+                    else put 'Could not save. Try again.' into #settings-status"""),
+        P(id='settings-status', cls=TextT.muted, role='status'),
+        cls='mg-settings-save flex items-center gap-3', data_ui='settings-save')

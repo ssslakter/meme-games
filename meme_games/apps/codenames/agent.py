@@ -46,6 +46,10 @@ class CodenamesAgentGame(AgentGame):
                                           for card in state.board)
                           for team in TeamColor},
         })
+        if 'vote' in topics and state.turn:
+            operatives = state.operatives(state.turn)
+            facts['picks'] = {'made': sum(uid in state.votes for uid in operatives),
+                              'needed': len(operatives)}
         if 'clue' in topics and state.turn:
             giver = next((uid for uid in state.team_uids(state.turn) if uid in state.spymasters), None)
             if giver: facts['clue_by'] = name(giver)
@@ -65,6 +69,9 @@ class CodenamesAgentGame(AgentGame):
         if 'clue' in topics and facts.get('clue'):
             clue, giver = facts['clue'], facts.get('clue_by', f'the {turn} spymaster')
             lines.append(f'{giver} gave the {turn} team the clue "{clue["word"]}" for {clue["number"]}')
+        if picks := facts.get('picks'):
+            lines.append(f'{picks["made"]} of {picks["needed"]} {turn} operatives have picked a card;'
+                         ' the card is turned over once they all pick the same one')
         if revealed := facts.get('revealed'):
             lines.append(f'the {revealed["team"]} team turned over "{revealed["word"]}"'
                          f' - it was {revealed["color"]}')
@@ -89,7 +96,10 @@ class CodenamesAgentGame(AgentGame):
 
         def card_data(card):
             result = {'id': card.id, 'word': card.word, 'revealed': card.revealed}
-            if card.revealed or knows_key: result['color'] = card.color.value
+            if card.revealed or knows_key or state.phase == GamePhase.FINISHED:
+                result['color'] = card.color.value
+            picked_by = [lobby.members[uid].name for uid in state.voters(card.id) if uid in lobby.members]
+            if picked_by: result['picked_by'] = picked_by
             return result
 
         return {
@@ -129,7 +139,7 @@ class CodenamesAgentGame(AgentGame):
                 lobby, member, arguments.get('team', '')),
             'codenames_set_role': lambda: codenames_actions.set_role(
                 lobby, member, arguments.get('role', '')),
-            'codenames_reveal_card': lambda: codenames_actions.reveal_card(
+            'codenames_reveal_card': lambda: codenames_actions.vote(
                 lobby, member, str(arguments.get('card_id', ''))),
             'codenames_end_turn': lambda: codenames_actions.end_turn(lobby, member),
             'codenames_spectate': lambda: codenames_actions.spectate(lobby, member),

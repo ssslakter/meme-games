@@ -44,6 +44,12 @@ class EventResult:
 
 
 @dataclass
+class RulesResult:
+    game: str
+    rules: str
+
+
+@dataclass
 class StateResult:
     """`phase`, `you` and `available_actions` are always filled in. `state` carries the
     whole snapshot on a full read, `changes` only what moved since your last read."""
@@ -79,6 +85,16 @@ def build_gateway(settings: Settings, client=None):
     async def join_lobby(lobby_code: str, name: str) -> JoinResult:
         """Join an agent-enabled existing lobby as a new spectator with a unique name."""
         return JoinResult(**await client.join(lobby_code, name))
+
+    @mcp.tool()
+    async def get_game_rules(game: Literal['codenames', 'alias', 'whoami']) -> RulesResult:
+        """Return the full rules for one game: 'codenames', 'alias' or 'whoami'. The text
+        covers what winning looks like, the exact mechanics as this app implements them,
+        what counts as fair play, and how to play well. Read the rules for the game you are
+        in before your first move - the rules include conventions that are not enforced by
+        the game itself and that other players expect you to keep. No player_session
+        needed."""
+        return RulesResult(**await client.rules(game))
 
     @mcp.tool()
     async def get_game_state(player_session: str, full: bool = False) -> StateResult:
@@ -164,6 +180,16 @@ def build_gateway(settings: Settings, client=None):
             player_session: str, answer: Literal['yes', 'no', 'not_sure']) -> ToolResult:
         """Answer the current Who Am I question with yes, no, or not_sure."""
         return await act(player_session, 'whoami_answer_question', {'answer': answer})
+
+    @mcp.tool()
+    async def whoami_write_notes(player_session: str, text: str) -> ToolResult:
+        """Replace your own Who Am I notes - the scratchpad shown beside your card.
+        Only write notes when a player has asked you to keep them, or when you were
+        asked to write something down. Do not use this to think out loud: unless the
+        lobby made notes private, everyone else can read yours, and an unprompted
+        running commentary is noise for the table. This replaces the whole note, so
+        include anything you want to keep."""
+        return await act(player_session, 'whoami_write_notes', {'text': text})
 
     @mcp.tool()
     async def whoami_end_turn(player_session: str) -> ToolResult:

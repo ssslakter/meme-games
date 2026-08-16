@@ -25,7 +25,15 @@ def ThemeSwitcher():
     return Div(light_btn, dark_btn, cls='mg-theme-switcher', data_ui='theme-switcher')
 
 
+def _NavLink(icon: str, text: str, href: str):
+    return A(UkIcon(icon, cls='mr-2', width=20, height=20), text, href=href,
+             cls=('uk-btn', ButtonT.default,
+                  'inline-flex shrink-0 items-center whitespace-nowrap px-4 py-2'),
+             hx_boost='false')
+
+
 def Navbar(*args, **kwargs):
+    from meme_games.apps.word_packs.routes import index as word_packs
     inner_navbar = NavBar(
         Button("Select game", cls=(ButtonT.primary, 'shrink-0 whitespace-nowrap px-5 py-2')),
         DropDownNavContainer(
@@ -36,9 +44,8 @@ def Navbar(*args, **kwargs):
             ]
         )(cls="min-w-48"),
         *args,
-        A(UkIcon('user', cls='mr-2', width=20, height=20), 'Settings', href='/me',
-          cls=('uk-btn', ButtonT.default, 'inline-flex shrink-0 items-center whitespace-nowrap px-4 py-2'),
-          hx_boost='false'),
+        _NavLink('book-open', 'Word Packs', word_packs.to()),
+        _NavLink('user', 'Settings', '/me'),
         ThemeSwitcher(),
         brand=A(H3("Meme Games"), href='/', hx_boost='false'),
         cls='mg-navbar-content px-4 py-2 sm:px-6',

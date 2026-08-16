@@ -7,6 +7,7 @@ from meme_games.domain import *
 from meme_games.apps.shared.actions import ActionRejected
 from meme_games.apps.shared.agent import AgentGame, agent_games
 from meme_games.apps.shared.chat import say_as
+from meme_games.apps.shared.rules import GAMES_WITH_RULES, game_rules
 from meme_games.apps.shared.utils import register_route
 
 
@@ -90,6 +91,16 @@ def _with_lobby_chat(snapshot: dict, lobby: Lobby) -> dict:
     snapshot['chat'] = [message.to_dict() for message in lobby.chat[-30:]]
     snapshot['available_actions'] = [*snapshot.get('available_actions', ()), *LOBBY_ACTIONS]
     return snapshot
+
+
+@rt('/rules', methods=['post'])
+async def rules(req: Request):
+    data = await _body(req)
+    game = str(data.get('game', ''))
+    text = game_rules(game)
+    if not text: return JSONResponse(
+        {'detail': f'unknown_game:{game}', 'valid_games': GAMES_WITH_RULES}, status_code=404)
+    return {'game': game, 'rules': text}
 
 
 @rt('/state', methods=['post'])

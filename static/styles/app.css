@@ -35,6 +35,39 @@
 
 /*-------------------------------- Chat --------------------------------------*/
 
+/* In the lobby rail the chat is the panel that grows: the spectator card under it is
+   a compact roster, so the talk takes whatever height the settings above it leave. */
+.mg-lobby-talk { min-height: 0; }
+
+.mg-lobby-talk .mg-chat {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+/* No `min-height: 0` on the card itself: with it the card could be squeezed shorter
+   than its own header and input, and the composer spilled out through the bottom
+   edge whenever the settings above it were expanded. */
+.mg-lobby-talk .mg-chat > .uk-card-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.mg-lobby-talk .mg-chat-messages {
+  flex: 1;
+  max-height: none;
+  min-height: 8rem;
+}
+
+/* A face per line turns the roster into the tallest thing in the rail, and the name
+   already identifies everyone - the avatars live on the board instead. */
+.mg-spectators-list .mg-user > span:first-child { display: none; }
+.mg-spectators-list .mg-user { gap: .5rem; }
+.mg-spectators-list { max-height: 9rem; overflow-y: auto; }
+.mg-spectators > .uk-card-body { padding: .6rem .9rem; }
+
 .mg-chat-messages {
   display: flex;
   flex-direction: column;
@@ -63,6 +96,12 @@
 .mg-chat-own .mg-chat-author { color: hsl(var(--primary)); }
 
 .mg-chat-text { color: hsl(var(--card-foreground)); }
+
+/*--------------------------------- Rules ------------------------------------*/
+
+.mg-rules-body { max-height: 70vh; overflow-y: auto; }
+.mg-rules-body h1 { font-size: 1.4rem; }
+.mg-rules-body h2 { margin-top: 1rem; font-size: 1.1rem; }
 
 /*---------------------------- Settings panel --------------------------------*/
 
@@ -147,6 +186,27 @@
     overflow-y: auto;
     min-height: 0;
   }
+
+  /* Taking the rail out of flow also took away the column the shell grid reserved
+     for it, so the board wrapped its rows across the full viewport and every card
+     that landed on the right sat underneath the rail - reading as "the cards do not
+     fit" rather than "they are covered". The board pays the rail's width back. */
+  [data-page="whoami"] .mg-board { padding-right: 23rem; }
+  [data-page="whoami"] .mg-whoami-header { right: 23rem; }
+
+  /* The right rail is the only column here, and expanding the settings pushed the
+     chat off the end of it. The left edge of the board is free, so the talk moves
+     over there and the rail keeps only what a host reaches for. */
+  [data-page="whoami"] .mg-lobby-talk .mg-chat {
+    position: fixed;
+    bottom: 1rem;
+    left: 1rem;
+    z-index: 40;
+    width: 20rem;
+    max-height: 45vh;
+  }
+
+  [data-page="whoami"] .mg-lobby-talk .mg-chat-messages { min-height: 5rem; }
 }
 
 .mg-board {

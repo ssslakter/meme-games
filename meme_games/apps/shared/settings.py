@@ -3,9 +3,10 @@ from meme_games.core import *
 from meme_games.domain import *
 from meme_games.apps.user import *
 from .general import *
+from .rules import game_rules
 
 
-__all__ = ['Settings', 'SettingsPanel', 'LobbyTools', 'Section',
+__all__ = ['Settings', 'SettingsPanel', 'LobbyTools', 'Section', 'GameRules',
            'lock_lobby', 'toggle_agents', 'switch_game', 'SwitchGame', 'GoTo']
 
 
@@ -47,7 +48,9 @@ def AllowAgents(lobby: Lobby, save_preference=False):
 
 def GoTo(url: str):
     '''Sends a websocket-connected member to `url` - used when the host changes the game.'''
-    return Div(hx_swap_oob="beforeend:body", _=f'init go to url "{url}"')
+    # htmx reads a selector-form OOB element as a template and inserts only its children,
+    # so the childless carrier used to arrive as nothing at all and never navigated
+    return Div(Div(_=f'init go to url "{url}"'), hx_swap_oob='beforeend:body')
 
 
 def Section(title: str, *content, open=False, **kwargs):
@@ -89,6 +92,18 @@ def SettingsPanel(*lobby_settings, lobby: Lobby = None, member: LobbyMember = No
         data_ui='settings-panel')
 
 
+def GameRules(lobby: Lobby):
+    '''The rules of whatever the lobby is playing, the same text the agents are given.'''
+    rules = game_rules(lobby.current_game)
+    if not rules: return None
+    return Div(
+        Button(UkIcon('book-open', cls='mr-2', width=20, height=20), 'Rules',
+               cls=(ButtonT.default, 'inline-flex w-full items-center justify-center whitespace-nowrap px-4 py-2'),
+               data_uk_toggle='target: #game-rules'),
+        Modal(Div(render_md(rules), cls='mg-rules-body'),
+              header=ModalTitle('How to play'), id='game-rules', data_ui='game-rules'))
+
+
 def LobbyTools(reciever: LobbyMember | User, lobby: Lobby, *lobby_settings,
                cls=()):
     from .spectators import Spectators
@@ -96,11 +111,13 @@ def LobbyTools(reciever: LobbyMember | User, lobby: Lobby, *lobby_settings,
     return GameRail(
         Div(
             SettingsPanel(*lobby_settings, lobby=lobby, member=reciever),
+            GameRules(lobby),
             Button(UkIcon('log-out', cls='mr-2', width=20, height=20), 'Leave lobby',
                    cls=(ButtonT.destructive, 'inline-flex w-full items-center justify-center whitespace-nowrap px-4 py-2'),
                    hx_post=leave_lobby, hx_swap='none', data_ui='leave-lobby'),
             cls='w-full space-y-3'),
-        Div(Spectators(reciever, lobby), ChatPanel(reciever, lobby), cls='w-full space-y-3'),
+        Div(ChatPanel(reciever, lobby), Spectators(reciever, lobby),
+            cls='mg-lobby-talk flex w-full min-h-0 flex-1 flex-col gap-3'),
         cls=('mg-lobby-tools justify-between', cls),
         data_ui='lobby-tools')
 

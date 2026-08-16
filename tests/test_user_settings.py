@@ -21,6 +21,13 @@ def test_user_settings_page_and_nickname_update():
         assert 'Sakura' in page.text
         assert 'id="custom-css-template"' in page.text
         assert 'onsubmit=' not in page.text
+        assert 'id="profile-form"' in page.text
+        assert 'id="avatar-file-name"' in page.text
+        assert 'Selector reference and starter CSS' not in page.text
+        assert 'Stable hooks' not in page.text
+        assert page.text.count('>Save changes<') == 1
+        assert 'Save CSS' not in page.text
+        assert '>Upload<' not in page.text
         assert 'fixed top-0 left-0 right-0' in page.text
         assert '-translate-y-[calc(100%-1rem)]' not in page.text
 
@@ -29,27 +36,52 @@ def test_user_settings_page_and_nickname_update():
         assert 'Theme Maker' in updated.text
 
 
-def test_custom_css_templates_are_plain_editable_stylesheets():
-    for filename in ('cyberpunk-2077.css', 'sakura.css'):
-        css = Path('static/styles/themes', filename).read_text()
-        assert '@import' not in css.lower()
-        assert '.mg-navbar' in css
-        assert 'html:not(.dark)' in css
-        assert 'html.dark' in css
+def _offered_themes() -> list[str]:
+    '''Every theme the settings page offers, so a new one cannot skip these checks.'''
+    from fasthtml.common import to_xml
+    from meme_games.apps.user.components.general import CustomCssSettings
+    return re.findall(r'value="(/static/styles/themes/[^"]+\.css)"', to_xml(CustomCssSettings()))
 
-def test_avatar_can_be_uploaded_and_removed_from_settings():
+
+def test_custom_css_templates_are_plain_editable_stylesheets():
+    paths = _offered_themes()
+    assert len(paths) >= 4
+    for path in paths:
+        css = Path(path.lstrip('/')).read_text()
+        assert '@import' not in css.lower(), path
+        assert '.mg-navbar' in css, path
+        assert 'html:not(.dark)' in css and 'html.dark' in css, path
+        # both modes must set the ink, or a theme reads as blank text on its own card
+        assert css.count('--card-foreground') >= 2, path
+
+
+def test_themes_leave_the_codenames_countdown_alone():
+    '''The commit countdown rides .mg-word-card::after; a theme that hides its own
+    corner ornament there used to take the countdown with it.'''
+    for path in _offered_themes():
+        css = Path(path.lstrip('/')).read_text()
+        for rule in re.findall(r'[^}]*\.mg-word-card[^{}]*::after[^{]*\{[^}]*\}', css):
+            if 'display: none' in rule or 'display:none' in rule:
+                assert ':not([data-commit])' in rule, path
+
+def test_single_save_updates_name_and_avatar_together():
     with TestClient(app, client=('10.0.1.2', 1)) as client:
         client.get('/me/', headers=HEADERS)
         uploaded = client.post(
-            '/me/avatar',
+            '/me/profile',
+            data={'name': '  Theme   Maker  '},
             files={'file': ('avatar.png', b'avatar', 'image/png')},
             headers=HEADERS,
         )
+        assert 'Theme Maker' in uploaded.text
         match = re.search(r'/user-content/([^"?]+\.png)', uploaded.text)
         assert uploaded.status_code == 200 and match
         avatar_path = Path('user-content') / match.group(1)
         try:
             assert avatar_path.exists()
+            renamed = client.post('/me/profile', data={'name': 'Just Renamed'}, headers=HEADERS)
+            assert 'Just Renamed' in renamed.text
+            assert match.group(1) in renamed.text
         finally:
             removed = client.delete('/me/avatar', headers=HEADERS)
         assert removed.status_code == 200

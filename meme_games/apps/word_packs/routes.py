@@ -47,8 +47,6 @@ def index(pack_id: str = None):
             cls=('pt-10', ContainerT.xl)),
             title="Word packs", no_image=True, page='word-packs')
 
-register_page("Word Packs", index.to())
-
 @rt
 def editor(id: str):
     pack = wordpack_manager.get_by_id(id)

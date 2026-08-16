@@ -19,7 +19,7 @@ class WhoAmIAgentGame(AgentGame):
     @staticmethod
     def available_actions(member: LobbyMember, state, target_uid: str | None) -> list[str]:
         if not member.is_player: return []
-        actions = []
+        actions = ['whoami_write_notes']
         if target_uid: actions.append('whoami_write_card')
         if state.phase == WhoAmIPhase.PLAYING and member.uid == state.current_turn_uid:
             if not state.ask_rejection(member, '?'):
@@ -145,6 +145,8 @@ class WhoAmIAgentGame(AgentGame):
             'whoami_answer_question': lambda: whoami_actions.answer_question(
                 lobby, member, str(arguments.get('answer', ''))),
             'whoami_end_turn': lambda: whoami_actions.end_turn(lobby, member),
+            'whoami_write_notes': lambda: whoami_actions.write_note(
+                lobby, member, str(arguments.get('text', ''))),
         }
         handler = actions.get(name)
         if not handler: raise ActionRejected('Unknown action')

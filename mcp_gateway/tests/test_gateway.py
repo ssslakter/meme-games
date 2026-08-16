@@ -15,6 +15,9 @@ class FakeGameClient:
     async def join(self, lobby_code, name):
         return {'player_session': HANDLE, 'lobby_id': lobby_code, 'name': name, 'cursor': 3}
 
+    async def rules(self, game):
+        return {'game': game, 'rules': f'# {game}\nrules text'}
+
     async def state(self, player_session, full=False):
         assert player_session == HANDLE
         return {'full': full, 'revision': 3, 'phase': 'waiting', 'you': {'id': 'p1'},
@@ -52,7 +55,7 @@ async def test_tools_use_independent_player_session_arguments():
             'codenames_set_role', 'codenames_give_clue', 'codenames_reveal_card',
             'codenames_end_turn', 'codenames_spectate', 'wait_for_events',
             'whoami_write_card', 'whoami_ask_question', 'whoami_answer_question',
-            'whoami_end_turn'}
+            'whoami_end_turn', 'get_game_rules'}
         # notes are a human aid; an agent already holds the whole history in context
         assert not {'join_team', 'set_role', 'give_clue', 'reveal_card', 'end_turn', 'spectate',
                     'whoami_write_note'} & {tool.name for tool in tools.tools}
@@ -66,6 +69,8 @@ async def test_tools_use_independent_player_session_arguments():
         assert result.structured_content['ok']
         events = await client.call_tool('wait_for_events', {'player_session': HANDLE, 'cursor': 3})
         assert events.structured_content['next_cursor'] == 4
+        rules = await client.call_tool('get_game_rules', {'game': 'whoami'})
+        assert rules.structured_content == {'game': 'whoami', 'rules': '# whoami\nrules text'}
         left = await client.call_tool('leave_lobby', {'player_session': HANDLE})
         assert left.structured_content['ok']
     assert fake.actions == [('codenames_join_team', {'team': 'red'})]

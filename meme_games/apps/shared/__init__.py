@@ -3,6 +3,7 @@ from .actions import *
 from .agent import *
 from .chat import *
 from .not_found import *
+from .rules import *
 from .navigation import *
 from .settings import *
 from .timer import *

@@ -4,6 +4,7 @@ from meme_games.apps.shared import *
 from meme_games.apps.shared.spectators import register_game_view
 from meme_games.apps.user import UserInfo
 from meme_games.apps.word_packs.domain import WordPackRepo
+from meme_games.apps.word_packs.components import PacksSelect
 
 from ..domain import *
 
@@ -27,8 +28,9 @@ def TeamPanel(reciever: LobbyMember | User, lobby: Lobby, team: TeamColor):
     members = [lobby.members[uid] for uid in state.team_uids(team) if uid in lobby.members]
     mine = isinstance(reciever, LobbyMember) and state.team_of(reciever) == team
     return Card(
-        Div(H4(f'{team.value.title()} team'), Span(len(members), cls='tabular-nums'),
-            cls='flex items-center justify-between'),
+        Div(H4(f'{team.value.title()} team', cls='mg-codenames-team-name'),
+            Span(len(members), cls='mg-codenames-team-count tabular-nums'),
+            cls='mg-codenames-team-head flex items-center justify-between'),
         Div(*[
             Div(
                 UserInfo(reciever, member.user,
@@ -48,30 +50,67 @@ def TeamPanel(reciever: LobbyMember | User, lobby: Lobby, team: TeamColor):
         data_ui='codenames-team', data_team=team.value)
 
 
+def LogLine(entry: LogEntry):
+    team = Span(entry.team, cls='mg-log-team') if entry.team else None
+    word = Span(f'"{entry.word}"', cls='mg-log-word')
+    match entry.kind:
+        case 'start': body = (team, ' opens the game')
+        case 'turn': body = (team, ' is up')
+        case 'timeout': body = (team, ' ran out of time')
+        case 'win': body = (team, ' wins')
+        case 'clue': body = (team, ' clue ', word, Span(entry.number, cls='mg-log-number'))
+        case 'reveal': body = (team, ' opened ', word, ' — ',
+                               Span(entry.card, cls='mg-log-card', data_card=entry.card))
+        case _: body = (team, f' {entry.kind}')
+    return P(*body, cls='mg-log-line', data_team=entry.team, data_ui='codenames-log-line')
+
+
+def EventLog(state: CodenamesState):
+    '''The public sequence of play. Only cards already turned over are named with a colour.'''
+    return Card(
+        H5('Event log'),
+        Div(*([LogLine(entry) for entry in reversed(state.log)]
+              or [P('Nothing yet.', cls=TextT.muted)]),
+            cls='mg-codenames-log overflow-y-auto', data_ui='codenames-log'),
+        cls='mg-panel mg-codenames-log-panel', body_cls='space-y-2 p-4')
+
+
 def TeamsRail(reciever, lobby):
     return GameRail(
         H3('Teams'),
         TeamPanel(reciever, lobby, TeamColor.RED),
         TeamPanel(reciever, lobby, TeamColor.BLUE),
+        EventLog(lobby.state),
         cls='mg-codenames-teams', data_ui='codenames-teams')
 
 
 def BoardCard(reciever: LobbyMember | User, state: CodenamesState, card: WordCard):
-    from ..routes import reveal_card
+    from ..routes import vote_card
     uid = reciever.uid
-    known = card.revealed or uid in state.spymasters
+    known = card.revealed or uid in state.spymasters or state.phase == GamePhase.FINISHED
     visible_color = card.color if known else None
     clickable = (isinstance(reciever, LobbyMember) and state.phase == GamePhase.GUESSING and
                  state.team_of(reciever) == state.turn and uid not in state.spymasters and not card.revealed)
     classes = CARD_STYLE[visible_color] if visible_color else 'border-border bg-card hover:border-primary/60'
+    voters = state.voters(card.id)
+    committing = state.consensus() == card.id
     content = (Span(card.word, cls='text-lg font-semibold'),
-               Span(visible_color.value if visible_color else '', cls='text-xs uppercase opacity-60'))
-    kwargs = dict(
-        cls=f'mg-game-card mg-word-card flex aspect-[5/3] min-w-0 flex-col items-center justify-center gap-1 border p-3 text-center shadow-sm transition {classes}',
+               Span(visible_color.value if visible_color else '', cls='text-xs uppercase opacity-60'),
+               Div(*[Span(cls='mg-vote-dot', data_mine=str(voter == uid).lower()) for voter in voters],
+                   cls='mg-vote-dots') if voters else None)
+    return Div(
+        *content,
+        cls=f'mg-game-card mg-word-card flex aspect-[5/3] min-w-0 flex-col items-center justify-center gap-1 border p-3 text-center shadow-sm transition {classes}'
+            + (' cursor-pointer' if clickable else ''),
         data_ui='word-card', data_card=card.id,
         data_color=visible_color.value if visible_color else 'hidden',
-        data_revealed=str(card.revealed).lower())
-    return Button(*content, type='button', hx_post=reveal_card.to(card_id=card.id), hx_swap='none', **kwargs) if clickable else Div(*content, **kwargs)
+        data_revealed=str(card.revealed).lower(),
+        data_votes=str(len(voters)) if voters else None,
+        data_commit='true' if committing else None,
+        style=f'--mg-commit:{COMMIT_SECONDS}s' if committing else None,
+        role='button' if clickable else None, tabindex='0' if clickable else None,
+        hx_post=vote_card.to(card_id=card.id) if clickable else None,
+        hx_swap='none' if clickable else None)
 
 
 def CluePanel(reciever: LobbyMember | User, state: CodenamesState):
@@ -91,7 +130,8 @@ def CluePanel(reciever: LobbyMember | User, state: CodenamesState):
     if state.phase == GamePhase.CLUE:
         if mine == state.turn and is_spymaster:
             return Form(
-                LabelInput('One-word clue', name='clue', required=True, autocomplete='off'),
+                LabelInput('Clue', name='clue', required=True, autocomplete='off',
+                           placeholder='one or more words'),
                 LabelInput('Number', name='number', type='number', min=1, max=9, value='1', required=True),
                 Button(UkIcon('send', cls='mr-2'), 'Give clue', cls=ButtonT.primary),
                 hx_post=submit_clue, hx_swap='none', cls='grid items-end gap-3 sm:grid-cols-[1fr_8rem_auto]')
@@ -111,9 +151,14 @@ def Board(reciever, state):
     return Div(
         Card(
             Div(
-                Div(P('Turn', cls=TextT.muted), H3(state.turn.value.title() if state.turn else 'Game over')),
-                Div(Span(f'Red {remaining[TeamColor.RED]}', cls='text-red-600'),
-                    Span(f'Blue {remaining[TeamColor.BLUE]}', cls='text-blue-600'), cls='flex gap-4'),
+                Div(P('Turn', cls=TextT.muted),
+                    H3(state.turn.value.title() if state.turn else 'Game over',
+                       cls='mg-codenames-turn', data_team=state.turn.value if state.turn else None)),
+                CircleTimer(state.timer.time, total=state.timer.total, paused=state.timer.paused)
+                    if state.turn_seconds() else None,
+                Div(*[Span(f'{team.value.title()} {remaining[team]}',
+                           cls='mg-codenames-remaining', data_team=team.value) for team in TeamColor],
+                    cls='flex gap-4'),
                 cls='flex flex-wrap items-center justify-between gap-4'),
             CluePanel(reciever, state), cls='mg-panel', body_cls='space-y-5 p-5'),
         Div(*[BoardCard(reciever, state, card) for card in state.board],
@@ -121,22 +166,49 @@ def Board(reciever, state):
         cls='min-w-0 space-y-5')
 
 
-def HostSettings(reciever, lobby, oob=False):
-    from ..routes import restart_game, select_pack
-    if not is_host(reciever): return None
-    state = lobby.state
+def PackSelect(state: CodenamesState):
+    from ..routes import editor_readonly
     packs = DI.get(WordPackRepo).get_all()
     return Div(
+        Button(UkIcon('book-open', cls='mr-2'), 'Select wordpack',
+               cls=(ButtonT.default, 'w-full justify-start'), data_uk_toggle='target: #pack-select'),
+        Modal(ModalTitle('Wordpack selection'),
+              Grid(Div(PacksSelect(packs, editor_readonly, hx_target='#editor', hx_swap='outerHTML'),
+                       cls='overflow-auto col-span-2 border-r-2'),
+                   Div(hx_post=editor_readonly.to(id=state.wordpack.id) if state.wordpack else None,
+                       hx_trigger='load' if state.wordpack else None, cls='col-span-3 h-full'),
+                   ModalCloseButton(),
+                   cols=5),
+              id='pack-select'))
+
+
+def HostSettings(reciever, lobby, oob=False):
+    from ..routes import pause_game, restart_game, shuffle_teams, update_settings
+    if not is_host(reciever): return None
+    state: CodenamesState = lobby.state
+    waiting = state.phase == GamePhase.WAITING
+    return Div(
         H5('Host controls'),
+        PackSelect(state),
         Form(
-            FormLabel('Wordpack', fr='codenames-wordpack'),
-            Select(*[Option(pack.name, value=pack.id, selected=state.wordpack and pack.id == state.wordpack.id)
-                     for pack in packs], id='codenames-wordpack', name='pack_id', cls='uk-select'),
-            Button('Use wordpack', cls=(ButtonT.default, 'w-full')),
-            hx_post=select_pack, hx_swap='none', cls='space-y-3'),
-        Button(UkIcon('rotate-ccw', cls='mr-2'), 'Restart game', hx_post=restart_game, hx_swap='none',
-               hx_confirm='Restart Codenames and keep the current teams?', cls=(ButtonT.destructive, 'w-full'))
-            if state.phase != GamePhase.WAITING else None,
+            LabelInput('Clue seconds (0 = no limit)', name='clue_seconds', type='number', min=0, max=600,
+                       value=str(state.clue_seconds)),
+            LabelInput('Guess seconds (0 = no limit)', name='guess_seconds', type='number', min=0, max=600,
+                       value=str(state.guess_seconds)),
+            Button('Update settings', cls=(ButtonT.primary, 'w-full')),
+            hx_post=update_settings, hx_swap='none', cls='space-y-3'),
+        Div(
+            Button(UkIcon('play' if state.timer.paused else 'pause', cls='mr-2 shrink-0'),
+                   'Resume' if state.timer.paused else 'Pause', hx_post=pause_game, hx_swap='none',
+                   disabled=not state.turn_seconds(),
+                   cls=(ButtonT.default, 'w-full justify-start px-3 py-2')),
+            Button(UkIcon('shuffle', cls='mr-2 shrink-0'), 'Shuffle teams', hx_post=shuffle_teams, hx_swap='none',
+                   disabled=not waiting or not state.players,
+                   cls=(ButtonT.default, 'w-full justify-start px-3 py-2')),
+            Button(UkIcon('rotate-ccw', cls='mr-2 shrink-0'), 'Restart', hx_post=restart_game, hx_swap='none',
+                   hx_confirm='Restart Codenames and keep the current teams?',
+                   cls=(ButtonT.destructive, 'w-full justify-start px-3 py-2')),
+            cls='grid grid-cols-2 gap-3'),
         id='codenames-host-controls', hx_swap_oob='true' if oob else None,
         cls='space-y-4', data_ui='codenames-host-controls')
 
