@@ -1,0 +1,19 @@
+meme_games/main.py
+  s_22e6ecaa191917::t_f891ac225955ae 44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "34d8e91d8bff2b03c865f19c65bb3196807386f6",
+  "prompts": {},
+  "sessions": {
+    "s_22e6ecaa191917": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "02a4b5ac-37ce-4682-b2ba-6a93dfa3a6fd",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
