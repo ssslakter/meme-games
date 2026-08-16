@@ -1,0 +1,26 @@
+meme_games/apps/shared/chat.py
+  s_5acf458e315b05::t_62ad7cc4ad543a 16-19
+static/styles/app.css
+  s_5acf458e315b05::t_60b7a7357c46f7 90-97
+tests/test_spectators.py
+  s_5acf458e315b05::t_ab869498352620 77-91
+static/scripts/common/utils.js
+  s_5acf458e315b05::t_ab122987b8fda1 20-22
+  s_5acf458e315b05::t_ee9e06b586b036 13-19,23-29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "c4e8d4a8855144b53894f7b3e4b6a4e11da1fe0e",
+  "prompts": {},
+  "sessions": {
+    "s_5acf458e315b05": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d7fa99f8-50a7-4d55-ba32-6545723e0cf7",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
