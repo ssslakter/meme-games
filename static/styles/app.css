@@ -57,7 +57,7 @@
 
 .mg-lobby-talk .mg-chat-messages {
   flex: 1;
-  max-height: none;
+  max-height: 50vh;
   min-height: 12rem;
 }
 
