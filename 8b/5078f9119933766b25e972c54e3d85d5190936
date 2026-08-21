@@ -1,0 +1,19 @@
+static/styles/app.css
+  s_e06a4a7e26524e::t_5a0ee9ffb5e00b 60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "8b5078f9119933766b25e972c54e3d85d5190936",
+  "prompts": {},
+  "sessions": {
+    "s_e06a4a7e26524e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fbb7c288-7973-4851-a50c-b82fda7e3b18",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
