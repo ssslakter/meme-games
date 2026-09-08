@@ -3,7 +3,7 @@ import asyncio
 from fasthtml.common import to_xml
 
 from meme_games.apps.alias.components.game import Game
-from meme_games.apps.alias.components.settings import HostGameActions
+from meme_games.apps.alias.components.settings import HostGameActions, VoteButton
 from meme_games.apps.alias.components.word_panel import GuessCount, GuessPanel, WordEntry, WordPanel
 from meme_games.apps.alias.domain import ALIAS, GameState, GuessEntry
 from meme_games.apps.alias.domain.config import GameConfig
@@ -178,3 +178,28 @@ def test_lobby_avatar_is_clipped_to_a_circle():
     html = to_xml(Avatar(User('avatar-player', 'Player')))
 
     assert 'rounded-full' in html and 'object-cover' in html
+
+
+def test_first_round_still_waits_for_the_explainer_to_start():
+    players = [LobbyMember(user=User(f'ready-{i}', f'Player {i}')) for i in range(2)]
+    team = Team(members=players)
+    game = GameState(state=StateMachine.VOTING_TO_START, teams={team.id: team},
+                     active_team=team, active_player=players[0], votes={p.uid for p in players})
+
+    assert 'Start round' in to_xml(VoteButton(players[0], game))
+
+
+def test_review_confirmation_is_the_next_team_ready_check():
+    scorer = LobbyMember(user=User('scorer', 'Scorer'))
+    next_player = LobbyMember(user=User('next-player', 'Next player'))
+    first, second = Team(members=[scorer]), Team(members=[next_player])
+    game = GameState(state=StateMachine.REVIEWING, teams={first.id: first, second.id: second},
+                     active_team=second, active_player=next_player, review_team=first,
+                     review_player=scorer, guess_log=[GuessEntry('apple', 1)], votes={next_player.uid})
+
+    game.next_state(reset_votes=False)
+
+    assert first.points == 1
+    assert game.state == StateMachine.VOTING_TO_START
+    assert game.votes == {next_player.uid}
+    assert 'Start round' in to_xml(VoteButton(next_player, game))

@@ -34,6 +34,9 @@ class GameState:
     active_team: Optional[Team] = None
     active_player: Optional[LobbyMember] = None
     active_guesser: Optional[LobbyMember] = None
+    review_team: Optional[Team] = None
+    review_player: Optional[LobbyMember] = None
+    review_guesser: Optional[LobbyMember] = None
     active_word: Optional[str] = None
     guess_log: List[GuessEntry] = field(default_factory=list)
     votes: set[str] = field(default_factory=set)
@@ -52,7 +55,7 @@ class GameState:
                 all(len(team) >= self.config.min_team_players for team in self.teams.values()) and
                 self.config.wordpack is not None)
 
-    def next_state(self):
+    def next_state(self, reset_votes=True):
         match self.state:
             case StateMachine.WAITING_FOR_PLAYERS:
                 if self.can_start(): self.start_game()
@@ -61,35 +64,39 @@ class GameState:
                 self.active_word = next(self.words_iterator)
                 self.timer.set(self.config.time_limit)
             case StateMachine.ROUND_PLAYING:
+                self.review_team = self.active_team
+                self.review_player = self.active_player
+                self.review_guesser = self.active_guesser
+                self.active_team.times_played += 1
+                self.advance_turn()
                 self.state = StateMachine.REVIEWING
             case StateMachine.REVIEWING:
                 points = sum(g.points for g in self.guess_log)
                 if len(self.teams) == 1:
-                    self.active_player.add_score(points)
-                    if self.active_guesser and self.active_guesser != self.active_player:
-                        self.active_guesser.add_score(points)
+                    self.review_player.add_score(points)
+                    if self.review_guesser and self.review_guesser != self.review_player:
+                        self.review_guesser.add_score(points)
                 else:
-                    self.active_team.points += points
-                self.active_team.times_played += 1
-                if len(self.teams) == 1:
-                    self.advance_pair()
-                else:
-                    self.active_team = next(self.teams_iterator)
-                    self.active_player = next(self.active_team)
+                    self.review_team.points += points
+                self.review_team = self.review_player = self.review_guesser = None
                 self.guess_log.clear()
                 self.state = StateMachine.VOTING_TO_START                
-        self.reset_votes()
+        if reset_votes: self.reset_votes()
 
     def team_points(self, team: Team):
         extra = sum(g.points for g in self.guess_log)
-        return team.points + extra*(team==self.active_team)
+        return team.points + extra*(team==self.review_team)
+
+    def player_points(self, player: LobbyMember):
+        extra = sum(g.points for g in self.guess_log)
+        return player.score + extra * (player in (self.review_player, self.review_guesser))
 
     def check_win_condition(self):
         if len(self.teams) == 1:
             team = next(iter(self.teams.values()))
             return (len(team) and team.times_played >= len(team) and
                     team.times_played % len(team) == 0 and
-                    max(member.score for member in team.members) >= self.config.max_score)
+                    max(self.player_points(member) for member in team.members) >= self.config.max_score)
         return (any(self.team_points(t) >= self.config.max_score for t in self.teams.values()) and 
                 all(t.times_played == self.active_team.times_played for t in self.teams.values()))
 
@@ -101,7 +108,7 @@ class GameState:
 
     def is_player_winner(self, player: LobbyMember):
         return (len(self.teams) == 1 and self.check_win_condition() and
-                player.score == max(member.score for member in self.active_team.members))
+                self.player_points(player) == max(self.player_points(member) for member in self.active_team.members))
 
     def start_game(self):
         self.state = StateMachine.VOTING_TO_START
@@ -117,6 +124,7 @@ class GameState:
         self.timer.stop()
         self.state = StateMachine.WAITING_FOR_PLAYERS
         self.active_team = self.active_player = self.active_guesser = self.active_word = None
+        self.review_team = self.review_player = self.review_guesser = None
         self.guess_log.clear()
         self.reset_votes()
         for team in self.teams.values():
@@ -125,9 +133,12 @@ class GameState:
         for attr in ('teams_iterator', 'words_iterator'):
             if hasattr(self, attr): delattr(self, attr)
 
-    def advance_pair(self):
+    def advance_turn(self):
         team = self.active_team
-        if team.times_played % len(team) == 0:
+        if len(self.teams) > 1:
+            self.active_team = next(self.teams_iterator)
+            self.active_player = next(self.active_team)
+        elif team.times_played % len(team) == 0:
             random.shuffle(team.members)
             if hasattr(team, 'iterator'): delattr(team, 'iterator')
             self.active_player, self.active_guesser = next(team), next(team)
