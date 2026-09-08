@@ -85,7 +85,8 @@ def RoundCenter(r: LobbyMember, game: gm.GameState):
     last_word = playing and game.timer.finished
     content = (ExplainerPanel(r, game) if r == game.active_player else
                Div(H2(f'{game.active_player.user.name} is explaining'),
-                   P('Follow along—the results appear in the history on the left.', cls=TextT.muted),
+                   P(f"{game.active_guesser.user.name} is guessing" if game.active_guesser else
+                     'Follow along—the results appear in the history on the left.', cls=TextT.muted),
                    cls='space-y-2 text-center')) if playing else VoteButton(r, game)
     return Card(
         Div(

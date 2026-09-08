@@ -19,7 +19,7 @@ class WordPack(Model):
     
     @property
     def words(self):
-        return self.words_.split('\n')
+        return [word.strip() for word in self.words_.splitlines() if word.strip()]
     
     def get_author_name(self) -> Optional[str]:
         return self.author.name if self.author else None

@@ -17,12 +17,14 @@ def TeamCard(r: User | LobbyMember, team: gm.Team, game: gm.GameState):
     return Card(
         WinnerTag() if game.is_winner(team) else None,
         DivFullySpaced(
-            H4(f'Team {list(game.teams).index(team.id) + 1}', cls='mg-team-name'),
+            H4('All vs all' if len(game.teams) == 1 else f'Team {list(game.teams).index(team.id) + 1}', cls='mg-team-name'),
             Div(Span(team.points, cls='mg-team-score tabular-nums'), PotentialScore(team, game),
-                cls='flex items-center gap-2')),
+                cls='flex items-center gap-2') if len(game.teams) > 1 else None),
         *(
             DivFullySpaced(
                 UserInfo(r, m.user, m.is_connected, m.is_host, avatar_cls='h-12 w-12'),
+                Span(m.score, cls='mg-player-score tabular-nums') if len(game.teams) == 1 else None,
+                Span('🏆', title='Winner') if game.is_player_winner(m) else None,
                 Span('Ready', cls='mg-ready-badge rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800 dark:bg-green-900 dark:text-green-100') if game.has_voted(m) else None,
                 cls="mg-team-member w-full truncate",
                 data_ready=str(game.has_voted(m)).lower(),

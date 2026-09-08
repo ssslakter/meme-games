@@ -33,6 +33,7 @@ class GameState:
     teams: Dict[int, Team] = field(default_factory=dict)
     active_team: Optional[Team] = None
     active_player: Optional[LobbyMember] = None
+    active_guesser: Optional[LobbyMember] = None
     active_word: Optional[str] = None
     guess_log: List[GuessEntry] = field(default_factory=list)
     votes: set[str] = field(default_factory=set)
@@ -62,10 +63,19 @@ class GameState:
             case StateMachine.ROUND_PLAYING:
                 self.state = StateMachine.REVIEWING
             case StateMachine.REVIEWING:
-                self.active_team.points += sum(g.points for g in self.guess_log)
+                points = sum(g.points for g in self.guess_log)
+                if len(self.teams) == 1:
+                    self.active_player.add_score(points)
+                    if self.active_guesser and self.active_guesser != self.active_player:
+                        self.active_guesser.add_score(points)
+                else:
+                    self.active_team.points += points
                 self.active_team.times_played += 1
-                self.active_team = next(self.teams_iterator)
-                self.active_player = next(self.active_team)
+                if len(self.teams) == 1:
+                    self.advance_pair()
+                else:
+                    self.active_team = next(self.teams_iterator)
+                    self.active_player = next(self.active_team)
                 self.guess_log.clear()
                 self.state = StateMachine.VOTING_TO_START                
         self.reset_votes()
@@ -75,19 +85,30 @@ class GameState:
         return team.points + extra*(team==self.active_team)
 
     def check_win_condition(self):
+        if len(self.teams) == 1:
+            team = next(iter(self.teams.values()))
+            return (len(team) and team.times_played >= len(team) and
+                    team.times_played % len(team) == 0 and
+                    max(member.score for member in team.members) >= self.config.max_score)
         return (any(self.team_points(t) >= self.config.max_score for t in self.teams.values()) and 
                 all(t.times_played == self.active_team.times_played for t in self.teams.values()))
 
     def is_winner(self, team: Team): 
+        if len(self.teams) == 1: return False
         if not self.check_win_condition(): return False
         winner = max(self.teams.values(), key=lambda t: self.team_points(t))
         return team==winner
+
+    def is_player_winner(self, player: LobbyMember):
+        return (len(self.teams) == 1 and self.check_win_condition() and
+                player.score == max(member.score for member in self.active_team.members))
 
     def start_game(self):
         self.state = StateMachine.VOTING_TO_START
         self.teams_iterator = cycle(self.teams.values())
         self.active_team = next(self.teams_iterator)
         self.active_player = next(self.active_team)
+        if len(self.teams) == 1: self.active_guesser = next(self.active_team)
         words = self.config.wordpack.words
         random.shuffle(words)
         self.words_iterator = cycle(words)
@@ -95,13 +116,23 @@ class GameState:
     def restart(self):
         self.timer.stop()
         self.state = StateMachine.WAITING_FOR_PLAYERS
-        self.active_team = self.active_player = self.active_word = None
+        self.active_team = self.active_player = self.active_guesser = self.active_word = None
         self.guess_log.clear()
         self.reset_votes()
         for team in self.teams.values():
             team.points = team.times_played = 0
+            for member in team.members: member.reset_score()
         for attr in ('teams_iterator', 'words_iterator'):
             if hasattr(self, attr): delattr(self, attr)
+
+    def advance_pair(self):
+        team = self.active_team
+        if team.times_played % len(team) == 0:
+            random.shuffle(team.members)
+            if hasattr(team, 'iterator'): delattr(team, 'iterator')
+            self.active_player, self.active_guesser = next(team), next(team)
+        else:
+            self.active_player, self.active_guesser = self.active_guesser, next(team)
 
     def shuffle_teams(self):
         sizes = [len(team.members) for team in self.teams.values()]

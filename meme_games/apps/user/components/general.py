@@ -44,7 +44,7 @@ def UserInfo(r: User, user: User, is_connected=True, is_host=False, cls='', avat
 
 
 def Avatar(u: User, cls="aspect-square h-10 w-10", **kwargs):
-    return Img(cls=stringify(('mg-avatar', cls)), alt="Avatar", loading="lazy",
+    return Img(cls=stringify(('mg-avatar', 'rounded-full object-cover', cls)), alt="Avatar", loading="lazy",
                src=get_avatar_path(u), data_avatar=u.uid, data_ui='avatar', **kwargs)
     
 

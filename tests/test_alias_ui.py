@@ -6,9 +6,12 @@ from meme_games.apps.alias.components.game import Game
 from meme_games.apps.alias.components.settings import HostGameActions
 from meme_games.apps.alias.components.word_panel import GuessCount, GuessPanel, WordEntry, WordPanel
 from meme_games.apps.alias.domain import ALIAS, GameState, GuessEntry
+from meme_games.apps.alias.domain.config import GameConfig
 from meme_games.apps.alias.domain.game import StateMachine
 from meme_games.apps.alias.domain.team import Team
 from meme_games.apps.alias.routes import set_end_round_timer
+from meme_games.apps.user.components.general import Avatar
+from meme_games.apps.word_packs.domain import WordPack
 from meme_games.domain import Lobby, LobbyMember, User
 
 
@@ -142,3 +145,36 @@ def test_alias_host_gets_game_management_controls():
     assert 'Pause' in html and 'Restart' in html
     assert 'Shuffle teams' in html and 'Random wordpack' in html
     assert HostGameActions(guest, GameState()) is None
+
+
+def test_one_team_scores_the_explaining_pair_and_rotates_players(monkeypatch):
+    players = [LobbyMember(user=User(f'pair-{i}', f'Player {i}')) for i in range(3)]
+    team = Team(members=players)
+    game = GameState(config=GameConfig(wordpack=WordPack(words_='apple'), max_score=2),
+                     teams={team.id: team})
+    shuffled = []
+    monkeypatch.setattr('meme_games.apps.alias.domain.game.random.shuffle', lambda members: shuffled.append(list(members)))
+
+    game.start_game()
+    assert (game.active_player, game.active_guesser) == (players[0], players[1])
+
+    for _ in players:
+        game.next_state()  # start round
+        game.guess_log = [GuessEntry('apple', 1)]
+        game.next_state()  # review
+        game.next_state()  # confirm review and advance
+
+    assert [player.score for player in players] == [2, 2, 2]
+    assert game.check_win_condition()
+    assert all(game.is_player_winner(player) for player in players)
+    assert len(shuffled) == 2  # words at start, then the next full player circle
+
+
+def test_wordpack_ignores_blank_lines():
+    assert WordPack(words_='apple\n\n pear \n \r\n').words == ['apple', 'pear']
+
+
+def test_lobby_avatar_is_clipped_to_a_circle():
+    html = to_xml(Avatar(User('avatar-player', 'Player')))
+
+    assert 'rounded-full' in html and 'object-cover' in html

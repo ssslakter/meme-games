@@ -81,14 +81,9 @@ def GameContents(r: LobbyMember, game_state: gm.GameState):
 
 
 def VoteButton(r: LobbyMember, game: gm.GameState):
-    from ..routes import vote, start_round
+    from ..routes import vote
     if game.state not in [gm.StateMachine.REVIEWING, gm.StateMachine.VOTING_TO_START] or r not in game.active_team: return None
     btn = Button(cls=(ButtonT.primary, 'px-8 py-3'), hx_swap='none')
-    if r == game.active_player and game.all_voted(game.active_team):
-        return Div(
-            P("Your team is ready. Start when you are.", cls=TextT.muted),
-            btn(UkIcon('play', cls='mr-2'), "Start round", hx_post=start_round),
-            cls='flex flex-col items-center gap-3')
     voted = game.has_voted(r)
     return btn(UkIcon('rotate-ccw' if voted else 'check', cls='mr-2'),
                "Not ready" if voted else "I'm ready", hx_post=vote.to(voted=not voted),

@@ -157,11 +157,13 @@ async def vote(req: Request, voted: bool):
     if game_state.has_voted(p) == voted: return VoteButton(p, game_state)
     if voted: game_state.add_vote(p)
     else: game_state.retract_vote(p)
-    if game_state.state == gm.StateMachine.REVIEWING and game_state.check_all_voted(): 
+    start_timer = False
+    if game_state.check_all_voted():
         game_state.next_state()
-        await notify_all(lobby, lambda r, *_: game_update(r, lobby))
+        start_timer = game_state.state == gm.StateMachine.ROUND_PLAYING
 
     await notify_all(lobby, lambda r, *_: game_update(r, lobby))
+    if start_timer: asyncio.create_task(set_end_round_timer(lobby))
 
 
 @rt
