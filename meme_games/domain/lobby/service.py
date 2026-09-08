@@ -28,6 +28,10 @@ class LobbyService:
         ids = list(self.lobbies) + self.repo.ids()
         while lobby_id in ids: lobby_id = random_id()
         lobby = Lobby(lobby_id, **kwargs)
+        # Ephemeral lobbies are recreated after a process restart, while their
+        # event rows outlive the in-memory lobby.  A new lobby starts at revision 0.
+        if not lobby.persistent and 'lobby_events' in self.repo.db.t:
+            self.repo.db.q('DELETE FROM lobby_events WHERE lobby_id = ?', [lobby_id])
         lobby.play_game(game)
         if host: lobby.set_host(lobby.create_member(host))
         self.lobbies[lobby_id] = lobby

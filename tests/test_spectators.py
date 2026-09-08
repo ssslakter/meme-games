@@ -3,7 +3,7 @@ import asyncio
 from fasthtml.common import to_xml
 
 from meme_games.core import DI
-from meme_games.domain import LobbyService, BASIC_GAME
+from meme_games.domain import LobbyService, BASIC_GAME, lobby_events
 from meme_games.domain.user import UserManager
 from meme_games.apps.shared.spectators import GAME_VIEWS, GameView, LobbyView, notify_roster_changed
 from meme_games.apps.whoami.domain import WHOAMI
@@ -36,6 +36,18 @@ def test_spectating_works_without_a_game_view():
     service.spectate(m, lobby)
     assert not m.is_player
     asyncio.run(notify_roster_changed(lobby))  # no connected members, must not raise
+
+
+def test_recreated_ephemeral_lobby_starts_a_new_event_history():
+    lobby, _ = _lobby('spec-events-restart', BASIC_GAME)
+    asyncio.run(notify_roster_changed(lobby))
+
+    service.evict_lobby(lobby.id)
+    replacement, _ = _lobby('spec-events-restart', BASIC_GAME)
+    asyncio.run(notify_roster_changed(replacement))
+
+    assert replacement.revision == 1
+    assert [event.revision for event in lobby_events.repo.after(replacement.id, 0)] == [1]
 
 
 def test_spectating_removes_the_player_from_the_game():
