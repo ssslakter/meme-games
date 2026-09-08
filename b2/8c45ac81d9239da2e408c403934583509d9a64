@@ -1,0 +1,22 @@
+meme_games/domain/lobby/service.py
+  s_c594341452f9d8::t_adfa08b3b239aa 31-34
+tests/test_spectators.py
+  s_c594341452f9d8::t_adfa08b3b239aa 6,41-50
+  s_c594341452f9d8::t_9848f450a647b6 51-52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "b28c45ac81d9239da2e408c403934583509d9a64",
+  "prompts": {},
+  "sessions": {
+    "s_c594341452f9d8": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0829a-bbd7-7762-b660-da3914f2f1cc",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
