@@ -147,24 +147,26 @@ def test_alias_host_gets_game_management_controls():
     assert HostGameActions(guest, GameState()) is None
 
 
-def test_one_team_scores_the_explaining_pair_without_repeating_pairs():
+def test_one_team_rotates_leaders_and_shifts_guessers_each_circle():
     players = [LobbyMember(user=User(f'pair-{i}', f'Player {i}')) for i in range(4)]
     team = Team(members=players)
     game = GameState(config=GameConfig(wordpack=WordPack(words_='apple'), max_score=2),
                      teams={team.id: team})
 
     game.start_game()
-    pairs = set()
+    pairs = []
 
-    for _ in range(6):
-        pairs.add(frozenset((game.active_player.uid, game.active_guesser.uid)))
+    for _ in range(8):
+        pairs.append((game.active_player.uid, game.active_guesser.uid))
         game.next_state()  # start round
         game.guess_log = [GuessEntry('apple', 1)]
         game.next_state()  # review
         game.next_state()  # confirm review and advance
 
-    assert len(pairs) == 6
-    assert max(game.explanation_counts.values()) - min(game.explanation_counts.values()) <= 1
+    assert pairs == [
+        ('pair-0', 'pair-1'), ('pair-1', 'pair-2'), ('pair-2', 'pair-3'), ('pair-3', 'pair-0'),
+        ('pair-0', 'pair-2'), ('pair-1', 'pair-3'), ('pair-2', 'pair-0'), ('pair-3', 'pair-1'),
+    ]
     assert game.check_win_condition()
 
 
