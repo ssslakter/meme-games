@@ -147,27 +147,25 @@ def test_alias_host_gets_game_management_controls():
     assert HostGameActions(guest, GameState()) is None
 
 
-def test_one_team_scores_the_explaining_pair_and_rotates_players(monkeypatch):
-    players = [LobbyMember(user=User(f'pair-{i}', f'Player {i}')) for i in range(3)]
+def test_one_team_scores_the_explaining_pair_without_repeating_pairs():
+    players = [LobbyMember(user=User(f'pair-{i}', f'Player {i}')) for i in range(4)]
     team = Team(members=players)
     game = GameState(config=GameConfig(wordpack=WordPack(words_='apple'), max_score=2),
                      teams={team.id: team})
-    shuffled = []
-    monkeypatch.setattr('meme_games.apps.alias.domain.game.random.shuffle', lambda members: shuffled.append(list(members)))
 
     game.start_game()
-    assert (game.active_player, game.active_guesser) == (players[0], players[1])
+    pairs = set()
 
-    for _ in players:
+    for _ in range(6):
+        pairs.add(frozenset((game.active_player.uid, game.active_guesser.uid)))
         game.next_state()  # start round
         game.guess_log = [GuessEntry('apple', 1)]
         game.next_state()  # review
         game.next_state()  # confirm review and advance
 
-    assert [player.score for player in players] == [2, 2, 2]
+    assert len(pairs) == 6
+    assert max(game.explanation_counts.values()) - min(game.explanation_counts.values()) <= 1
     assert game.check_win_condition()
-    assert all(game.is_player_winner(player) for player in players)
-    assert len(shuffled) == 2  # words at start, then the next full player circle
 
 
 def test_wordpack_ignores_blank_lines():

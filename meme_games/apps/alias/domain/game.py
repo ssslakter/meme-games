@@ -1,4 +1,4 @@
-from itertools import cycle
+from itertools import combinations, cycle
 from meme_games.domain import * 
 from meme_games.core import *
 from meme_games.apps.word_packs.domain import WordPackRepo
@@ -44,6 +44,8 @@ class GameState:
     word_pool: List[str] = field(default_factory=list)
     all_words: List[str] = field(default_factory=list)
     word_round: int = 1
+    pair_queue: List[tuple[str, str]] = field(default_factory=list)
+    explanation_counts: Dict[str, int] = field(default_factory=dict)
     guess_log: List[GuessEntry] = field(default_factory=list)
     votes: set[str] = field(default_factory=set)
     timer: Timer = field(default_factory=Timer)
@@ -103,8 +105,8 @@ class GameState:
         if self.state == StateMachine.FINISHED: return True
         if len(self.teams) == 1:
             team = next(iter(self.teams.values()))
-            return (len(team) and team.times_played >= len(team) and
-                    team.times_played % len(team) == 0 and
+            counts = self.explanation_counts.values()
+            return (counts and min(counts) > 0 and max(counts) - min(counts) <= 1 and
                     max(self.player_points(member) for member in team.members) >= self.config.max_score)
         return (any(self.team_points(t) >= self.config.max_score for t in self.teams.values()) and 
                 all(t.times_played == self.active_team.times_played for t in self.teams.values()))
@@ -123,7 +125,7 @@ class GameState:
         self.teams_iterator = cycle(self.teams.values())
         self.active_team = next(self.teams_iterator)
         self.active_player = next(self.active_team)
-        if len(self.teams) == 1: self.active_guesser = next(self.active_team)
+        if len(self.teams) == 1: self.next_pair()
         if self.config.player_words:
             self.state = StateMachine.COLLECTING_WORDS
             self.timer.set(self.config.word_collection_time)
@@ -168,6 +170,8 @@ class GameState:
         self.word_pool.clear()
         self.all_words.clear()
         self.word_round = 1
+        self.pair_queue.clear()
+        self.explanation_counts.clear()
         self.guess_log.clear()
         self.reset_votes()
         for team in self.teams.values():
@@ -181,12 +185,30 @@ class GameState:
         if len(self.teams) > 1:
             self.active_team = next(self.teams_iterator)
             self.active_player = next(self.active_team)
-        elif team.times_played % len(team) == 0:
-            random.shuffle(team.members)
-            if hasattr(team, 'iterator'): delattr(team, 'iterator')
-            self.active_player, self.active_guesser = next(team), next(team)
         else:
-            self.active_player, self.active_guesser = self.active_guesser, next(team)
+            self.next_pair()
+
+    def next_pair(self):
+        team = self.active_team
+        members = {member.uid: member for member in team.members}
+        self.explanation_counts = {uid: self.explanation_counts.get(uid, 0) for uid in members}
+        self.pair_queue = [pair for pair in self.pair_queue if all(uid in members for uid in pair)]
+        if not self.pair_queue:
+            self.pair_queue = [tuple(pair) for pair in combinations(members, 2)]
+            random.shuffle(self.pair_queue)
+        if not self.pair_queue:
+            self.active_player = self.active_guesser = next(iter(members.values()))
+            return
+        first, second = min(self.pair_queue, key=lambda pair: (
+            max(self.explanation_counts[pair[0]], self.explanation_counts[pair[1]]),
+            self.explanation_counts[pair[0]] + self.explanation_counts[pair[1]],
+        ))
+        self.pair_queue.remove((first, second))
+        if self.explanation_counts[first] <= self.explanation_counts[second]:
+            self.active_player, self.active_guesser = members[first], members[second]
+        else:
+            self.active_player, self.active_guesser = members[second], members[first]
+        self.explanation_counts[self.active_player.uid] += 1
 
     def shuffle_teams(self):
         sizes = [len(team.members) for team in self.teams.values()]
