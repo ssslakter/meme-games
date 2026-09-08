@@ -1,0 +1,22 @@
+tests/test_alias_ui.py
+  s_c594341452f9d8::t_22e323451cc47e 6,150-154
+  s_c594341452f9d8::t_4a0b3c245ae42e 155-156
+meme_games/apps/alias/components/settings.py
+  s_c594341452f9d8::t_22e323451cc47e 30-34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "ee6a266b5a3d5ec34f476f415e9edc76d8ffb83f",
+  "prompts": {},
+  "sessions": {
+    "s_c594341452f9d8": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0829a-bbd7-7762-b660-da3914f2f1cc",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
