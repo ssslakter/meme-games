@@ -27,9 +27,11 @@ def PackSelect(game_state: gm.GameState):
     from ..routes import pack_select
     return Div(
         Button(UkIcon('book-open', cls='mr-2'), "Select wordpack",
-               cls=(ButtonT.default, 'w-full justify-start'), data_uk_toggle='target: #pack-select',
-               hx_get=pack_select, hx_target='#pack-select-content', hx_swap='innerHTML'),
-        Modal(ModalTitle("Wordpack selection"), Div(id='pack-select-content'), id='pack-select')
+               cls=(ButtonT.default, 'w-full justify-start'), data_uk_toggle='target: #pack-select'),
+        Modal(ModalTitle("Wordpack selection"),
+              Div(P('Loading wordpacks…', cls=TextT.muted), id='pack-select-content'),
+              id='pack-select', hx_get=pack_select, hx_trigger='shown',
+              hx_target='#pack-select-content', hx_swap='innerHTML')
     )
 
 def ConfigLobby(r: LobbyMember, game_state: gm.GameState):

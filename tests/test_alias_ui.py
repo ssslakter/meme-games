@@ -3,7 +3,7 @@ import asyncio
 from fasthtml.common import to_xml
 
 from meme_games.apps.alias.components.game import Game
-from meme_games.apps.alias.components.settings import HostGameActions, VoteButton
+from meme_games.apps.alias.components.settings import HostGameActions, PackSelect, VoteButton
 from meme_games.apps.alias.components.word_panel import CurrentWord, ExplainerPanel, GuessCount, GuessPanel, WordEntry, WordPanel
 from meme_games.apps.alias.domain import ALIAS, GameState, GuessEntry
 from meme_games.apps.alias.domain.config import GameConfig
@@ -145,6 +145,13 @@ def test_alias_host_gets_game_management_controls():
     assert 'Pause' in html and 'Restart' in html
     assert 'Shuffle teams' in html and 'Random wordpack' in html
     assert HostGameActions(guest, GameState()) is None
+
+
+def test_wordpack_modal_refreshes_when_opened():
+    html = to_xml(PackSelect(GameState()))
+
+    assert 'hx-get="/alias/pack_select"' in html
+    assert 'hx-trigger="shown"' in html
 
 
 def test_one_team_rotates_leaders_and_shifts_guessers_each_circle():
