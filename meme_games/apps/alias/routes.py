@@ -99,6 +99,8 @@ async def start_game(req: Request):
     game.start_game()
     lobby.lock()
     await notify_all(lobby, lambda r, *_: game_update(r, lobby))
+    if game.state == gm.StateMachine.COLLECTING_WORDS:
+        asyncio.create_task(set_end_word_collection_timer(lobby))
 
 
 @rt
@@ -147,6 +149,16 @@ async def set_end_round_timer(lobby: Lobby):
     await notify_all(lobby, update)
 
 
+async def set_end_word_collection_timer(lobby: Lobby):
+    game_state: GameState = lobby.state
+    await game_state.timer.sleep()
+    if lobby.current_game != ALIAS or lobby.state is not game_state: return
+    if not game_state.finish_word_collection():
+        game_state.restart()
+        lobby.unlock()
+    await notify_all(lobby, lambda r, *_: game_update(r, lobby))
+
+
 @rt
 async def vote(req: Request, voted: bool):
     lobby, game_state, p = pre_init(req)
@@ -182,14 +194,23 @@ async def guess(req: Request, correct: bool):
     if not (p==game_state.active_player and not game_state.timer.paused and
             game_state.state == gm.StateMachine.ROUND_PLAYING):
         return add_toast(req.session, "Cannot guess now", "error")
-    game_state.guess_word(p, correct)
-    if game_state.timer.finished:
+    pool_finished = game_state.guess_word(p, correct)
+    if game_state.timer.finished or pool_finished:
         game_state.next_state()
         return await notify_all(lobby, lambda r, *_: game_update(r, lobby))
     def update(r: LobbyMember, *_):
         return RoundLog(game_state.guess_log, game_state), GuessCount(game_state)
     await notify_all(lobby, update)
     return CurrentWord(game_state)
+
+
+@rt
+async def submit_words(req: Request, words: str):
+    lobby, game_state, p = pre_init(req)
+    if game_state.state != gm.StateMachine.COLLECTING_WORDS or not is_player(p):
+        return add_toast(req.session, 'Cannot add words now', 'error')
+    game_state.submit_words(p, words)
+    return add_toast(req.session, 'Words added', 'success')
 
 
 @rt

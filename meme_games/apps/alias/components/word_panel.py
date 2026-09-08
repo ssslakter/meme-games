@@ -6,9 +6,25 @@ from .settings import VoteButton
 
 
 def CurrentWord(game: gm.GameState):
-    return Div(P('Current word', cls=TextT.muted), H1(game.active_word, cls='mg-current-word'),
+    return Div(P('Round 2: one word only.' if game.config.player_words and game.word_round == 2 else 'Current word', cls=TextT.muted), H1(game.active_word, cls='mg-current-word'),
                id='current_word', hx_swap_oob='true', data_ui='current-word',
                cls='mg-current-word-card border bg-card px-8 py-10 text-center shadow-sm')
+
+
+def WordCollectionPanel(r: LobbyMember, game: gm.GameState):
+    from ..routes import submit_words
+    submitted = len(game.submitted_words.get(r.uid, []))
+    return Card(
+        Div(CircleTimer(game.timer.rem_t, total=game.config.word_collection_time),
+            H2('Write words for the shared pack'),
+            P(f'You added {submitted} words. Add one word per line.', cls=TextT.muted),
+            cls='flex flex-col items-center gap-3 text-center'),
+        Form(
+            TextArea(name='words', rows=7, placeholder='apple\nspaceship\n...', cls='w-full resize-y'),
+            Button('Add words', type='submit', cls=(ButtonT.primary, 'w-full')),
+            hx_post=submit_words, hx_swap='none', hx_on__after_request='this.reset()', cls='space-y-3'),
+        cls='mg-round-center w-full min-w-0 p-6 md:p-10', body_cls='space-y-6',
+        data_ui='word-collection')
 
 
 def ExplainerPanel(r: LobbyMember, game: gm.GameState):
@@ -102,6 +118,9 @@ def RoundCenter(r: LobbyMember, game: gm.GameState):
 
 
 def WordPanel(r: LobbyMember, game: gm.GameState):
+    if game.state == gm.StateMachine.COLLECTING_WORDS:
+        return Div(WordCollectionPanel(r, game), cls='mg-game-panel mg-word-panel w-full',
+                   data_ui='word-panel', data_stage='word-collection')
     if game.state not in [gm.StateMachine.ROUND_PLAYING, gm.StateMachine.REVIEWING]: return None
     if game.state == gm.StateMachine.REVIEWING:
         return Div(

@@ -203,3 +203,23 @@ def test_review_confirmation_is_the_next_team_ready_check():
     assert game.state == StateMachine.VOTING_TO_START
     assert game.votes == {next_player.uid}
     assert 'Start round' in to_xml(VoteButton(next_player, game))
+
+
+def test_player_words_are_reused_for_the_one_word_second_round():
+    player = LobbyMember(user=User('word-writer', 'Writer'))
+    team = Team(members=[player])
+    game = GameState(config=GameConfig(player_words=True, word_collection_time=30),
+                     teams={team.id: team})
+
+    game.start_game()
+    game.submit_words(player, 'apple\n\npear')
+    assert game.finish_word_collection()
+    assert game.state == StateMachine.VOTING_TO_START
+
+    game.next_state()
+    assert game.word_round == 1 and game.active_word in {'apple', 'pear'}
+    assert not game.guess_word(player, True)
+    assert not game.guess_word(player, True)
+    assert game.word_round == 2 and game.active_word in {'apple', 'pear'}
+    assert not game.guess_word(player, True)
+    assert game.guess_word(player, True)

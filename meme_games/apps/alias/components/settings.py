@@ -37,6 +37,11 @@ def ConfigLobby(r: LobbyMember, game_state: gm.GameState):
              RangeSlider('Time limit', value=str(game_state.config.time_limit), min=1, max=120, step=1, name='time_limit'),
              Details(
                  Summary("Advanced", cls='cursor-pointer px-3 py-2 font-medium'),
+                 Div(
+                     CheckboxX(id='player-words', name='player_words', checked=game_state.config.player_words),
+                     FormLabel('Players write the words', fr='player-words', cls='m-0 cursor-pointer'),
+                     cls='flex items-center gap-2'),
+                 RangeSlider('Word collection time', value=str(game_state.config.word_collection_time), min=10, max=180, step=5, name='word_collection_time'),
                  LabelInput('Max score', value=str(game_state.config.max_score), name='max_score'),
                  LabelInput('Max teams', value=str(game_state.config.max_teams), name='max_teams'),
                  cls='mg-more-settings space-y-3 rounded border'
@@ -100,7 +105,7 @@ def VoteButton(r: LobbyMember, game: gm.GameState):
 def GameControls(r: LobbyMember, game_state: gm.GameState):
     from meme_games.apps.word_packs.routes import index
     wordpack = game_state.config.wordpack
-    if game_state.state in [gm.StateMachine.ROUND_PLAYING, gm.StateMachine.REVIEWING]: 
+    if game_state.state in [gm.StateMachine.COLLECTING_WORDS, gm.StateMachine.ROUND_PLAYING, gm.StateMachine.REVIEWING]:
         return None
 
     return Card(
