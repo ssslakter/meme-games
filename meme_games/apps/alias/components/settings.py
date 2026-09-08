@@ -15,18 +15,21 @@ def RangeSlider(label: str, value: str, min: int, max: int, step: int, name: str
         cls='space-y-2')
 
 
-def PackSelect(game_state: gm.GameState):
+def PackSelectContents(game_state: gm.GameState):
     from ..routes import editor_readonly
     packs = wordpack_manager.get_all()
+    return Grid(Div(PacksSelect(packs, editor_readonly, hx_target='#editor', hx_swap='outerHTML'), cls='overflow-auto col-span-2 border-r-2'),
+                Div(hx_post=editor_readonly.to(id=game_state.config.wordpack.id), hx_trigger='load', cls='col-span-3 h-full'),
+                ModalCloseButton(), cols=5)
+
+
+def PackSelect(game_state: gm.GameState):
+    from ..routes import pack_select
     return Div(
         Button(UkIcon('book-open', cls='mr-2'), "Select wordpack",
-               cls=(ButtonT.default, 'w-full justify-start'), data_uk_toggle='target: #pack-select'),
-        Modal(ModalTitle("Wordpack selection"),
-            Grid(Div(PacksSelect(packs, editor_readonly, hx_target='#editor', hx_swap='outerHTML'), cls='overflow-auto col-span-2 border-r-2'),
-            Div(hx_post=editor_readonly.to(id=game_state.config.wordpack.id), hx_trigger='load', cls='col-span-3 h-full'),
-            ModalCloseButton(),
-            cols=5),
-            id='pack-select')
+               cls=(ButtonT.default, 'w-full justify-start'), data_uk_toggle='target: #pack-select',
+               hx_get=pack_select, hx_target='#pack-select-content', hx_swap='innerHTML'),
+        Modal(ModalTitle("Wordpack selection"), Div(id='pack-select-content'), id='pack-select')
     )
 
 def ConfigLobby(r: LobbyMember, game_state: gm.GameState):

@@ -31,6 +31,8 @@ def ExplainerPanel(r: LobbyMember, game: gm.GameState):
     from ..routes import guess
     if not r == game.active_player: return None
     return Div(
+        P(f'Explain to: {game.active_guesser.user.name}' if game.active_guesser else None,
+          cls='text-center font-semibold'),
         CurrentWord(game),
         Div(
             Button(UkIcon('circle-check', width=22, height=22), Span('Guessed', cls='text-xl font-semibold'),

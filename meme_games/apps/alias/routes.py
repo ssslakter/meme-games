@@ -38,6 +38,11 @@ def editor_readonly(req: Request, id:str):
                           hx_on__after_request="UIkit.modal('#pack-select').hide()")
 
 @rt
+def pack_select(req: Request):
+    _, game_state, _ = pre_init(req)
+    return PackSelectContents(game_state)
+
+@rt
 async def select_pack(req: Request, id: str):
     lobby, _, p = pre_init(req)
     if not is_host(p): return
