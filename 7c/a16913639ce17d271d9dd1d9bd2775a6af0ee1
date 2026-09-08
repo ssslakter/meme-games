@@ -1,0 +1,36 @@
+meme_games/apps/alias/domain/config.py
+  s_c594341452f9d8::t_fd133a871d97c8 13-15
+meme_games/apps/alias/domain/game.py
+  s_c594341452f9d8::t_fd133a871d97c8 11,42-45,61,69,123-134,136-141,143-154,163-166,172,206,209-210
+  s_c594341452f9d8::t_430bcc98fd9003 135
+  s_c594341452f9d8::t_abba0fe53cd674 142
+meme_games/apps/alias/routes.py
+  s_c594341452f9d8::t_49d31d919aea28 213
+  s_c594341452f9d8::t_74fd04001c2ff4 102-103,152-161,197-198,207-212
+  s_c594341452f9d8::t_a92de729388d97 214-215
+meme_games/apps/alias/components/settings.py
+  s_c594341452f9d8::t_5e0ed7377de101 108
+  s_c594341452f9d8::t_74fd04001c2ff4 40-44
+meme_games/apps/alias/components/word_panel.py
+  s_c594341452f9d8::t_49d31d919aea28 9
+  s_c594341452f9d8::t_74fd04001c2ff4 14-24,26-29,121-123
+  s_c594341452f9d8::t_bcf313dfdc9022 25
+tests/test_alias_ui.py
+  s_c594341452f9d8::t_57c8fa9665758c 206-225
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "7ca16913639ce17d271d9dd1d9bd2775a6af0ee1",
+  "prompts": {},
+  "sessions": {
+    "s_c594341452f9d8": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0829a-bbd7-7762-b660-da3914f2f1cc",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
