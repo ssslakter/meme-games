@@ -4,7 +4,7 @@ from fasthtml.common import to_xml
 
 from meme_games.apps.alias.components.game import Game
 from meme_games.apps.alias.components.settings import HostGameActions, VoteButton
-from meme_games.apps.alias.components.word_panel import ExplainerPanel, GuessCount, GuessPanel, WordEntry, WordPanel
+from meme_games.apps.alias.components.word_panel import CurrentWord, ExplainerPanel, GuessCount, GuessPanel, WordEntry, WordPanel
 from meme_games.apps.alias.domain import ALIAS, GameState, GuessEntry
 from meme_games.apps.alias.domain.config import GameConfig
 from meme_games.apps.alias.domain.game import StateMachine
@@ -190,20 +190,21 @@ def test_first_round_still_waits_for_the_explainer_to_start():
 def test_explainer_sees_their_guesser_name():
     explainer = LobbyMember(user=User('explainer', 'Alice'))
     guesser = LobbyMember(user=User('guesser', 'Bob'))
-    game = GameState(state=StateMachine.ROUND_PLAYING, active_player=explainer,
-                     active_guesser=guesser, active_word='apple')
+    team = Team(members=[explainer, guesser])
+    game = GameState(state=StateMachine.ROUND_PLAYING, teams={team.id: team}, active_team=team,
+                     active_player=explainer, active_guesser=guesser, active_word='apple')
 
-    assert 'Explain to: Bob' in to_xml(ExplainerPanel(explainer, game))
+    assert 'Explain to: Bob' in to_xml(CurrentWord(game))
 
 
-def test_team_explainer_sees_their_teammates():
+def test_team_explainer_does_not_get_a_single_guesser():
     explainer = LobbyMember(user=User('team-explainer', 'Alice'))
     guesser = LobbyMember(user=User('team-guesser', 'Bob'))
     team = Team(members=[explainer, guesser])
     game = GameState(state=StateMachine.ROUND_PLAYING, active_team=team,
                      active_player=explainer, active_word='apple')
 
-    assert 'Explain to: Bob' in to_xml(ExplainerPanel(explainer, game))
+    assert 'Explain to:' not in to_xml(ExplainerPanel(explainer, game))
 
 
 def test_review_confirmation_is_the_next_team_ready_check():

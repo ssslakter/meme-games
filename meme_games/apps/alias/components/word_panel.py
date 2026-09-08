@@ -6,7 +6,11 @@ from .settings import VoteButton
 
 
 def CurrentWord(game: gm.GameState):
-    return Div(P('Round 2: one word only.' if game.config.player_words and game.word_round == 2 else 'Current word', cls=TextT.muted), H1(game.active_word, cls='mg-current-word'),
+    subtitle = (f'Explain to: {game.active_guesser.user.name}'
+                if len(game.teams) == 1 and game.active_guesser else
+                'Round 2: one word only.' if game.config.player_words and game.word_round == 2 else
+                'Current word')
+    return Div(P(subtitle, cls=TextT.muted, data_ui='explaining-to'), H1(game.active_word, cls='mg-current-word'),
                id='current_word', hx_swap_oob='true', data_ui='current-word',
                cls='mg-current-word-card border bg-card px-8 py-10 text-center shadow-sm')
 
@@ -30,11 +34,7 @@ def WordCollectionPanel(r: LobbyMember, game: gm.GameState):
 def ExplainerPanel(r: LobbyMember, game: gm.GameState):
     from ..routes import guess
     if not r == game.active_player: return None
-    guessers = ([game.active_guesser.user.name] if game.active_guesser else
-                [member.user.name for member in game.active_team.members if member != r])
     return Div(
-        P(f"Explain to: {', '.join(guessers)}" if guessers else 'You are explaining alone.',
-          cls='text-center font-semibold', data_ui='explaining-to'),
         CurrentWord(game),
         Div(
             Button(UkIcon('circle-check', width=22, height=22), Span('Guessed', cls='text-xl font-semibold'),
