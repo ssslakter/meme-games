@@ -196,6 +196,16 @@ def test_explainer_sees_their_guesser_name():
     assert 'Explain to: Bob' in to_xml(ExplainerPanel(explainer, game))
 
 
+def test_team_explainer_sees_their_teammates():
+    explainer = LobbyMember(user=User('team-explainer', 'Alice'))
+    guesser = LobbyMember(user=User('team-guesser', 'Bob'))
+    team = Team(members=[explainer, guesser])
+    game = GameState(state=StateMachine.ROUND_PLAYING, active_team=team,
+                     active_player=explainer, active_word='apple')
+
+    assert 'Explain to: Bob' in to_xml(ExplainerPanel(explainer, game))
+
+
 def test_review_confirmation_is_the_next_team_ready_check():
     scorer = LobbyMember(user=User('scorer', 'Scorer'))
     next_player = LobbyMember(user=User('next-player', 'Next player'))
