@@ -12,6 +12,7 @@ class StateMachine(Enum):
     VOTING_TO_START = auto()          # Team members voting to start their round
     ROUND_PLAYING = auto()            # Active round in progress
     REVIEWING = auto()                # Another team reviewing the just-finished round
+    FINISHED = auto()
 
     def pretty(self) -> str:
         # Convert "waiting_for_players" → "Waiting for players"
@@ -85,7 +86,9 @@ class GameState:
                     self.review_team.points += points
                 self.review_team = self.review_player = self.review_guesser = None
                 self.guess_log.clear()
-                self.state = StateMachine.VOTING_TO_START                
+                self.state = (StateMachine.FINISHED if self.config.player_words and self.word_round == 2
+                              and not self.word_pool and self.active_word is None else
+                              StateMachine.VOTING_TO_START)
         if reset_votes: self.reset_votes()
 
     def team_points(self, team: Team):
@@ -97,6 +100,7 @@ class GameState:
         return player.score + extra * (player in (self.review_player, self.review_guesser))
 
     def check_win_condition(self):
+        if self.state == StateMachine.FINISHED: return True
         if len(self.teams) == 1:
             team = next(iter(self.teams.values()))
             return (len(team) and team.times_played >= len(team) and

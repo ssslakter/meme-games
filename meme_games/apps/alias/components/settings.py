@@ -82,6 +82,8 @@ def GameContents(r: LobbyMember, game_state: gm.GameState):
                           disabled=not game_state.can_start()) if is_host(r) else None
         case gm.StateMachine.REVIEWING:
             return P("Waiting for the next round to start")
+        case gm.StateMachine.FINISHED:
+            return P("The shared word pack is complete.")
         case _: return None
 
 

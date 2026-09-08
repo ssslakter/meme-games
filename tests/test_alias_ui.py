@@ -223,3 +223,6 @@ def test_player_words_are_reused_for_the_one_word_second_round():
     assert game.word_round == 2 and game.active_word in {'apple', 'pear'}
     assert not game.guess_word(player, True)
     assert game.guess_word(player, True)
+    game.next_state()
+    game.next_state()
+    assert game.state == StateMachine.FINISHED
