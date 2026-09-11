@@ -1,6 +1,4 @@
-# CLAUDE.md
-
-This file provides guidance to Agents when working with code in this repository.
+This file provides guidance to Agents when working with code in this repository. Always test in `dev` environment as it has all needed dependencies.
 
 ## Commands
 

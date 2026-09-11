@@ -44,7 +44,7 @@ def ActionBtn(icon, **kwargs):
     return Button(UkIcon(icon), **kwargs)
 
 
-def render_pack(col, wp: WordPack):
+def render_pack(col, wp: WordPack, author_id: str):
     from .routes import delete, editor
     def _Td(*args, cls='', shrink=True, **kwargs): 
         return Td(*args, cls=f'!p-0 md:!p-2 {cls}',shrink=shrink, **kwargs)
@@ -52,17 +52,17 @@ def render_pack(col, wp: WordPack):
         case "Name": return _Td(Div(wp.name, data_pack=wp.id, cls='truncate'))
         case "Author": return _Td(Div(wp.author.name if wp.author else 'unknown'))
         case "edit": return _Td(ActionBtn('pencil'), hx_swap='none', hx_post=editor.to(id=wp.id), shrink=True)
-        case "delete": 
+        case "delete":
             return _Td(ActionBtn('trash', hx_post=delete.to(id=wp.id), hx_target='closest tr',
-                                 cls=ButtonT.destructive), shrink=True)
+                                 cls=ButtonT.destructive), shrink=True) if wp.author_id == author_id else _Td(shrink=True)
         case _: raise ValueError(f"Unknown column: {col}")
 
-def Packs(wordpacks: list[WordPack]):
+def Packs(wordpacks: list[WordPack], author_id: str = ''):
     cols2w = dict([("Name", 40), ("Author", 30), ("edit",15), ("delete",15)])
     return TableFromDicts(
         header_data=cols2w.keys(),
         body_data=[dict.fromkeys(cols2w.keys(), wp) for wp in wordpacks],
-        body_cell_render=render_pack,
+        body_cell_render=partial(render_pack, author_id=author_id),
         header_cell_render=lambda col: Th('' if col in ["edit", "delete"] else col, cls=f'w-[{cols2w[col]}%]'),
         cls=(TableT.middle, TableT.divider, TableT.hover, TableT.sm, 'table-fixed'),
         id='packs_list'

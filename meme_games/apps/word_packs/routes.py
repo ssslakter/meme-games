@@ -15,7 +15,10 @@ async def upload(sess, file: UploadFile):
     return save(sess, file.filename.split(".")[0], text.decode("utf-8"))
 
 @rt("/delete", methods=["post"])
-def delete(id: str):
+def delete(sess: dict, id: str):
+    pack = wordpack_manager.get_by_id(id)
+    if not pack or pack.author_id != sess.get('uid'):
+        raise HTTPException(403, 'You can only delete your own wordpacks')
     wordpack_manager.delete(id)
 
 @rt
@@ -30,14 +33,14 @@ def new_creation():
     return WordPackEditor(WordPack(), hx_swap_oob='true')
 
 @rt
-def index(pack_id: str = None): 
+def index(sess: dict, pack_id: str = None):
     packs = wordpack_manager.get_all()
     wpack = wordpack_manager.get_by_id(pack_id)
     return LobbyPage(
         Container(
             Grid(
                 SideBar(),
-                ListCard("Wordpacks", Packs(packs), cls='max-h-[719px] overflow-y-auto'),
+                ListCard("Wordpacks", Packs(packs, sess.get('uid')), cls='max-h-[719px] overflow-y-auto'),
                 ListCard("Editor", WordPackEditor(wpack)),
                 cols_sm=1,
                 cols_md=3,
@@ -60,4 +63,4 @@ def search(sess, title: str, my_only: Optional[bool] = False):
     # TODO do with sql query
     if my_only: packs = [p for p in packs if p.author_id==sess.get('uid')]
     if title: packs = [p for p in packs if title in p.name.lower() or title in (p.get_author_name() or '')]
-    return Packs(packs)
+    return Packs(packs, sess.get('uid'))
