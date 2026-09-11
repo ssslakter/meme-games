@@ -1,5 +1,7 @@
 __all__ = ['WordPack', 'WordPackRepo']
 
+from importlib.resources import files
+
 from ...core import *
 from ...domain import *
 
@@ -66,8 +68,11 @@ class WordPackRepo(DataRepository[WordPack]):
     
 
     def init_defaults(self):
-        if self.find('default'): return
-        packs = [
-            WordPack(name='Default', words_='apple\nbanana\ncherry\norange\npear'),
-        ]
-        self.upsert_all(packs)
+        default_words: str = files('meme_games.apps.word_packs').joinpath('data/default.txt').read_text(encoding='utf-8')
+        default: Optional[WordPack] = self.find('default')
+        if default:
+            if not default.author_id and default.words_ != default_words:
+                default.words_ = default_words
+                self.upsert(default)
+            return
+        self.upsert(WordPack(name='Default', words_=default_words))

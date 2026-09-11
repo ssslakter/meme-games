@@ -1,6 +1,6 @@
 test.ipynb
 .vscode/
-data/
+/data/
 notebooks/static
 user-content
 .sesskey

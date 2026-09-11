@@ -44,18 +44,34 @@ def ActionBtn(icon, **kwargs):
     return Button(UkIcon(icon), **kwargs)
 
 
+def DeleteConfirmation(wp: WordPack) -> FT:
+    from .routes import delete
+    modal_id = f'wordpack-delete-{wp.id}'
+    return Modal(
+        ModalCloseButton(),
+        P(f'Delete “{wp.name}”? This cannot be undone.'),
+        header=ModalTitle('Delete wordpack?'),
+        footer=Div(
+            Button('Cancel', type='button', cls=(ButtonT.default, 'uk-modal-close')),
+            Button('Delete', type='button', hx_post=delete.to(id=wp.id), hx_target='closest tr', hx_swap='delete',
+                   cls=ButtonT.destructive,
+                   _=f"on htmx:afterRequest call UIkit.modal('#{modal_id}').hide()"),
+            cls='flex justify-end gap-3'),
+        id=modal_id, dialog_cls='max-w-md')
+
+
 def render_pack(col, wp: WordPack, author_id: str):
-    from .routes import delete, editor
+    from .routes import editor
     def _Td(*args, cls='', shrink=True, **kwargs): 
         return Td(*args, cls=f'!p-0 md:!p-2 {cls}',shrink=shrink, **kwargs)
     match col:
         case "Name": return _Td(Div(wp.name, data_pack=wp.id, cls='truncate'))
-        case "Author": return _Td(Div(wp.author.name if wp.author else 'unknown'))
+        case "Author": return _Td(Div(wp.author.name if wp.author else ''))
         case "edit":
             return _Td(ActionBtn('pencil'), hx_swap='none', hx_post=editor.to(id=wp.id), shrink=True) if wp.author_id == author_id else _Td(ActionBtn('eye'), hx_swap='none', hx_post=editor.to(id=wp.id), shrink=True)
         case "delete":
-            return _Td(ActionBtn('trash', hx_post=delete.to(id=wp.id), hx_target='closest tr',
-                                 cls=ButtonT.destructive), shrink=True) if wp.author_id == author_id else _Td(shrink=True)
+            return _Td(ActionBtn('trash', type='button', data_uk_toggle=f'target: #wordpack-delete-{wp.id}',
+                                 cls=ButtonT.destructive), DeleteConfirmation(wp), shrink=True) if wp.author_id == author_id else _Td(shrink=True)
         case _: raise ValueError(f"Unknown column: {col}")
 
 def Packs(wordpacks: list[WordPack], author_id: str = ''):
@@ -93,7 +109,7 @@ def WordPackEditor(wp: Optional[WordPack] = None,
             TextArea(wp.words_ , cls='resize-y whitespace-pre', name="words", 
                      placeholder='words', rows=min(max(len(wp.words), 5), 25), readonly=readonly),
             Div(
-                submit_button,
+                submit_button(disabled=True) if readonly else submit_button,
                 style="display: flex; flex-direction: row; gap: 10px;",
             ),
             style="display: flex; flex-direction: column; gap: 10px; align-items: flex-start;",
@@ -105,7 +121,7 @@ def render_pack_select(col, wp: WordPack, route, **kwargs):
         return Td(*args, cls=f'!p-0 md:!p-2 cursor-pointer {cls}', hx_get=route.to(id=wp.id), **kwargs)
     match col:
         case "Name": return _Td(Div(wp.name, data_pack=wp.id, cls='truncate'))
-        case "Author": return _Td(Div(wp.author.name if wp.author else 'unknown'))
+        case "Author": return _Td(Div(wp.author.name if wp.author else ''))
         case _: raise ValueError(f"Unknown column: {col}")
 
 def PacksSelect(wordpacks: list[WordPack], route_with_id=None, **kwargs):
