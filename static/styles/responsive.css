@@ -41,6 +41,28 @@
   }
 }
 
+@media (min-width: 1024px) {
+  [data-page="alias"] .mg-alias-team-content { overflow-y: auto; }
+  [data-page="alias"] .mg-alias-chat { flex-shrink: 0; }
+}
+
+@media (max-width: 1023px) {
+  [data-page="alias"] .mg-alias-teams { display: contents; }
+  [data-page="alias"] .mg-alias-team-content {
+    order: 1;
+    width: 100%;
+    max-width: 34rem;
+    margin-inline: auto;
+  }
+  [data-page="alias"] .mg-alias-stage { order: 2; }
+  [data-page="alias"] .mg-alias-chat {
+    order: 3;
+    width: 100%;
+    max-width: 34rem;
+    margin-inline: auto;
+  }
+}
+
 @media (max-width: 767px) {
   .mg-page-content { padding-inline: .75rem; }
 

@@ -85,11 +85,12 @@ def test_round_stacks_history_under_teams_beside_center():
 
     assert 'data-ui="alias-teams"' in board
     assert 'data-ui="alias-stage"' in board
+    assert 'data-ui="chat"' in board
     assert 'data-ui="round-history"' in board
     assert 'lg:max-h-[calc(100vh-7rem)]' in board
     assert 'lg:overflow-hidden' in board
     assert 'data-ui="alias-history"' not in board
-    assert board.index('data-ui="alias-teams"') < board.index('data-ui="round-history"') < board.index('data-ui="alias-stage"')
+    assert board.index('data-ui="alias-teams"') < board.index('data-ui="round-history"') < board.index('data-ui="chat"') < board.index('data-ui="alias-stage"')
 
 
 def test_timer_expiry_marks_the_last_word_without_ending_round():

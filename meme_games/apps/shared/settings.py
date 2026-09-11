@@ -104,8 +104,8 @@ def GameRules(lobby: Lobby):
               header=ModalTitle('How to play'), id='game-rules', data_ui='game-rules'))
 
 
-def LobbyTools(reciever: LobbyMember | User, lobby: Lobby, *lobby_settings,
-               cls=()):
+def LobbyTools(reciever: LobbyMember | User, lobby: Lobby, *lobby_settings: Any,
+               cls: Any = (), show_chat: bool = True) -> FT:
     from .spectators import Spectators
     from .chat import ChatPanel
     return GameRail(
@@ -116,7 +116,7 @@ def LobbyTools(reciever: LobbyMember | User, lobby: Lobby, *lobby_settings,
                    cls=(ButtonT.destructive, 'inline-flex w-full items-center justify-center whitespace-nowrap px-4 py-2'),
                    hx_post=leave_lobby, hx_swap='none', data_ui='leave-lobby'),
             cls='w-full space-y-3'),
-        Div(ChatPanel(reciever, lobby), Spectators(reciever, lobby),
+        Div(ChatPanel(reciever, lobby) if show_chat else None, Spectators(reciever, lobby),
             cls='mg-lobby-talk flex w-full min-h-0 flex-1 flex-col gap-3'),
         cls=('mg-lobby-tools justify-between', cls),
         data_ui='lobby-tools')
