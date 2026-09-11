@@ -4,9 +4,18 @@ from pathlib import Path
 from starlette.testclient import TestClient
 
 from meme_games.main import app
+from meme_games.apps.shared.navigation import Navbar
+from fasthtml.common import to_xml
 
 
 HEADERS = {'user-agent': 'Mozilla/5.0 Firefox'}
+
+
+def test_theme_switcher_labels_can_collapse_without_hiding_icons():
+    html = to_xml(Navbar())
+
+    assert html.count('mg-theme-label') == 4
+    assert html.count('mg-theme-icon') == 4
 
 
 def test_user_settings_page_and_nickname_update():

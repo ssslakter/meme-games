@@ -3,7 +3,7 @@ import asyncio
 from fasthtml.common import to_xml
 
 from meme_games.apps.alias.components.game import Game
-from meme_games.apps.alias.components.settings import ConfigLobby, GameControls, HostGameActions, PackSelect, PackSelectContents, VoteButton
+from meme_games.apps.alias.components.settings import ConfigLobby, GameControls, HostGameActions, PackSelect, PackSelectContents, RestartConfirmation, VoteButton
 from meme_games.apps.alias.components.word_panel import CurrentWord, ExplainerPanel, GuessCount, GuessPanel, RoundLog, WordCollectionPanel, WordEntry, WordPanel
 from meme_games.apps.alias.domain import ALIAS, GameState, GuessEntry
 from meme_games.apps.alias.domain.config import GameConfig
@@ -145,6 +145,9 @@ def test_alias_host_gets_game_management_controls():
 
     assert 'Pause' in html and 'Restart' in html
     assert 'Shuffle teams' in html and 'Random wordpack' in html
+    assert 'hx-confirm' not in html
+    assert 'data-uk-toggle="target: #alias-restart-confirm"' in html
+    assert 'hx-post="/alias/restart_game"' in to_xml(RestartConfirmation())
     assert HostGameActions(guest, GameState()) is None
 
 
@@ -162,6 +165,7 @@ def test_player_words_toggle_saves_without_the_update_button():
     assert 'name="player_words"' in html
     assert 'hx-post="/alias/update_settings"' in html
     assert 'hx-include="closest form"' in html
+    assert 'mg-more-settings-body space-y-3 p-3 pt-2' in html
 
 
 def test_one_team_rotates_leaders_and_shifts_guessers_each_circle():
@@ -325,4 +329,6 @@ def test_wordpack_picker_is_rendered_for_guests_with_disabled_selection():
 
     assert 'id="packs_select"' in html
     assert 'id="editor"' in html
+    assert 'mg-pack-select-layout' in html
+    assert 'mg-pack-select-list' in html and 'mg-pack-select-editor' in html
     assert 'Must be host to select' in html and 'disabled' in html

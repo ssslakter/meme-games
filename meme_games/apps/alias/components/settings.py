@@ -19,25 +19,32 @@ def PackSelectContents(r: LobbyMember, game_state: gm.GameState) -> FT:
     from ..routes import editor_readonly, select_pack
     packs = wordpack_manager.get_all()
     wordpack = game_state.config.wordpack
-    return Grid(Div(PacksSelect(packs, editor_readonly, hx_target='#editor', hx_swap='outerHTML'), cls='overflow-auto col-span-2 border-r-2'),
+    return Div(Div(PacksSelect(packs, editor_readonly, hx_target='#editor', hx_swap='outerHTML'),
+                   cls='mg-pack-select-list overflow-auto'),
                 WordPackEditor(wordpack, readonly=True,
                                form_kwargs=dict(hx_post=select_pack, hx_swap='none'),
                                submit_button=Button('Select wordpack' if is_host(r) else 'Must be host to select',
                                                     disabled=not is_host(r)),
+                               cls='mg-pack-select-editor',
                                hx_on__after_request="UIkit.modal('#pack-select').hide()"),
-                ModalCloseButton(), cols=5)
+                ModalCloseButton(), cls='mg-pack-select-layout')
 
 
-def PackSelect(game_state: gm.GameState):
+def PackSelectButton() -> FT:
+    return Button(UkIcon('book-open', cls='mr-2'), 'Select wordpack',
+                  cls=(ButtonT.default, 'w-full justify-start'), data_uk_toggle='target: #pack-select')
+
+
+def PackSelectModal(game_state: gm.GameState) -> FT:
     from ..routes import pack_select
-    return Div(
-        Button(UkIcon('book-open', cls='mr-2'), "Select wordpack",
-               cls=(ButtonT.default, 'w-full justify-start'), data_uk_toggle='target: #pack-select'),
-        Modal(ModalTitle("Wordpack selection"),
-              Div(P('Loading wordpacks…', cls=TextT.muted), id='pack-select-content'),
-              id='pack-select', hx_get=pack_select, hx_trigger='shown',
-              hx_target='#pack-select-content', hx_swap='innerHTML')
-    )
+    return Modal(ModalTitle('Wordpack selection'),
+                 Div(P('Loading wordpacks…', cls=TextT.muted), id='pack-select-content'),
+                 id='pack-select', hx_get=pack_select, hx_trigger='shown',
+                 hx_target='#pack-select-content', hx_swap='innerHTML', cls='mg-pack-select-modal')
+
+
+def PackSelect(game_state: gm.GameState) -> FT:
+    return Div(PackSelectButton(), PackSelectModal(game_state))
 
 def ConfigLobby(r: LobbyMember, game_state: gm.GameState):
     from ..routes import update_settings
@@ -48,19 +55,21 @@ def ConfigLobby(r: LobbyMember, game_state: gm.GameState):
              Details(
                  Summary("Advanced", cls='cursor-pointer px-3 py-2 font-medium'),
                  Div(
-                     CheckboxX(id='player-words', name='player_words', checked=game_state.config.player_words,
-                               hx_post=update_settings, hx_include='closest form', hx_swap='none'),
-                     FormLabel('Players write the words', fr='player-words', cls='m-0 cursor-pointer'),
-                     cls='flex items-center gap-2'),
-                 Div(
-                     CheckboxX(id='hide-skipped-words', name='hide_skipped_words',
-                               checked=game_state.config.hide_skipped_words),
-                     FormLabel('Hide skipped words from other players', fr='hide-skipped-words', cls='m-0 cursor-pointer'),
-                     cls='flex items-center gap-2'),
-                 RangeSlider('Word collection time', value=str(game_state.config.word_collection_time), min=10, max=180, step=5, name='word_collection_time'),
-                 LabelInput('Max score', value=str(game_state.config.max_score), name='max_score'),
-                 LabelInput('Max teams', value=str(game_state.config.max_teams), name='max_teams'),
-                 cls='mg-more-settings space-y-3 rounded border'
+                     Div(
+                         CheckboxX(id='player-words', name='player_words', checked=game_state.config.player_words,
+                                   hx_post=update_settings, hx_include='closest form', hx_swap='none'),
+                         FormLabel('Players write the words', fr='player-words', cls='m-0 cursor-pointer'),
+                         cls='flex items-center gap-2'),
+                     Div(
+                         CheckboxX(id='hide-skipped-words', name='hide_skipped_words',
+                                   checked=game_state.config.hide_skipped_words),
+                         FormLabel('Hide skipped words from other players', fr='hide-skipped-words', cls='m-0 cursor-pointer'),
+                         cls='flex items-center gap-2'),
+                     RangeSlider('Word collection time', value=str(game_state.config.word_collection_time), min=10, max=180, step=5, name='word_collection_time'),
+                     LabelInput('Max score', value=str(game_state.config.max_score), name='max_score'),
+                     LabelInput('Max teams', value=str(game_state.config.max_teams), name='max_teams'),
+                     cls='mg-more-settings-body space-y-3 p-3 pt-2'),
+                 cls='mg-more-settings rounded border'
                  ),
              Button("Update settings", cls=(ButtonT.primary, 'w-full'), type='submit'),
              hx_post = update_settings, hx_swap = 'none', cls='space-y-5'
@@ -69,7 +78,7 @@ def ConfigLobby(r: LobbyMember, game_state: gm.GameState):
 
 
 def HostGameActions(r: LobbyMember, game: gm.GameState):
-    from ..routes import pause_game, random_wordpack, restart_game, shuffle_teams
+    from ..routes import pause_game, random_wordpack, shuffle_teams
     if not is_host(r): return None
     playing = game.state == gm.StateMachine.ROUND_PLAYING
     waiting = game.state == gm.StateMachine.WAITING_FOR_PLAYERS
@@ -79,8 +88,9 @@ def HostGameActions(r: LobbyMember, game: gm.GameState):
             Button(UkIcon('play' if game.timer.paused else 'pause', cls='mr-2 shrink-0'),
                    'Resume' if game.timer.paused else 'Pause', hx_post=pause_game, hx_swap='none',
                    disabled=not playing, cls=(ButtonT.default, 'w-full justify-start px-3 py-2')),
-            Button(UkIcon('rotate-ccw', cls='mr-2 shrink-0'), 'Restart', hx_post=restart_game, hx_swap='none',
-                   hx_confirm='Restart this game and reset all scores?', cls=(ButtonT.destructive, 'w-full justify-start px-3 py-2')),
+            Button(UkIcon('rotate-ccw', cls='mr-2 shrink-0'), 'Restart', type='button',
+                   data_uk_toggle='target: #alias-restart-confirm',
+                   cls=(ButtonT.destructive, 'w-full justify-start px-3 py-2')),
             Button(UkIcon('shuffle', cls='mr-2 shrink-0'), 'Shuffle teams', hx_post=shuffle_teams, hx_swap='none',
                    disabled=not waiting or len(game.teams) < 2, cls=(ButtonT.default, 'w-full justify-start px-3 py-2')),
             Button(UkIcon('dices', cls='mr-2 shrink-0'), 'Random wordpack', hx_post=random_wordpack, hx_swap='none',
@@ -88,6 +98,20 @@ def HostGameActions(r: LobbyMember, game: gm.GameState):
             cls='grid grid-cols-2 gap-3'),
         id='alias-host-controls', hx_swap_oob='true',
         cls='space-y-4', data_ui='host-game-controls')
+
+
+def RestartConfirmation() -> FT:
+    from ..routes import restart_game
+    return Modal(
+        ModalCloseButton(),
+        P('This resets the game and every score. Teams stay together.'),
+        header=ModalTitle('Restart Alias?'),
+        footer=Div(
+            Button('Cancel', type='button', cls=(ButtonT.default, 'uk-modal-close')),
+            Button('Restart', hx_post=restart_game, hx_swap='none', cls=ButtonT.destructive,
+                   _="on htmx:afterRequest call UIkit.modal('#alias-restart-confirm').hide()"),
+            cls='flex justify-end gap-3'),
+        id='alias-restart-confirm', dialog_cls='max-w-md')
 
 
 def GameContents(r: LobbyMember, game_state: gm.GameState):

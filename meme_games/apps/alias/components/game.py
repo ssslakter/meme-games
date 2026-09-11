@@ -30,11 +30,11 @@ def Game(reciever: LobbyMember | User, lobby: Lobby, **kwargs: Any) -> FT:
 
 def Page(reciever: LobbyMember | User, lobby: Lobby) -> Any:
     from ..routes import ws_url
-    return LobbyPage(
+    return (*LobbyPage(
         GameShell(
             Game(reciever, lobby),
             LobbyTools(reciever, lobby,
-                       Div(HostGameActions(reciever, lobby.state), PackSelect(lobby.state),
+                       Div(HostGameActions(reciever, lobby.state), PackSelectButton(),
                            ConfigLobby(reciever, lobby.state), cls='w-full space-y-6'),
                        show_chat=False)),
         hx_ext="ws",
@@ -43,7 +43,7 @@ def Page(reciever: LobbyMember | User, lobby: Lobby) -> Any:
         user=reciever,
         title = f'Alias lobby: {lobby.id}',
         page='alias'
-    )
+    ), PackSelectModal(lobby.state), RestartConfirmation())
 
 
 register_game_view(ALIAS, Game)

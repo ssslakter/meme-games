@@ -2,14 +2,15 @@ from meme_games.core import *
 from .utils import *
 from .general import *
 
-def _ThemeButton(icon: str, text: str, action: str, cls: str = ""):
+def _ThemeButton(icon: str, text: str, action: str, cls: str = "") -> FT:
     return Button(
-        UkIcon(icon, cls="mr-2", width=20, height=20), text, _=action,
+        UkIcon(icon, cls="mg-theme-icon mr-2", width=20, height=20),
+        Span(text, cls='mg-theme-label'), _=action,
         cls=(ButtonT.default, 'px-4 py-2', cls)
     )
 
 
-def ThemeSwitcher():
+def ThemeSwitcher() -> FT:
     light_btn = _ThemeButton(
         "sun",
         "Light",
@@ -32,7 +33,7 @@ def _NavLink(icon: str, text: str, href: str):
              hx_boost='false')
 
 
-def Navbar(*args, **kwargs):
+def Navbar(*args: Any, **kwargs: Any) -> FT:
     from meme_games.apps.word_packs.routes import index as word_packs
     inner_navbar = NavBar(
         Button("Select game", cls=(ButtonT.primary, 'shrink-0 whitespace-nowrap px-5 py-2')),

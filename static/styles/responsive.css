@@ -6,6 +6,16 @@
   :root:root { --uk-global-font-size: 1rem; }
 }
 
+@media (min-width: 768px) and (max-width: 1100px) {
+  .mg-navbar-content { padding-inline: 1rem !important; }
+  .mg-navbar-content h3 { white-space: nowrap; }
+  .mg-navbar-content .items-center.gap-3 { gap: .5rem; }
+  .mg-theme-switcher { display: flex; flex-shrink: 0; }
+  .mg-theme-switcher .mg-theme-label { display: none; }
+  .mg-theme-switcher .mg-theme-icon { margin-right: 0; }
+  .mg-theme-switcher .uk-btn { padding-inline: .7rem; }
+}
+
 /* NavBar duplicates its actions into a hamburger menu (the second .mg-navbar-content,
    hidden until the toggle clears its `hidden` class). Centred auto-width buttons read
    as items that failed to fit a row, so the panel is made to look like a menu. */
@@ -41,12 +51,20 @@
   }
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 720px) {
+  [data-page="alias"] .mg-game-alias {
+    grid-template-columns: minmax(15rem, 20rem) minmax(0, 1fr);
+  }
+  [data-page="alias"] .mg-alias-teams {
+    height: calc(100vh - 7rem);
+    max-height: calc(100vh - 7rem);
+    overflow: hidden;
+  }
   [data-page="alias"] .mg-alias-team-content { overflow-y: auto; }
   [data-page="alias"] .mg-alias-chat { flex-shrink: 0; }
 }
 
-@media (max-width: 1023px) {
+@media (max-width: 719px) {
   [data-page="alias"] .mg-alias-teams { display: contents; }
   [data-page="alias"] .mg-alias-team-content {
     order: 1;
@@ -61,6 +79,51 @@
     max-width: 34rem;
     margin-inline: auto;
   }
+}
+
+[data-page="alias"] .mg-more-settings {
+  border-color: hsl(var(--foreground) / .25);
+}
+
+.mg-pack-select-modal .uk-modal-dialog {
+  width: min(72rem, calc(100vw - 2rem));
+  max-width: none;
+}
+
+.mg-pack-select-layout {
+  display: grid;
+  grid-template-columns: minmax(20rem, .9fr) minmax(24rem, 1.1fr);
+  gap: 1rem;
+}
+
+.mg-pack-select-list {
+  min-width: 0;
+  max-height: 70vh;
+  border-right: 1px solid hsl(var(--border));
+  padding-right: 1rem;
+}
+
+.mg-pack-select-editor,
+.mg-pack-select-editor form,
+.mg-pack-select-editor textarea {
+  width: 100% !important;
+  min-width: 0;
+}
+
+.mg-pack-select-editor textarea {
+  min-height: min(32rem, 60vh);
+}
+
+@media (max-width: 767px) {
+  .mg-pack-select-layout { grid-template-columns: minmax(0, 1fr); }
+  .mg-pack-select-list {
+    max-height: 18rem;
+    border-right: 0;
+    border-bottom: 1px solid hsl(var(--border));
+    padding-right: 0;
+    padding-bottom: 1rem;
+  }
+  .mg-pack-select-editor textarea { min-height: 14rem; }
 }
 
 @media (max-width: 767px) {
