@@ -51,20 +51,26 @@
   }
 }
 
-@media (min-width: 720px) {
+@media (min-width: 600px) {
   [data-page="alias"] .mg-game-alias {
     grid-template-columns: minmax(15rem, 20rem) minmax(0, 1fr);
   }
-  [data-page="alias"] .mg-alias-teams {
-    height: calc(100vh - 7rem);
-    max-height: calc(100vh - 7rem);
-    overflow: hidden;
-  }
-  [data-page="alias"] .mg-alias-team-content { overflow-y: auto; }
   [data-page="alias"] .mg-alias-chat { flex-shrink: 0; }
 }
 
-@media (max-width: 719px) {
+@media (min-width: 600px) and (max-width: 1279px) {
+  [data-page="alias"] .mg-alias-teams {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}
+
+@media (min-width: 1280px) {
+  [data-page="alias"] .mg-alias-team-content { overflow-y: auto; }
+}
+
+@media (max-width: 599px) {
   [data-page="alias"] .mg-alias-teams { display: contents; }
   [data-page="alias"] .mg-alias-team-content {
     order: 1;
