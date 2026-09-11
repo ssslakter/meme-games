@@ -1,0 +1,29 @@
+AGENTS.md
+  h_cec284cdd16cba 1
+meme_games/apps/word_packs/routes.py
+  s_6e72ef81f8bb85::t_f5c0242784ad16 18,36
+  s_6e72ef81f8bb85::t_2a4b1a1350ab9a 19-21,43,66
+meme_games/apps/word_packs/components.py
+  s_6e72ef81f8bb85::t_2a4b1a1350ab9a 47,55,57,60,65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "6742255a03ec2411a8c1e33c2d585b6fffdf4300",
+  "prompts": {},
+  "humans": {
+    "h_cec284cdd16cba": {
+      "author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_6e72ef81f8bb85": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a092da-7225-79e3-8ec2-37e29a4745de",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
