@@ -112,6 +112,26 @@ def test_alias_player_words_setting_starts_word_collection():
         assert lobby.state.state == StateMachine.COLLECTING_WORDS
 
 
+def test_alias_settings_update_reaches_other_members() -> None:
+    headers = {'user-agent': 'Mozilla/5.0 Firefox', 'HX-Request': 'true'}
+    with TestClient(app, client=("10.0.0.10", 1)) as host, TestClient(app, client=("10.0.0.11", 1)) as guest:
+        host.get('/alias/settings-notify', headers=headers)
+        guest.get('/alias/settings-notify', headers=headers)
+
+        with guest.websocket_connect('/ws/alias') as websocket:
+            websocket.receive_text()
+            response = host.post('/alias/update_settings', headers=headers, data={
+                'time_limit': '45', 'word_collection_time': '90', 'max_score': '30',
+                'max_teams': '3', 'hide_skipped_words': 'on',
+            })
+            update = websocket.receive_text()
+
+        assert response.status_code == 200
+        assert service.lobbies['settings-notify'].state.config.time_limit == 45
+        assert 'Config updated' in response.text
+        assert 'Config updated' in update and 'id="game"' in update
+
+
 def test_pages_are_never_served_from_the_browser_cache():
     """A cached page replays state the server has moved past, e.g. a nickname prompt
     for a user who has since been named."""

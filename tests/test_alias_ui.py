@@ -158,13 +158,12 @@ def test_wordpack_modal_refreshes_when_opened():
     assert 'hx-trigger="shown"' in html
 
 
-def test_player_words_toggle_saves_without_the_update_button():
+def test_alias_settings_only_save_from_the_update_button() -> None:
     host = LobbyMember(user=User('settings-host', 'Host'), is_host_=True)
     html = to_xml(ConfigLobby(host, GameState()))
 
     assert 'name="player_words"' in html
-    assert 'hx-post="/alias/update_settings"' in html
-    assert 'hx-include="closest form"' in html
+    assert html.count('hx-post="/alias/update_settings"') == 1
     assert 'mg-more-settings-body space-y-3 p-3 pt-2' in html
 
 

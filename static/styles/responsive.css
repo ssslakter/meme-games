@@ -105,6 +105,12 @@
   border-color: hsl(var(--foreground) / .25);
 }
 
+[data-page="alias"] .mg-alias-team-content > .mg-round-history {
+  flex: none !important;
+  height: min(30rem, 50vh);
+  overflow: hidden;
+}
+
 .mg-pack-select-modal .uk-modal-dialog {
   width: min(72rem, calc(100vw - 2rem));
   max-width: none;

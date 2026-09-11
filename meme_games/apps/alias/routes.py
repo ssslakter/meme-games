@@ -74,11 +74,16 @@ async def join_team(req: Request, team_id: str):
 
 @rt
 async def update_settings(req: Request, config: gm.GameConfig):
-    _, game_state, p = pre_init(req)  
+    lobby, game_state, p = pre_init(req)
     if game_state.state == gm.StateMachine.ROUND_PLAYING or not is_host(p):
         return add_toast(req.session, "Cannot change lobby settings", "error")
     game_state.config = config
-    return add_toast(req.session, "Config updated", 'success')
+    def update(r: LobbyMember, *_: Any) -> tuple[Any, FT]:
+        toast = Div(AppToast('Config updated', 'success'),
+                    hx_swap_oob='beforeend:#mg-toast-container')
+        return game_update(r, lobby), toast
+    await notify_all(lobby, update, but=p)
+    return update(p)
 
 @rt('/{lobby_id}', methods=['get'])
 def index(req: Request, lobby_id: str = None):

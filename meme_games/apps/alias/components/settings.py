@@ -46,7 +46,7 @@ def PackSelectModal(game_state: gm.GameState) -> FT:
 def PackSelect(game_state: gm.GameState) -> FT:
     return Div(PackSelectButton(), PackSelectModal(game_state))
 
-def ConfigLobby(r: LobbyMember, game_state: gm.GameState):
+def ConfigLobby(r: LobbyMember, game_state: gm.GameState) -> Optional[FT]:
     from ..routes import update_settings
     if not is_host(r): return None
     return Div(
@@ -56,8 +56,7 @@ def ConfigLobby(r: LobbyMember, game_state: gm.GameState):
                  Summary("Advanced", cls='cursor-pointer px-3 py-2 font-medium'),
                  Div(
                      Div(
-                         CheckboxX(id='player-words', name='player_words', checked=game_state.config.player_words,
-                                   hx_post=update_settings, hx_include='closest form', hx_swap='none'),
+                         CheckboxX(id='player-words', name='player_words', checked=game_state.config.player_words),
                          FormLabel('Players write the words', fr='player-words', cls='m-0 cursor-pointer'),
                          cls='flex items-center gap-2'),
                      Div(
