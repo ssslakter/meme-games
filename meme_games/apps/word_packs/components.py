@@ -51,7 +51,8 @@ def render_pack(col, wp: WordPack, author_id: str):
     match col:
         case "Name": return _Td(Div(wp.name, data_pack=wp.id, cls='truncate'))
         case "Author": return _Td(Div(wp.author.name if wp.author else 'unknown'))
-        case "edit": return _Td(ActionBtn('pencil'), hx_swap='none', hx_post=editor.to(id=wp.id), shrink=True)
+        case "edit":
+            return _Td(ActionBtn('pencil'), hx_swap='none', hx_post=editor.to(id=wp.id), shrink=True) if wp.author_id == author_id else _Td(ActionBtn('eye'), hx_swap='none', hx_post=editor.to(id=wp.id), shrink=True)
         case "delete":
             return _Td(ActionBtn('trash', hx_post=delete.to(id=wp.id), hx_target='closest tr',
                                  cls=ButtonT.destructive), shrink=True) if wp.author_id == author_id else _Td(shrink=True)
