@@ -15,18 +15,29 @@ def CurrentWord(game: gm.GameState):
                cls='mg-current-word-card border bg-card px-8 py-10 text-center shadow-sm')
 
 
-def WordCollectionPanel(r: LobbyMember, game: gm.GameState):
-    from ..routes import submit_words
+def WordCollectionStatus(r: LobbyMember, game: gm.GameState) -> FT:
     submitted = len(game.submitted_words.get(r.uid, []))
+    return P(f'{submitted} words saved', id='word-collection-status', cls=TextT.muted)
+
+
+def WordCollectionPanel(r: LobbyMember, game: gm.GameState) -> FT:
+    from ..routes import submit_words
+    saved_words = '\n'.join(game.submitted_words.get(r.uid, []))
+    finalized = r.uid in game.submitted_players
     return Card(
         Div(CircleTimer(game.timer.rem_t, total=game.config.word_collection_time),
             H2('Write words for the shared pack'),
-            P(f'You added {submitted} words. Add one word per line.', cls=TextT.muted),
+            P('Add one word per line. Changes are saved automatically.', cls=TextT.muted),
             cls='flex flex-col items-center gap-3 text-center'),
         Form(
-            TextArea(name='words', rows=7, placeholder='apple\nspaceship\n...', cls='w-full resize-y'),
-            Button('Add words', type='submit', cls=(ButtonT.primary, 'w-full')),
-            hx_post=submit_words, hx_swap='none', hx_on__after_request='this.reset()', cls='space-y-3'),
+            TextArea(saved_words, name='words', rows=7, placeholder='apple\nspaceship\n...', cls='w-full resize-y',
+                     readonly=finalized, hx_post=submit_words, hx_trigger='input changed delay:500ms',
+                     hx_target='#word-collection-status', hx_swap='outerHTML'),
+            WordCollectionStatus(r, game),
+            Button('Words submitted' if finalized else 'Submit words', type='button', disabled=finalized,
+                   cls=(ButtonT.primary, 'w-full'), hx_post=submit_words.to(finalized='True'),
+                   hx_include='closest form', hx_target='closest .mg-round-center', hx_swap='outerHTML'),
+            cls='space-y-3'),
         cls='mg-round-center w-full min-w-0 p-6 md:p-10', body_cls='space-y-6',
         data_ui='word-collection')
 
@@ -61,7 +72,7 @@ def WordEntry(guess: gm.GuessEntry, game: gm.GameState):
         score = WordEntryScore(guess)
         mid = Div(score, body, cls='flex flex-col items-center justify-between min-w-0')
         body = Div(btn(-1)('-'), mid, btn(1)('+'), cls='flex w-full items-center justify-between gap-3')
-    result = 'guessed' if guess.points > 0 else 'skipped'
+    result = 'skipped' if guess.was_skipped() else 'guessed'
     if game.state != gm.StateMachine.REVIEWING:
         body = Div(body, UkIcon('circle-check' if result == 'guessed' else 'circle-x', width=18, height=18),
                    cls='flex items-center justify-between gap-3')
@@ -72,8 +83,11 @@ def WordEntry(guess: gm.GuessEntry, game: gm.GameState):
                data_ui='word-entry', data_result=result)
 
 
-def RoundLog(guesses: list[gm.GuessEntry], game: gm.GameState):
-    entries = ((WordEntry(guess, game) for guess in reversed(guesses)) if guesses else
+def RoundLog(r: LobbyMember | None, guesses: list[gm.GuessEntry], game: gm.GameState) -> FT:
+    owner = game.review_player if game.state == gm.StateMachine.REVIEWING else game.active_player
+    visible_guesses = [guess for guess in guesses
+                       if not guess.was_skipped() or not game.hides_skipped_words() or r == owner]
+    entries = ((WordEntry(guess, game) for guess in reversed(visible_guesses)) if visible_guesses else
                (P('Words will appear here as the round progresses.', cls=TextT.muted),))
     log_size = 'min-h-0 flex-1 overflow-y-auto pr-1' if game.state == gm.StateMachine.ROUND_PLAYING else 'max-h-[45vh] overflow-y-auto pr-1'
     return DivVStacked(entries, cls=f'w-full gap-2 {log_size}', id='guess_log',
@@ -86,13 +100,13 @@ def GuessCount(game: gm.GameState):
 
 
 
-def GuessPanel(game: gm.GameState, footer=None):
+def GuessPanel(r: LobbyMember | None, game: gm.GameState, footer: Any = None) -> Optional[FT]:
     if game.state not in [gm.StateMachine.ROUND_PLAYING, gm.StateMachine.REVIEWING]: return None
     playing = game.state == gm.StateMachine.ROUND_PLAYING
     return Card(
         Div(H3('Finished words'), GuessCount(game),
             cls='flex items-center justify-between'),
-        RoundLog(game.guess_log, game),
+        RoundLog(r, game.guess_log, game),
         footer,
         cls=('mg-round-history order-2 flex min-h-0 min-w-0 flex-1 flex-col md:order-1' if playing
              else 'mg-round-history order-2 min-w-0 md:order-1'),
@@ -128,7 +142,7 @@ def WordPanel(r: LobbyMember, game: gm.GameState):
     if game.state not in [gm.StateMachine.ROUND_PLAYING, gm.StateMachine.REVIEWING]: return None
     if game.state == gm.StateMachine.REVIEWING:
         return Div(
-            GuessPanel(game, VoteButton(r, game)),
+            GuessPanel(r, game, VoteButton(r, game)),
             cls='mg-game-panel mg-word-panel w-full',
             data_ui='word-panel', data_stage='review')
     return Div(

@@ -3,8 +3,8 @@ import asyncio
 from fasthtml.common import to_xml
 
 from meme_games.apps.alias.components.game import Game
-from meme_games.apps.alias.components.settings import HostGameActions, PackSelect, VoteButton
-from meme_games.apps.alias.components.word_panel import CurrentWord, ExplainerPanel, GuessCount, GuessPanel, WordEntry, WordPanel
+from meme_games.apps.alias.components.settings import ConfigLobby, GameControls, HostGameActions, PackSelect, PackSelectContents, VoteButton
+from meme_games.apps.alias.components.word_panel import CurrentWord, ExplainerPanel, GuessCount, GuessPanel, RoundLog, WordCollectionPanel, WordEntry, WordPanel
 from meme_games.apps.alias.domain import ALIAS, GameState, GuessEntry
 from meme_games.apps.alias.domain.config import GameConfig
 from meme_games.apps.alias.domain.game import StateMachine
@@ -53,7 +53,7 @@ def test_review_moves_history_back_to_the_center():
 
 
 def test_empty_round_keeps_oob_history_target():
-    panel = to_xml(GuessPanel(GameState(state=StateMachine.ROUND_PLAYING)))
+    panel = to_xml(GuessPanel(None, GameState(state=StateMachine.ROUND_PLAYING)))
 
     assert 'id="guess_log"' in panel
     assert 'Words will appear here' in panel
@@ -154,6 +154,15 @@ def test_wordpack_modal_refreshes_when_opened():
     assert 'hx-trigger="shown"' in html
 
 
+def test_player_words_toggle_saves_without_the_update_button():
+    host = LobbyMember(user=User('settings-host', 'Host'), is_host_=True)
+    html = to_xml(ConfigLobby(host, GameState()))
+
+    assert 'name="player_words"' in html
+    assert 'hx-post="/alias/update_settings"' in html
+    assert 'hx-include="closest form"' in html
+
+
 def test_one_team_rotates_leaders_and_shifts_guessers_each_circle():
     players = [LobbyMember(user=User(f'pair-{i}', f'Player {i}')) for i in range(4)]
     team = Team(members=players)
@@ -232,7 +241,7 @@ def test_review_confirmation_is_the_next_team_ready_check():
     assert 'Start round' in to_xml(VoteButton(next_player, game))
 
 
-def test_player_words_are_reused_for_the_one_word_second_round():
+def test_player_words_finish_skipped_words_before_an_explicit_second_round():
     player = LobbyMember(user=User('word-writer', 'Writer'))
     team = Team(members=[player])
     game = GameState(config=GameConfig(player_words=True, word_collection_time=30),
@@ -245,11 +254,74 @@ def test_player_words_are_reused_for_the_one_word_second_round():
 
     game.next_state()
     assert game.word_round == 1 and game.active_word in {'apple', 'pear'}
+    skipped = game.active_word
+    assert not game.guess_word(player, False)
+    assert game.active_word != skipped
     assert not game.guess_word(player, True)
-    assert not game.guess_word(player, True)
+    assert game.guess_word(player, True)
+    game.next_state()
+    game.next_state()
+    assert game.state == StateMachine.BETWEEN_WORD_ROUNDS
+    assert game.word_round == 1
+
+    game.next_state()
     assert game.word_round == 2 and game.active_word in {'apple', 'pear'}
     assert not game.guess_word(player, True)
     assert game.guess_word(player, True)
     game.next_state()
     game.next_state()
     assert game.state == StateMachine.FINISHED
+
+
+def test_player_word_drafts_replace_autosaves_and_lock_after_submit():
+    player = LobbyMember(user=User('autosave-writer', 'Writer'))
+    team = Team(members=[player])
+    game = GameState(state=StateMachine.COLLECTING_WORDS, teams={team.id: team})
+
+    assert game.submit_words(player, 'apple\npear')
+    assert game.submit_words(player, 'apple\nbanana')
+    assert game.submitted_words[player.uid] == ['apple', 'banana']
+    assert game.submit_words(player, 'apple\nbanana', finalized=True)
+    assert not game.submit_words(player, 'changed later')
+
+    game.timer.set(game.config.word_collection_time)
+    html = to_xml(WordCollectionPanel(player, game))
+    assert 'input changed delay:500ms' in html
+    assert 'Words submitted' in html
+    assert 'readonly' in html and 'disabled' in html
+
+
+def test_player_words_hide_skips_from_everyone_except_the_explainer():
+    explainer = LobbyMember(user=User('private-skip-explainer', 'Alice'))
+    observer = LobbyMember(user=User('private-skip-observer', 'Bob'))
+    team = Team(members=[explainer, observer])
+    game = GameState(config=GameConfig(player_words=True), state=StateMachine.ROUND_PLAYING,
+                     teams={team.id: team}, active_team=team, active_player=explainer,
+                     guess_log=[GuessEntry('secret', 0, skipped=True), GuessEntry('visible', 1)])
+
+    assert 'secret' in to_xml(RoundLog(explainer, game.guess_log, game))
+    observer_log = to_xml(RoundLog(observer, game.guess_log, game))
+    assert 'secret' not in observer_log
+    assert 'visible' in observer_log
+
+
+def test_round_break_is_ready_only_and_names_the_next_pair():
+    explainer = LobbyMember(user=User('break-explainer', 'Alice'))
+    guesser = LobbyMember(user=User('break-guesser', 'Bob'))
+    team = Team(members=[explainer, guesser])
+    game = GameState(config=GameConfig(player_words=True), state=StateMachine.BETWEEN_WORD_ROUNDS,
+                     teams={team.id: team}, active_team=team, active_player=explainer, active_guesser=guesser)
+
+    html = to_xml(GameControls(guesser, game))
+    assert 'only one word' in html
+    assert 'Alice is explaining' in html and 'Bob is guessing' in html
+    assert "I'm ready" in html
+
+
+def test_wordpack_picker_is_rendered_for_guests_with_disabled_selection():
+    guest = LobbyMember(user=User('pack-guest', 'Guest'))
+    html = to_xml(PackSelectContents(guest, GameState()))
+
+    assert 'id="packs_select"' in html
+    assert 'id="editor"' in html
+    assert 'Must be host to select' in html and 'disabled' in html

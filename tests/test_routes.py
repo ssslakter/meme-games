@@ -93,6 +93,25 @@ def test_alias_host_can_pause_resume_and_restart_without_losing_teams():
         assert team.points == 0
 
 
+def test_alias_player_words_setting_starts_word_collection():
+    headers = {'user-agent': 'Mozilla/5.0 Firefox', 'HX-Request': 'true'}
+    with TestClient(app, client=("10.0.0.7", 1)) as host:
+        host.get('/alias/player-words-start', headers=headers)
+        lobby = service.lobbies['player-words-start']
+        lobby.host.play()
+        team = lobby.state.create_team()
+        team.append(lobby.host)
+
+        host.post('/alias/update_settings', headers=headers, data={
+            'time_limit': '60', 'word_collection_time': '60', 'max_score': '40',
+            'max_teams': '4', 'player_words': 'on',
+        })
+        host.post('/alias/start_game', headers=headers)
+
+        assert lobby.state.config.player_words
+        assert lobby.state.state == StateMachine.COLLECTING_WORDS
+
+
 def test_pages_are_never_served_from_the_browser_cache():
     """A cached page replays state the server has moved past, e.g. a nickname prompt
     for a user who has since been named."""

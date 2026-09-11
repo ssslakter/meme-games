@@ -9,6 +9,7 @@ class StateMachine(Enum):
     def _generate_next_value_(name: str, start, count, last_values): return name.lower()
     WAITING_FOR_PLAYERS = auto()      # Waiting for all required players to connect
     COLLECTING_WORDS = auto()         # Players are building the shared word pool
+    BETWEEN_WORD_ROUNDS = auto()
     VOTING_TO_START = auto()          # Team members voting to start their round
     ROUND_PLAYING = auto()            # Active round in progress
     REVIEWING = auto()                # Another team reviewing the just-finished round
@@ -26,6 +27,10 @@ class GuessEntry:
     word: str
     points: int
     id: str = field(default_factory=random_id)
+    skipped: Optional[bool] = None
+
+    def was_skipped(self) -> bool:
+        return self.skipped if self.skipped is not None else self.points <= 0
 
 
 @dataclass
@@ -41,7 +46,9 @@ class GameState:
     review_guesser: Optional[LobbyMember] = None
     active_word: Optional[str] = None
     submitted_words: Dict[str, List[str]] = field(default_factory=dict)
+    submitted_players: set[str] = field(default_factory=set)
     word_pool: List[str] = field(default_factory=list)
+    skipped_words: List[str] = field(default_factory=list)
     all_words: List[str] = field(default_factory=list)
     word_round: int = 1
     leader_index: int = 0
@@ -54,6 +61,13 @@ class GameState:
 
     def all_voted(self, team: Team) -> bool: return all(self.has_voted(m) for m in team.members)
 
+    def all_players_voted(self) -> bool:
+        players = [member for team in self.teams.values() for member in team.members]
+        return bool(players) and all(self.has_voted(member) for member in players)
+
+    def hides_skipped_words(self) -> bool:
+        return self.config.player_words or self.config.hide_skipped_words
+
     def change_config(self, config: GameConfig):
         self.config = config
 
@@ -63,11 +77,16 @@ class GameState:
                 all(len(team) >= self.config.min_team_players for team in self.teams.values()) and
                 (self.config.player_words or self.config.wordpack is not None))
 
-    def next_state(self, reset_votes=True):
+    def next_state(self, reset_votes: bool = True) -> None:
         match self.state:
             case StateMachine.WAITING_FOR_PLAYERS:
                 if self.can_start(): self.start_game()
             case StateMachine.VOTING_TO_START:
+                self.state = StateMachine.ROUND_PLAYING
+                self.active_word = self.next_word()
+                self.timer.set(self.config.time_limit)
+            case StateMachine.BETWEEN_WORD_ROUNDS:
+                self.start_word_round(self.all_words, round_number=2)
                 self.state = StateMachine.ROUND_PLAYING
                 self.active_word = self.next_word()
                 self.timer.set(self.config.time_limit)
@@ -88,9 +107,12 @@ class GameState:
                     self.review_team.points += points
                 self.review_team = self.review_player = self.review_guesser = None
                 self.guess_log.clear()
-                self.state = (StateMachine.FINISHED if self.config.player_words and self.word_round == 2
-                              and not self.word_pool and self.active_word is None else
-                              StateMachine.VOTING_TO_START)
+                if self.config.player_words and not self.word_pool and not self.skipped_words and self.active_word is None:
+                    self.state = (StateMachine.FINISHED if self.word_round == 2 else
+                                  StateMachine.BETWEEN_WORD_ROUNDS)
+                    if self.state == StateMachine.BETWEEN_WORD_ROUNDS: self.reset_votes()
+                else:
+                    self.state = StateMachine.VOTING_TO_START
         if reset_votes: self.reset_votes()
 
     def team_points(self, team: Team):
@@ -101,7 +123,8 @@ class GameState:
         extra = sum(g.points for g in self.guess_log)
         return player.score + extra * (player in (self.review_player, self.review_guesser))
 
-    def check_win_condition(self):
+    def check_win_condition(self) -> bool:
+        if self.config.player_words: return self.state == StateMachine.FINISHED
         if self.state == StateMachine.FINISHED: return True
         if len(self.teams) == 1:
             team = next(iter(self.teams.values()))
@@ -135,27 +158,31 @@ class GameState:
         self.start_word_round(self.config.wordpack.words)
         self.state = StateMachine.VOTING_TO_START
 
-    def start_word_round(self, words: List[str], round_number=1):
+    def start_word_round(self, words: List[str], round_number: int = 1) -> None:
         self.word_round = round_number
         self.all_words = list(words)
         self.word_pool = list(words)
+        self.skipped_words.clear()
         random.shuffle(self.word_pool)
         if not self.config.player_words: self.words_iterator = cycle(tuple(self.word_pool))
 
     def next_word(self) -> Optional[str]:
         if self.word_pool: return self.word_pool.pop()
-        if self.config.player_words and self.word_round == 1:
-            self.start_word_round(self.all_words, round_number=2)
+        if self.config.player_words and self.skipped_words:
+            self.word_pool, self.skipped_words = self.skipped_words, []
+            random.shuffle(self.word_pool)
             return self.word_pool.pop()
         if not self.config.player_words: return next(self.words_iterator)
 
-    def submit_words(self, player: LobbyMember, words: str):
-        if self.state != StateMachine.COLLECTING_WORDS or not self.team_by_player(player): return
-        self.submitted_words.setdefault(player.uid, []).extend(
-            word.strip() for word in words.splitlines() if word.strip())
+    def submit_words(self, player: LobbyMember, words: str, finalized: bool = False) -> bool:
+        if (self.state != StateMachine.COLLECTING_WORDS or not self.team_by_player(player) or
+                player.uid in self.submitted_players): return False
+        self.submitted_words[player.uid] = [word.strip() for word in words.splitlines() if word.strip()]
+        if finalized: self.submitted_players.add(player.uid)
+        return True
 
     def finish_word_collection(self) -> bool:
-        words = [word for submitted in self.submitted_words.values() for word in submitted]
+        words = list(dict.fromkeys(word for submitted in self.submitted_words.values() for word in submitted))
         if not words: return False
         self.start_word_round(words)
         self.state = StateMachine.VOTING_TO_START
@@ -167,7 +194,9 @@ class GameState:
         self.active_team = self.active_player = self.active_guesser = self.active_word = None
         self.review_team = self.review_player = self.review_guesser = None
         self.submitted_words.clear()
+        self.submitted_players.clear()
         self.word_pool.clear()
+        self.skipped_words.clear()
         self.all_words.clear()
         self.word_round = 1
         self.leader_index, self.guesser_offset = 0, 1
@@ -214,10 +243,11 @@ class GameState:
     def check_all_voted(self):
         return self.all_voted(self.active_team)
 
-    def guess_word(self, player: LobbyMember, correct: bool):
+    def guess_word(self, player: LobbyMember, correct: bool) -> bool:
         if self.state != StateMachine.ROUND_PLAYING or player != self.active_player: return False
-        self.guess_log.append(GuessEntry(self.active_word, self.config.correct_guess_score 
-                                         if correct else self.config.mistake_penalty))
+        self.guess_log.append(GuessEntry(self.active_word, self.config.correct_guess_score
+                                         if correct else self.config.mistake_penalty, skipped=not correct))
+        if self.config.player_words and not correct: self.skipped_words.append(self.active_word)
         self.active_word = self.next_word()
         return self.active_word is None
 

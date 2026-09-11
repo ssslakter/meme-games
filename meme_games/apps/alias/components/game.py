@@ -14,7 +14,7 @@ def Game(reciever: LobbyMember | User, lobby: Lobby, **kwargs):
             Div(*[TeamCard(reciever, team, state) for team in state.teams.values()],
                 NewTeamCard() if state.state == gm.StateMachine.WAITING_FOR_PLAYERS and not state.team_by_player(reciever) else None,
                 cls='mg-team-grid flex flex-col gap-3', data_ui='team-grid'),
-            GuessPanel(state) if playing else None,
+            GuessPanel(reciever, state) if playing else None,
             cls='mg-alias-teams lg:h-[calc(100vh-7rem)] lg:max-h-[calc(100vh-7rem)] lg:overflow-hidden',
             data_ui='alias-teams'),
         Div(WordPanel(reciever, state), GameControls(reciever, state),

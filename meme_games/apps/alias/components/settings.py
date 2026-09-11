@@ -15,11 +15,16 @@ def RangeSlider(label: str, value: str, min: int, max: int, step: int, name: str
         cls='space-y-2')
 
 
-def PackSelectContents(game_state: gm.GameState):
-    from ..routes import editor_readonly
+def PackSelectContents(r: LobbyMember, game_state: gm.GameState) -> FT:
+    from ..routes import editor_readonly, select_pack
     packs = wordpack_manager.get_all()
+    wordpack = game_state.config.wordpack
     return Grid(Div(PacksSelect(packs, editor_readonly, hx_target='#editor', hx_swap='outerHTML'), cls='overflow-auto col-span-2 border-r-2'),
-                Div(hx_post=editor_readonly.to(id=game_state.config.wordpack.id), hx_trigger='load', cls='col-span-3 h-full'),
+                WordPackEditor(wordpack, readonly=True,
+                               form_kwargs=dict(hx_post=select_pack, hx_swap='none'),
+                               submit_button=Button('Select wordpack' if is_host(r) else 'Must be host to select',
+                                                    disabled=not is_host(r)),
+                               hx_on__after_request="UIkit.modal('#pack-select').hide()"),
                 ModalCloseButton(), cols=5)
 
 
@@ -43,8 +48,14 @@ def ConfigLobby(r: LobbyMember, game_state: gm.GameState):
              Details(
                  Summary("Advanced", cls='cursor-pointer px-3 py-2 font-medium'),
                  Div(
-                     CheckboxX(id='player-words', name='player_words', checked=game_state.config.player_words),
+                     CheckboxX(id='player-words', name='player_words', checked=game_state.config.player_words,
+                               hx_post=update_settings, hx_include='closest form', hx_swap='none'),
                      FormLabel('Players write the words', fr='player-words', cls='m-0 cursor-pointer'),
+                     cls='flex items-center gap-2'),
+                 Div(
+                     CheckboxX(id='hide-skipped-words', name='hide_skipped_words',
+                               checked=game_state.config.hide_skipped_words),
+                     FormLabel('Hide skipped words from other players', fr='hide-skipped-words', cls='m-0 cursor-pointer'),
                      cls='flex items-center gap-2'),
                  RangeSlider('Word collection time', value=str(game_state.config.word_collection_time), min=10, max=180, step=5, name='word_collection_time'),
                  LabelInput('Max score', value=str(game_state.config.max_score), name='max_score'),
@@ -87,6 +98,8 @@ def GameContents(r: LobbyMember, game_state: gm.GameState):
                           disabled=not game_state.can_start()) if is_host(r) else None
         case gm.StateMachine.REVIEWING:
             return P("Waiting for the next round to start")
+        case gm.StateMachine.BETWEEN_WORD_ROUNDS:
+            return P('Round 2: explanations may contain only one word.', cls=TextT.muted)
         case gm.StateMachine.FINISHED:
             return P("The shared word pack is complete.")
         case _: return None
@@ -94,7 +107,10 @@ def GameContents(r: LobbyMember, game_state: gm.GameState):
 
 def VoteButton(r: LobbyMember, game: gm.GameState):
     from ..routes import vote, start_round
-    if game.state not in [gm.StateMachine.REVIEWING, gm.StateMachine.VOTING_TO_START] or r not in game.active_team: return None
+    between_rounds = game.state == gm.StateMachine.BETWEEN_WORD_ROUNDS
+    if between_rounds and not game.team_by_player(r): return None
+    if not between_rounds and (game.state not in [gm.StateMachine.REVIEWING, gm.StateMachine.VOTING_TO_START]
+                               or r not in game.active_team): return None
     btn = Button(cls=(ButtonT.primary, 'px-8 py-3'), hx_swap='none')
     if (game.state == gm.StateMachine.VOTING_TO_START and r == game.active_player and
             game.all_voted(game.active_team)):
@@ -110,7 +126,6 @@ def VoteButton(r: LobbyMember, game: gm.GameState):
 
 
 def GameControls(r: LobbyMember, game_state: gm.GameState):
-    from meme_games.apps.word_packs.routes import index
     wordpack = game_state.config.wordpack
     if game_state.state in [gm.StateMachine.COLLECTING_WORDS, gm.StateMachine.ROUND_PLAYING, gm.StateMachine.REVIEWING]:
         return None
@@ -126,6 +141,12 @@ def GameControls(r: LobbyMember, game_state: gm.GameState):
                 Button(wordpack.name, cls=ButtonT.text) if wordpack else "No pack selected",
                 data_uk_toggle='target: #pack-select'),
             cls='grid gap-6 text-center sm:grid-cols-2'),
+        Div(
+            P(f'{game_state.active_player.name} is explaining'),
+            P(f'{game_state.active_guesser.name} is guessing' if game_state.active_guesser else
+              f'Team {list(game_state.teams).index(game_state.active_team.id) + 1} is guessing', cls=TextT.muted),
+            cls='text-center') if game_state.state in [gm.StateMachine.VOTING_TO_START,
+                                                       gm.StateMachine.BETWEEN_WORD_ROUNDS] else None,
         Div(GameContents(r, game_state), VoteButton(r, game_state),
             cls='flex flex-wrap items-center justify-center gap-4'),
         cls='mg-game-controls w-full', body_cls='space-y-5 p-6',

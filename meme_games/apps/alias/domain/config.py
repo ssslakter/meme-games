@@ -12,4 +12,5 @@ class GameConfig:
     correct_guess_score: int = 1
     mistake_penalty: int = 0
     player_words: bool = False
+    hide_skipped_words: bool = False
     word_collection_time: int = 60

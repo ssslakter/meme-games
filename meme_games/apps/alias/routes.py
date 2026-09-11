@@ -38,9 +38,9 @@ def editor_readonly(req: Request, id:str):
                           hx_on__after_request="UIkit.modal('#pack-select').hide()")
 
 @rt
-def pack_select(req: Request):
-    _, game_state, _ = pre_init(req)
-    return PackSelectContents(game_state)
+def pack_select(req: Request) -> FT:
+    _, game_state, player = pre_init(req)
+    return PackSelectContents(player, game_state)
 
 @rt
 async def select_pack(req: Request, id: str):
@@ -165,17 +165,21 @@ async def set_end_word_collection_timer(lobby: Lobby):
 
 
 @rt
-async def vote(req: Request, voted: bool):
+async def vote(req: Request, voted: bool) -> Any:
     lobby, game_state, p = pre_init(req)
-    if not (p in game_state.active_team and
-        game_state.state in [gm.StateMachine.VOTING_TO_START, 
-                             gm.StateMachine.REVIEWING]):
+    between_rounds = game_state.state == gm.StateMachine.BETWEEN_WORD_ROUNDS
+    if not ((between_rounds and game_state.team_by_player(p)) or
+            (p in game_state.active_team and game_state.state in [gm.StateMachine.VOTING_TO_START,
+                                                                   gm.StateMachine.REVIEWING])):
         raise HTTPException(400, 'cannot vote now')
     if game_state.has_voted(p) == voted: return VoteButton(p, game_state)
     if voted: game_state.add_vote(p)
     else: game_state.retract_vote(p)
     if game_state.state == gm.StateMachine.REVIEWING and game_state.check_all_voted():
         game_state.next_state(reset_votes=False)
+    elif between_rounds and game_state.all_players_voted():
+        game_state.next_state()
+        asyncio.create_task(set_end_round_timer(lobby))
 
     await notify_all(lobby, lambda r, *_: game_update(r, lobby))
 
@@ -204,18 +208,18 @@ async def guess(req: Request, correct: bool):
         game_state.next_state()
         return await notify_all(lobby, lambda r, *_: game_update(r, lobby))
     def update(r: LobbyMember, *_):
-        return RoundLog(game_state.guess_log, game_state), GuessCount(game_state)
+        return RoundLog(r, game_state.guess_log, game_state), GuessCount(game_state)
     await notify_all(lobby, update)
     return CurrentWord(game_state)
 
 
 @rt
-async def submit_words(req: Request, words: str):
+async def submit_words(req: Request, words: str = '', finalized: bool = False) -> Any:
     lobby, game_state, p = pre_init(req)
     if game_state.state != gm.StateMachine.COLLECTING_WORDS or not is_player(p):
         return add_toast(req.session, 'Cannot add words now', 'error')
-    game_state.submit_words(p, words)
-    return add_toast(req.session, 'Words added', 'success')
+    game_state.submit_words(p, words, finalized)
+    return WordCollectionPanel(p, game_state) if finalized else WordCollectionStatus(p, game_state)
 
 
 @rt
