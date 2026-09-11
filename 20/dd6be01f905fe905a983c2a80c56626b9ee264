@@ -1,0 +1,19 @@
+static/styles/responsive.css
+  s_7bdef31c75bbd8::t_0def54906dc0f0 59-62,64-65,70-80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "20dd6be01f905fe905a983c2a80c56626b9ee264",
+  "prompts": {},
+  "sessions": {
+    "s_7bdef31c75bbd8": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0925f-7d93-7a01-95c4-aa9e922d873c",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
