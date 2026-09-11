@@ -1,0 +1,38 @@
+static/styles/responsive.css
+  s_7bdef31c75bbd8::t_2842d915cb508c 85
+  s_7bdef31c75bbd8::t_d3627383724b9f 9-18,54-62,67,84,86-87,89-92,94-98,100-105,109-112,114-117,120-125,127
+  s_7bdef31c75bbd8::t_c2a7e9cd0eb5e3 88,93,99,106-108,113,118-119,126
+  s_7bdef31c75bbd8::t_28e5d533884509 128
+tests/test_user_settings.py
+  s_7bdef31c75bbd8::t_126ccff60acbb6 7-8,14-18
+  s_7bdef31c75bbd8::t_28bbc13aee1040 19-20
+meme_games/apps/alias/components/settings.py
+  s_7bdef31c75bbd8::t_6c9c40460b524c 58-72
+  s_7bdef31c75bbd8::t_27396d16959f16 22-23,28,30
+  s_7bdef31c75bbd8::t_da42ea39f12651 33-38,40-47
+  s_7bdef31c75bbd8::t_11bc5eb6e1fbb9 81,91-93,103-114
+  s_7bdef31c75bbd8::t_4cbafb0ae81f3b 115-116
+tests/test_alias_ui.py
+  s_7bdef31c75bbd8::t_126ccff60acbb6 6,148-150,168,332-333
+meme_games/apps/shared/navigation.py
+  s_7bdef31c75bbd8::t_27396d16959f16 5,7-8,13,36
+meme_games/apps/alias/components/game.py
+  s_7bdef31c75bbd8::t_11bc5eb6e1fbb9 33
+  s_7bdef31c75bbd8::t_da42ea39f12651 37,46
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "0a0bff4d1b75bbda52b8ba337042aa2a29164cd2",
+  "prompts": {},
+  "sessions": {
+    "s_7bdef31c75bbd8": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0925f-7d93-7a01-95c4-aa9e922d873c",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
