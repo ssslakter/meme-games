@@ -1,0 +1,41 @@
+meme_games/apps/whoami/monitor.py
+  s_6e72ef81f8bb85::t_a87ead84e2f46c 2,8-32,36-47
+static/styles/themes/sakura.css
+  s_6e72ef81f8bb85::t_22da960f710a4e 195-196
+static/scripts/common/timer.js
+  s_6e72ef81f8bb85::t_c7dd42cf2bce00 52-62,64
+meme_games/apps/word_packs/routes.py
+  s_6e72ef81f8bb85::t_a54370237c1792 47-49,62
+static/styles/themes/autumn-grove.css
+  s_6e72ef81f8bb85::t_22da960f710a4e 182-183
+static/styles/themes/deep-sea.css
+  s_6e72ef81f8bb85::t_22da960f710a4e 183-184
+meme_games/apps/word_packs/components.py
+  s_6e72ef81f8bb85::t_a54370237c1792 90,113
+static/styles/themes/cyberpunk-2077.css
+  s_6e72ef81f8bb85::t_22da960f710a4e 467-468
+meme_games/apps/shared/navigation.py
+  s_6e72ef81f8bb85::t_9b24a323fa90fc 49
+static/styles/app.css
+  s_6e72ef81f8bb85::t_c7dd42cf2bce00 34-99
+  s_6e72ef81f8bb85::t_22da960f710a4e 10-29
+meme_games/domain/lobby/lobby.py
+  s_6e72ef81f8bb85::t_b08a3da1dc0987 193
+  s_6e72ef81f8bb85::t_9b24a323fa90fc 67,79-80,91,191-192,194
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "a2945b782eff2b80d86e4fe5229585a65b07b200",
+  "prompts": {},
+  "sessions": {
+    "s_6e72ef81f8bb85": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a092da-7225-79e3-8ec2-37e29a4745de",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
