@@ -46,6 +46,7 @@ def Navbar(*args: Any, **kwargs: Any) -> FT:
         )(cls="min-w-48"),
         *args,
         _NavLink('book-open', 'Word Packs', word_packs.to()),
+        _NavLink('activity', 'Monitor', '/monitor'),
         _NavLink('user', 'Settings', '/me'),
         ThemeSwitcher(),
         brand=A(H3("Meme Games"), href='/', hx_boost='false'),

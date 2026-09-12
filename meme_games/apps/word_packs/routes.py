@@ -44,7 +44,9 @@ def index(sess: dict, pack_id: str = None):
             Grid(
                 SideBar(),
                 ListCard("Wordpacks", Packs(packs, sess.get('uid')), cls='max-h-[719px] overflow-y-auto'),
-                ListCard("Editor", WordPackEditor(wpack, readonly=bool(wpack and wpack.author_id != sess.get('uid')))),
+                ListCard("Editor", WordPackEditor(wpack,
+                                                   readonly=bool(wpack and wpack.author_id != sess.get('uid')),
+                                                   disable_submit=bool(wpack and wpack.author_id != sess.get('uid')))),
                 cols_sm=1,
                 cols_md=3,
                 cols_lg=4,
@@ -57,7 +59,7 @@ def index(sess: dict, pack_id: str = None):
 def editor(sess: dict, id: str):
     pack = wordpack_manager.get_by_id(id)
     if pack and pack.author_id != sess.get('uid'):
-        return WordPackEditor(pack, readonly=True, hx_swap_oob='true')
+        return WordPackEditor(pack, readonly=True, disable_submit=True, hx_swap_oob='true')
     return WordPackEditor(pack, hx_swap_oob='true')
 
 

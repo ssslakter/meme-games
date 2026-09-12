@@ -87,6 +87,7 @@ def Packs(wordpacks: list[WordPack], author_id: str = ''):
 
 def WordPackEditor(wp: Optional[WordPack] = None,
                    readonly: bool = False,
+                   disable_submit: bool = False,
                    submit_button = Button("Save", cls=ButtonT.primary),
                    form_kwargs = None,
                    **kwargs):
@@ -109,7 +110,7 @@ def WordPackEditor(wp: Optional[WordPack] = None,
             TextArea(wp.words_ , cls='resize-y whitespace-pre', name="words", 
                      placeholder='words', rows=min(max(len(wp.words), 5), 25), readonly=readonly),
             Div(
-                submit_button(disabled=True) if readonly else submit_button,
+                submit_button(disabled=True) if disable_submit else submit_button,
                 style="display: flex; flex-direction: row; gap: 10px;",
             ),
             style="display: flex; flex-direction: column; gap: 10px; align-items: flex-start;",

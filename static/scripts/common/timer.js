@@ -49,7 +49,19 @@ function renderTextTimers() {
   walkTimers('text', renderers.text);
 }
 
+function renderElapsedTimers() {
+  for (const el of htmx.findAll(document, '[data-elapsed]')) {
+    const total = Math.max(0, Math.floor((Date.now() - Date.parse(el.dataset.elapsed)) / 1000));
+    const hours = Math.floor(total / 3600);
+    const minutes = Math.floor((total % 3600) / 60);
+    const seconds = total % 60;
+    el.textContent = hours ? `${hours}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`
+      : `${minutes}m ${String(seconds).padStart(2, '0')}s`;
+  }
+}
+
 setInterval(renderTextTimers, 2000);
+setInterval(renderElapsedTimers, 1000);
 
 function animateVisuals() {
   walkTimers('circle', (el, diff, duration) => {

@@ -1,27 +1,47 @@
 from meme_games.core import *
-from meme_games.domain import LobbyService, Lobby
+from meme_games.domain import GAME_REGISTRY, Lobby, LobbyService
 from ..shared import *
 
 lobby_service = DI.get(LobbyService)
 
 
-def LobbyInfo(lobby: Lobby):
-    return Panel(f'{lobby.id}: ',
-               A('join', href=f'/whoami/{lobby.id}', hx_boost='false', cls='bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 transition duration-150 ease-in-out'),
-               f'Last active: {lobby.last_active.strftime("%Y-%m-%d %H:%M:%S")}',
-               Div("Will be deleted in: ", Timer(lobby.last_active + lobby_service.lobby_lifetime - dt.datetime.now())),
-               cls='flex flex-col md:flex-row items-start md:items-center justify-between p-4 space-y-2 md:space-y-0',
-               style='gap: 8px;')
+def elapsed_text(started_at: dt.datetime) -> str:
+    seconds = max(0, int((dt.datetime.now() - started_at).total_seconds()))
+    minutes, seconds = divmod(seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+    return f'{hours}h {minutes:02d}m {seconds:02d}s' if hours else f'{minutes}m {seconds:02d}s'
+
+
+def LobbyInfo(lobby: Lobby) -> FT:
+    return Article(
+        Div(
+            H3(lobby.id, cls='mg-monitor-lobby-title'),
+            Span(f'{len(lobby.members)} members', cls='mg-monitor-members'),
+            cls='flex items-center justify-between gap-3'),
+        Div(
+            Span('Game', cls='mg-monitor-label'),
+            Span(GAME_REGISTRY[lobby.current_game].name.title(), cls='mg-monitor-game'),
+            cls='mg-monitor-detail'),
+        Div(
+            Span('Playing for', cls='mg-monitor-label'),
+            Span(elapsed_text(lobby.game_started_at), data_elapsed=lobby.game_started_at.isoformat(),
+                 cls='mg-monitor-duration'),
+            cls='mg-monitor-detail'),
+        A('Open lobby', href=game_url(lobby.current_game, lobby.id) or '/', hx_boost='false',
+          cls=(ButtonT.primary, 'uk-btn')),
+        cls='mg-monitor-lobby', data_ui='monitor-lobby')
 
 
 @settings_rt
-def monitor():
-    lobbies_list = Div(H3("Who am I lobbies:"),
-                       Div(Ul(*[Li(LobbyInfo(lobby)) for lobby in lobby_service.lobbies.values()]), cls='space-y-4 p-4'),
-                       _='init updateTimer() then setInterval(updateTimer, 500)',
-                       cls='bg-white/70 dark:bg-gray-800/70 rounded-lg shadow-xl p-6')
-    return LobbyPage("Current active lobbies",
-                  lobbies_list if len(lobby_service.lobbies) else Div("No active lobbies", cls='text-center text-gray-500 dark:text-gray-400 text-lg p-6'),
-                  no_image=True,
-                  cls='pt-10 flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900',
-                  page='monitor')
+def monitor() -> FT:
+    lobbies = sorted(lobby_service.lobbies.values(), key=lambda lobby: lobby.game_started_at, reverse=True)
+    return LobbyPage(
+        Main(
+            H1('Lobby monitor', cls='mg-monitor-title'),
+            P('All active lobbies and the games currently in progress.', cls='mg-monitor-description'),
+            Div(*[LobbyInfo(lobby) for lobby in lobbies], cls='mg-monitor-list') if lobbies
+            else P('No active lobbies.', cls='mg-monitor-empty'),
+            _='init renderElapsedTimers()',
+            cls='mg-monitor'),
+        no_image=True,
+        page='monitor')

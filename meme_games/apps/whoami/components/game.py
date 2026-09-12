@@ -59,14 +59,12 @@ def Game(reciever: LobbyMember | User, lobby: Lobby, **kwargs):
 
 def MainBlock(reciever: LobbyMember | User, lobby: Lobby):
     from ..routes import ws_url
-    from ..monitor import monitor
 
     return LobbyPage(
         GameShell(
             Game(reciever, lobby),
             LobbyTools(reciever, lobby, WhoAmISettings(reciever, lobby))),
         NotesBlock(reciever, lobby),
-        navbar_args=[A("Monitor", href=monitor.to(), cls=AT.text)],
         hx_ext="ws",
         ws_connect=ws_url,
         user=reciever,

@@ -180,6 +180,8 @@ h1, h2, h3, h4, h5,
 }
 
 .mg-timer {
+  --mg-timer-progress: var(--mg-sea-glow);
+  --mg-timer-track: rgba(127, 214, 255, .24);
   color: var(--mg-sea-glow) !important;
   filter: drop-shadow(0 0 6px rgba(79, 227, 208, .45));
 }

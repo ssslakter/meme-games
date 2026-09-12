@@ -7,8 +7,94 @@
   --mg-label-handle: hsl(var(--muted-foreground) / .35);
 }
 
+.mg-timer {
+  --mg-timer-progress: hsl(var(--primary));
+  --mg-timer-track: hsl(var(--muted));
+  color: var(--mg-timer-progress);
+}
+
+.mg-timer circle:first-child {
+  stroke: var(--mg-timer-track) !important;
+  stroke-width: 7 !important;
+}
+
+.mg-timer [ring-fg] {
+  stroke: var(--mg-timer-progress) !important;
+  stroke-width: 12 !important;
+}
+
+.mg-timer [timer-text] {
+  fill: var(--mg-timer-progress) !important;
+}
+
 .mg-anim {
   transition: left .5s ease-in-out, top .5s ease-in-out, width .5s ease-in-out, height .5s ease-in-out;
+}
+
+.mg-monitor {
+  width: min(100%, 64rem);
+  margin-inline: auto;
+}
+
+.mg-monitor-title {
+  color: hsl(var(--foreground));
+}
+
+.mg-monitor-description,
+.mg-monitor-label,
+.mg-monitor-members {
+  color: hsl(var(--muted-foreground));
+}
+
+.mg-monitor-description {
+  margin-top: .5rem;
+}
+
+.mg-monitor-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.mg-monitor-lobby {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  background: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  box-shadow: 0 .5rem 1.5rem hsl(var(--foreground) / .08);
+}
+
+.mg-monitor-lobby-title {
+  margin: 0;
+  color: hsl(var(--card-foreground));
+  font-size: 1.15rem;
+}
+
+.mg-monitor-detail {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.mg-monitor-game,
+.mg-monitor-duration {
+  color: hsl(var(--primary));
+  font-weight: 600;
+}
+
+.mg-monitor-duration {
+  font-variant-numeric: tabular-nums;
+}
+
+.mg-monitor-empty {
+  margin-top: 2rem;
+  color: hsl(var(--muted-foreground));
+  text-align: center;
 }
 
 /*------------------------- Shared lobby furniture ---------------------------*/

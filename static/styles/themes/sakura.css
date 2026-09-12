@@ -192,6 +192,8 @@ h1::after {
 }
 
 .mg-timer {
+  --mg-timer-progress: var(--mg-sakura-deep);
+  --mg-timer-track: rgba(247, 168, 189, .35);
   color: var(--mg-sakura-deep) !important;
   filter: drop-shadow(0 3px 5px rgba(190, 71, 104, .22));
 }

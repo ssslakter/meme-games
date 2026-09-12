@@ -464,6 +464,8 @@ html:not(.dark) .uk-select {
 .mg-toast-warning, .mg-toast-error { border-left-color: var(--mg-cyber-red) !important; }
 
 .mg-timer {
+  --mg-timer-progress: var(--mg-cyber-cyan);
+  --mg-timer-track: rgba(255, 52, 95, .42);
   color: var(--mg-cyber-cyan) !important;
   filter: drop-shadow(0 0 8px var(--mg-cyber-cyan));
 }

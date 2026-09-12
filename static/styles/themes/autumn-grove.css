@@ -179,6 +179,8 @@ h1, h2, h3, h4, h5,
 }
 
 .mg-timer {
+  --mg-timer-progress: var(--mg-autumn-rust);
+  --mg-timer-track: rgba(95, 111, 56, .28);
   color: var(--mg-autumn-rust) !important;
   filter: drop-shadow(0 3px 5px rgba(156, 63, 34, .24));
 }

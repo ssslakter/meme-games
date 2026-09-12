@@ -64,6 +64,7 @@ class Lobby(Model):
     host: Optional[LobbyMember] = None
     members: dict[str, LobbyMember] = field(default_factory=dict)
     last_active: dt.datetime = field(default_factory=dt.datetime.now)
+    game_started_at: dt.datetime = field(default_factory=dt.datetime.now)
     current_game: str = BASIC_GAME
     states: dict[str, Any] = field(default_factory=dict)
     states_json: str = ''
@@ -75,6 +76,8 @@ class Lobby(Model):
     def __post_init__(self):
         if isinstance(self.last_active, str):
             self.last_active = dt.datetime.fromisoformat(self.last_active)
+        if isinstance(self.game_started_at, str):
+            self.game_started_at = dt.datetime.fromisoformat(self.game_started_at)
 
     @property
     def state(self):
@@ -85,6 +88,7 @@ class Lobby(Model):
         '''Switch to `name`, keeping every member and the state of the game they left.'''
         if name not in GAME_REGISTRY: raise ValueError(f'Unknown game {name}, available: {list(GAME_REGISTRY)}')
         self.current_game = name
+        self.game_started_at = dt.datetime.now()
         if name not in self.states:
             state = GAME_REGISTRY[name].new_state()
             if state is not None: self.states[name] = state
@@ -184,6 +188,10 @@ class LobbyRepo(DataRepository[Lobby]):
     def _set_tables(self):
         self.lobbies: fl.Table = self.db.t.lobbies.create(**Lobby.columns(), pk='id',
                                                           transform=True, if_not_exists=True)
+        if 'game_started_at' not in self.lobbies.columns_dict:
+            self.db.q(f'ALTER TABLE {self.lobbies} ADD COLUMN game_started_at TEXT')
+            self.db.q(f'UPDATE {self.lobbies} SET game_started_at = last_active WHERE game_started_at IS NULL')
+            self.lobbies = self.db.t.lobbies
         return self.lobbies
 
     def update(self, lobby: Lobby):
