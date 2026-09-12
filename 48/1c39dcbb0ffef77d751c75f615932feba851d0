@@ -1,0 +1,38 @@
+static/styles/app.css
+  s_6e72ef81f8bb85::t_5365d5c01106e6 34-53,65-82
+  s_6e72ef81f8bb85::t_d8b46b0a7f1eb1 54-64
+static/styles/themes/deep-sea.css
+  s_6e72ef81f8bb85::t_5365d5c01106e6 189-194
+static/styles/themes/autumn-grove.css
+  s_6e72ef81f8bb85::t_5365d5c01106e6 188-193
+static/styles/themes/cyberpunk-2077.css
+  s_6e72ef81f8bb85::t_5365d5c01106e6 473-478
+tests/test_user_settings.py
+  s_6e72ef81f8bb85::t_d8b46b0a7f1eb1 14,20
+  s_6e72ef81f8bb85::t_f3360b5a96ccab 18-19
+  s_6e72ef81f8bb85::t_d09bf49f5eddab 17
+meme_games/apps/shared/navigation.py
+  s_6e72ef81f8bb85::t_5365d5c01106e6 6-12,15-16,18,36
+static/styles/responsive.css
+  s_6e72ef81f8bb85::t_5365d5c01106e6 13-16
+static/scripts/common/theme.js
+  s_6e72ef81f8bb85::t_5365d5c01106e6 7-12
+static/styles/themes/sakura.css
+  s_6e72ef81f8bb85::t_5365d5c01106e6 201-206
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "481c39dcbb0ffef77d751c75f615932feba851d0",
+  "prompts": {},
+  "sessions": {
+    "s_6e72ef81f8bb85": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a092da-7225-79e3-8ec2-37e29a4745de",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
