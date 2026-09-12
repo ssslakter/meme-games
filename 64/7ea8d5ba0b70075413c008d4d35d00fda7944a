@@ -1,0 +1,19 @@
+meme_games/domain/lobby/lobby.py
+  s_6e72ef81f8bb85::t_e31568fa8f156b 81-82
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "647ea8d5ba0b70075413c008d4d35d00fda7944a",
+  "prompts": {},
+  "sessions": {
+    "s_6e72ef81f8bb85": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a092da-7225-79e3-8ec2-37e29a4745de",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
