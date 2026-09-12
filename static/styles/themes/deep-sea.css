@@ -186,6 +186,12 @@ h1, h2, h3, h4, h5,
   filter: drop-shadow(0 0 6px rgba(79, 227, 208, .45));
 }
 
+.mg-theme-toggle {
+  --mg-theme-toggle-bg: var(--mg-sea-deep);
+  --mg-theme-toggle-icon: var(--mg-sea-lume);
+  --mg-theme-toggle-thumb: var(--mg-sea-lume);
+}
+
 .uk-checkbox {
   position: relative;
   border-color: var(--mg-sea-glow) !important;

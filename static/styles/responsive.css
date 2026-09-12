@@ -10,10 +10,10 @@
   .mg-navbar-content { padding-inline: 1rem !important; }
   .mg-navbar-content h3 { white-space: nowrap; }
   .mg-navbar-content .items-center.gap-3 { gap: .5rem; }
-  .mg-theme-switcher { display: flex; flex-shrink: 0; }
-  .mg-theme-switcher .mg-theme-label { display: none; }
-  .mg-theme-switcher .mg-theme-icon { margin-right: 0; }
-  .mg-theme-switcher .uk-btn { padding-inline: .7rem; }
+  .mg-theme-toggle { flex-shrink: 0; }
+  .mg-nav-settings .mg-nav-label { display: none; }
+  .mg-nav-settings .mg-nav-icon { margin-right: 0; }
+  .mg-nav-settings { padding-inline: .7rem !important; }
 }
 
 /* NavBar duplicates its actions into a hamburger menu (the second .mg-navbar-content,
@@ -33,8 +33,6 @@
     justify-content: center;
   }
 
-  .mg-navbar-content + .mg-navbar-content .mg-theme-switcher { display: flex; }
-  .mg-navbar-content + .mg-navbar-content .mg-theme-switcher > * { flex: 1; }
 }
 
 /* A lobby rail is a sidebar on desktop and a stack of full-width cards below the

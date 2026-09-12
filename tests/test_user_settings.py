@@ -11,11 +11,13 @@ from fasthtml.common import to_xml
 HEADERS = {'user-agent': 'Mozilla/5.0 Firefox'}
 
 
-def test_theme_switcher_labels_can_collapse_without_hiding_icons():
+def test_theme_switcher_is_one_toggle_with_both_icons():
     html = to_xml(Navbar())
 
-    assert html.count('mg-theme-label') == 4
-    assert html.count('mg-theme-icon') == 4
+    assert html.count('data-ui="theme-switcher"') == 2
+    assert html.count('mg-theme-icon-light') == 2
+    assert html.count('mg-theme-icon-dark') == 2
+    assert 'mg-theme-label' not in html
 
 
 def test_user_settings_page_and_nickname_update():

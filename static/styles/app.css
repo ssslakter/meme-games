@@ -31,6 +31,55 @@
   transition: left .5s ease-in-out, top .5s ease-in-out, width .5s ease-in-out, height .5s ease-in-out;
 }
 
+.mg-theme-toggle {
+  position: relative;
+  display: inline-flex;
+  width: 3.5rem;
+  height: 2rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: .25rem !important;
+  overflow: hidden;
+  border: 1px solid hsl(var(--border));
+  border-radius: 999px !important;
+  background: var(--mg-theme-toggle-bg, hsl(var(--muted))) !important;
+  color: var(--mg-theme-toggle-icon, hsl(var(--muted-foreground))) !important;
+  box-shadow: none !important;
+}
+
+.mg-theme-toggle .mg-theme-icon {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  transition: opacity .2s ease;
+}
+
+.mg-theme-toggle .mg-theme-icon-light,
+html.dark .mg-theme-toggle .mg-theme-icon-dark {
+  opacity: .45;
+}
+
+.mg-theme-toggle .mg-theme-icon-dark,
+html.dark .mg-theme-toggle .mg-theme-icon-light {
+  opacity: 1;
+}
+
+.mg-theme-toggle-thumb {
+  position: absolute;
+  top: .2rem;
+  left: .2rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: var(--mg-theme-toggle-thumb, hsl(var(--card)));
+  box-shadow: 0 1px 4px hsl(var(--foreground) / .25);
+  transition: transform .2s ease;
+}
+
+html.dark .mg-theme-toggle-thumb {
+  transform: translateX(1.5rem);
+}
+
 .mg-monitor {
   width: min(100%, 64rem);
   margin-inline: auto;

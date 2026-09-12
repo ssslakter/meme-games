@@ -470,6 +470,12 @@ html:not(.dark) .uk-select {
   filter: drop-shadow(0 0 8px var(--mg-cyber-cyan));
 }
 
+.mg-theme-toggle {
+  --mg-theme-toggle-bg: var(--mg-cyber-red);
+  --mg-theme-toggle-icon: var(--mg-cyber-cyan);
+  --mg-theme-toggle-thumb: var(--mg-cyber-cyan);
+}
+
 ::selection {
   background: var(--mg-cyber-red);
   color: white;

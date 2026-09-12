@@ -185,6 +185,12 @@ h1, h2, h3, h4, h5,
   filter: drop-shadow(0 3px 5px rgba(156, 63, 34, .24));
 }
 
+.mg-theme-toggle {
+  --mg-theme-toggle-bg: var(--mg-autumn-olive);
+  --mg-theme-toggle-icon: var(--mg-autumn-paper);
+  --mg-theme-toggle-thumb: var(--mg-autumn-paper);
+}
+
 .uk-checkbox {
   position: relative;
   border-color: var(--mg-autumn-rust) !important;

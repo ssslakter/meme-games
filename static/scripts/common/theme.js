@@ -4,3 +4,9 @@ function setThemeMode(dark) {
   franken.mode = mode;
   localStorage.setItem('__FRANKEN__', JSON.stringify(franken));
 }
+
+function toggleThemeMode() {
+  const dark = !document.documentElement.classList.contains('dark');
+  document.documentElement.classList.toggle('dark', dark);
+  setThemeMode(dark);
+}

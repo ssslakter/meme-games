@@ -198,6 +198,12 @@ h1::after {
   filter: drop-shadow(0 3px 5px rgba(190, 71, 104, .22));
 }
 
+.mg-theme-toggle {
+  --mg-theme-toggle-bg: var(--mg-plum);
+  --mg-theme-toggle-icon: var(--mg-cream);
+  --mg-theme-toggle-thumb: var(--mg-cream);
+}
+
 .uk-checkbox {
   position: relative;
   border-color: var(--mg-sakura-deep) !important;

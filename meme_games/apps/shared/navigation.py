@@ -2,34 +2,20 @@ from meme_games.core import *
 from .utils import *
 from .general import *
 
-def _ThemeButton(icon: str, text: str, action: str, cls: str = "") -> FT:
-    return Button(
-        UkIcon(icon, cls="mg-theme-icon mr-2", width=20, height=20),
-        Span(text, cls='mg-theme-label'), _=action,
-        cls=(ButtonT.default, 'px-4 py-2', cls)
-    )
-
-
 def ThemeSwitcher() -> FT:
-    light_btn = _ThemeButton(
-        "sun",
-        "Light",
-        "on click remove .dark from <html/> then call setThemeMode(false) then call me.blur()",
-        "rounded-r-none",
-    )
-    dark_btn = _ThemeButton(
-        "moon",
-        "Dark",
-        "on click add .dark to <html/> then call setThemeMode(true) then call me.blur()",
-        "rounded-l-none",
-    )
-    return Div(light_btn, dark_btn, cls='mg-theme-switcher', data_ui='theme-switcher')
+    return Button(
+        UkIcon('sun', cls='mg-theme-icon mg-theme-icon-light', width=17, height=17),
+        UkIcon('moon', cls='mg-theme-icon mg-theme-icon-dark', width=17, height=17),
+        Span(cls='mg-theme-toggle-thumb'),
+        type='button', aria_label='Toggle light and dark mode',
+        _='on click call toggleThemeMode() then call me.blur()',
+        cls=(ButtonT.default, 'mg-theme-toggle'), data_ui='theme-switcher')
 
 
-def _NavLink(icon: str, text: str, href: str):
-    return A(UkIcon(icon, cls='mr-2', width=20, height=20), text, href=href,
+def _NavLink(icon: str, text: str, href: str, cls: str = '') -> FT:
+    return A(UkIcon(icon, cls='mg-nav-icon mr-2', width=20, height=20), Span(text, cls='mg-nav-label'), href=href,
              cls=('uk-btn', ButtonT.default,
-                  'inline-flex shrink-0 items-center whitespace-nowrap px-4 py-2'),
+                  'inline-flex shrink-0 items-center whitespace-nowrap px-4 py-2', cls),
              hx_boost='false')
 
 
@@ -47,7 +33,7 @@ def Navbar(*args: Any, **kwargs: Any) -> FT:
         *args,
         _NavLink('book-open', 'Word Packs', word_packs.to()),
         _NavLink('activity', 'Monitor', '/monitor'),
-        _NavLink('user', 'Settings', '/me'),
+        _NavLink('user', 'Settings', '/me', cls='mg-nav-settings'),
         ThemeSwitcher(),
         brand=A(H3("Meme Games"), href='/', hx_boost='false'),
         cls='mg-navbar-content px-4 py-2 sm:px-6',
