@@ -78,6 +78,8 @@ class Lobby(Model):
             self.last_active = dt.datetime.fromisoformat(self.last_active)
         if isinstance(self.game_started_at, str):
             self.game_started_at = dt.datetime.fromisoformat(self.game_started_at)
+        if self.game_started_at is None:
+            self.game_started_at = self.last_active
 
     @property
     def state(self):
