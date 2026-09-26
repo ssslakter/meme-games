@@ -37,7 +37,7 @@ class ChatMessage:
     uid: str
     name: str
     text: str
-    at: dt.datetime = field(default_factory=dt.datetime.now)
+    at: dt.datetime = field(default_factory=lambda: dt.datetime.now().astimezone())
 
     def to_dict(self):
         return {'uid': self.uid, 'name': self.name, 'text': self.text, 'at': self.at.isoformat()}
@@ -64,7 +64,7 @@ class Lobby(Model):
     host: Optional[LobbyMember] = None
     members: dict[str, LobbyMember] = field(default_factory=dict)
     last_active: dt.datetime = field(default_factory=dt.datetime.now)
-    game_started_at: dt.datetime = field(default_factory=dt.datetime.now)
+    game_started_at: Optional[dt.datetime] = None
     current_game: str = BASIC_GAME
     states: dict[str, Any] = field(default_factory=dict)
     states_json: str = ''
@@ -78,8 +78,6 @@ class Lobby(Model):
             self.last_active = dt.datetime.fromisoformat(self.last_active)
         if isinstance(self.game_started_at, str):
             self.game_started_at = dt.datetime.fromisoformat(self.game_started_at)
-        if self.game_started_at is None:
-            self.game_started_at = self.last_active
 
     @property
     def state(self):
@@ -90,7 +88,7 @@ class Lobby(Model):
         '''Switch to `name`, keeping every member and the state of the game they left.'''
         if name not in GAME_REGISTRY: raise ValueError(f'Unknown game {name}, available: {list(GAME_REGISTRY)}')
         self.current_game = name
-        self.game_started_at = dt.datetime.now()
+        self.game_started_at = None if name == BASIC_GAME else dt.datetime.now()
         if name not in self.states:
             state = GAME_REGISTRY[name].new_state()
             if state is not None: self.states[name] = state
