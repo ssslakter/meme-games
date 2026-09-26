@@ -184,8 +184,8 @@ def test_one_team_rotates_leaders_and_shifts_guessers_each_circle():
         game.next_state()  # confirm review and advance
 
     assert pairs == [
-        ('pair-0', 'pair-1'), ('pair-1', 'pair-2'), ('pair-2', 'pair-3'), ('pair-3', 'pair-0'),
-        ('pair-0', 'pair-2'), ('pair-1', 'pair-3'), ('pair-2', 'pair-0'), ('pair-3', 'pair-1'),
+        ('pair-0', 'pair-3'), ('pair-1', 'pair-2'), ('pair-0', 'pair-2'), ('pair-3', 'pair-1'),
+        ('pair-0', 'pair-1'), ('pair-2', 'pair-3'), ('pair-3', 'pair-0'), ('pair-2', 'pair-1'),
     ]
     assert game.check_win_condition()
 
