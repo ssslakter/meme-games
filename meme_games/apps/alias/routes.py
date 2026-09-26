@@ -1,5 +1,5 @@
 from ..shared.utils import register_route, lobby_state
-from ..shared.ws_route import lobby_ws 
+from ..shared.ws_route import lobby_ws
 from ..shared.spectators import notify_roster_changed
 from meme_games.core import *
 from meme_games.domain import *
@@ -27,13 +27,13 @@ def game_update(reciever: LobbyMember, lobby: Lobby):
     return Game(reciever, lobby, hx_swap_oob='true'), HostGameActions(reciever, lobby.state)
 
 
-@rt 
+@rt
 def editor_readonly(req: Request, id:str):
     _,_, p = pre_init(req)
     pack = wordpack_manager.get_by_id(id)
     return WordPackEditor(pack, readonly=True,
                           form_kwargs=dict(hx_post=select_pack, hx_swap='none'),
-                          submit_button=Button("Select wordpack" if is_host(p) else "Must be host to select", 
+                          submit_button=Button("Select wordpack" if is_host(p) else "Must be host to select",
                                                disabled= not is_host(p)),
                           hx_on__after_request="UIkit.modal('#pack-select').hide()")
 
@@ -55,7 +55,7 @@ async def select_pack(req: Request, id: str):
 async def new_team(req: Request):
     lobby, game_state, p = pre_init(req)
     if any(p in t for t in game_state.teams.values()): return
-    if lobby.locked: 
+    if lobby.locked:
         add_toast(req.session, "Game is locked", "error")
         return
     team = game_state.create_team()
@@ -63,7 +63,7 @@ async def new_team(req: Request):
 
 @rt
 async def join_team(req: Request, team_id: str):
-    lobby, game_state, p = pre_init(req)  
+    lobby, game_state, p = pre_init(req)
     team = game_state.teams.get(team_id)
     if not team: return
     game_state.remove_player(p.uid)
