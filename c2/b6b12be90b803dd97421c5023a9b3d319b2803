@@ -1,0 +1,30 @@
+meme_games/apps/home/routes.py
+  h_cec284cdd16cba 20-21,25-26,36,41,45,54,58,66,88
+meme_games/apps/user/components/general.py
+  h_cec284cdd16cba 110
+static/styles/app.css
+  h_cec284cdd16cba 83-89
+static/styles/responsive.css
+  h_cec284cdd16cba 78-87,89-91,95-100,102,104-106
+static/styles/themes/autumn-grove.css
+  h_cec284cdd16cba 22-38,61-62,109,113-123,145,147-149,154,161-168,173
+static/styles/themes/cyberpunk-2077.css
+  h_cec284cdd16cba 22-34,36-38,61-62,312,318,476,478-575
+static/styles/themes/deep-sea.css
+  h_cec284cdd16cba 22-38,61-62,109-121,146,148-150,155,162-169,174,213-219
+static/styles/themes/retro.css
+  h_cec284cdd16cba 1-474
+static/styles/themes/sakura.css
+  h_cec284cdd16cba 21-27,29-37,60-61,111,116-126,153,155-157,165,172-179,184
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "c2b6b12be90b803dd97421c5023a9b3d319b2803",
+  "prompts": {},
+  "humans": {
+    "h_cec284cdd16cba": {
+      "author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
