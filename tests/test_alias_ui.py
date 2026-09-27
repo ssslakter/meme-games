@@ -249,7 +249,8 @@ def test_alias_settings_only_save_from_the_update_button() -> None:
     assert 'name="player_words"' in html
     assert 'name="player_words_last_word"' in html
     assert 'name="disable_skip"' in html
-    assert html.count('hx-post="/alias/update_settings"') == 1
+    assert html.count('hx-post="/alias/update_settings"') == 2
+    assert 'hx-trigger="change"' in html and 'hx-include="closest form"' in html
     assert 'mg-more-settings-body space-y-3 p-3 pt-2' in html
 
 

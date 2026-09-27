@@ -66,7 +66,19 @@ def ConfigLobby(r: LobbyMember, game_state: gm.GameState) -> Optional[FT]:
                  Summary("Advanced", cls='cursor-pointer px-3 py-2 font-medium'),
                  Div(
                      Div(
-                         CheckboxX(id='player-words', name='player_words', checked=game_state.config.player_words),
+                         CheckboxX(id='player-words', name='player_words', checked=game_state.config.player_words,
+                                   hx_post=update_settings, hx_trigger='change', hx_include='closest form',
+                                   hx_swap='none',
+                                   _='on change if me.checked '
+                                     'add @disabled to #alias-pack-select '
+                                     'add @disabled to #alias-random-pack '
+                                     'set #alias-pack-name.style.pointerEvents to "none" '
+                                     'call UIkit.modal("#pack-select").hide() '
+                                     'else '
+                                     'remove @disabled from #alias-pack-select '
+                                     'remove @disabled from #alias-random-pack '
+                                     'set #alias-pack-name.style.pointerEvents to "auto" '
+                                     'end'),
                          FormLabel('Players write the words', fr='player-words', cls='m-0 cursor-pointer'),
                          cls='flex items-center gap-2'),
                      Div(
@@ -113,7 +125,7 @@ def HostGameActions(r: LobbyMember, game: gm.GameState):
             Button(UkIcon('shuffle', cls='mr-2 shrink-0'), 'Shuffle teams', hx_post=shuffle_teams, hx_swap='none',
                    disabled=not waiting or len(game.teams) < 2, cls=(ButtonT.default, 'w-full justify-start px-3 py-2')),
             Button(UkIcon('dices', cls='mr-2 shrink-0'), 'Random wordpack', hx_post=random_wordpack, hx_swap='none',
-                   disabled=playing or game.config.player_words,
+                   disabled=playing or game.config.player_words, id='alias-random-pack',
                    cls=(ButtonT.default, 'w-full justify-start px-3 py-2')),
             cls='grid grid-cols-2 gap-3'),
         id='alias-host-controls', hx_swap_oob='true',
@@ -184,6 +196,7 @@ def GameControls(r: LobbyMember, game_state: gm.GameState):
                 P("Word pack", cls=TextT.muted),
                 P('Players write the words') if game_state.config.player_words else
                 (Button(wordpack.name, cls=ButtonT.text) if wordpack else "No pack selected"),
+                id='alias-pack-name',
                 data_uk_toggle=None if game_state.config.player_words else 'target: #pack-select'),
             cls='grid gap-6 text-center sm:grid-cols-2'),
         Div(

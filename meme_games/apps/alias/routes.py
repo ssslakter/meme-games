@@ -78,7 +78,10 @@ async def update_settings(req: Request, config: gm.GameConfig):
     def update(r: LobbyMember, *_: Any) -> tuple[Any, FT]:
         toast = Div(AppToast('Config updated', 'success'),
                     hx_swap_oob='beforeend:#mg-toast-container')
-        return game_update(r, lobby), toast
+        # the picker stays mounted while the modal is open, so a checkbox change has to
+        # replace it too; `shown` only reloads the next time the modal opens
+        picker = Div(PackSelectContents(r, game_state), hx_swap_oob='innerHTML:#pack-select-content')
+        return game_update(r, lobby), toast, picker
     await notify_all(lobby, update, but=p)
     return update(p)
 
