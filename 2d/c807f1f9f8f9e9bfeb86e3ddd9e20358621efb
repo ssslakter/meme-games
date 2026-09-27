@@ -1,0 +1,20 @@
+meme_games/apps/alias/components/settings.py
+  h_cec284cdd16cba 69-81,128,199
+meme_games/apps/alias/routes.py
+  h_cec284cdd16cba 81-84
+static/styles/responsive.css
+  h_cec284cdd16cba 82-98
+tests/test_alias_ui.py
+  h_cec284cdd16cba 252-253
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "2dc807f1f9f8f9e9bfeb86e3ddd9e20358621efb",
+  "prompts": {},
+  "humans": {
+    "h_cec284cdd16cba": {
+      "author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
