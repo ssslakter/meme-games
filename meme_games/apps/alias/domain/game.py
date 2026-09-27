@@ -1,5 +1,5 @@
 from itertools import cycle
-from meme_games.domain import * 
+from meme_games.domain import *
 from meme_games.core import *
 from meme_games.apps.word_packs.domain import WordPackRepo
 from .team import *
@@ -51,8 +51,7 @@ class GameState:
     skipped_words: List[str] = field(default_factory=list)
     all_words: List[str] = field(default_factory=list)
     word_round: int = 1
-    leader_index: int = 0
-    guesser_offset: int = 1
+    turn: int = 0
     guess_log: List[GuessEntry] = field(default_factory=list)
     votes: set[str] = field(default_factory=set)
     timer: Timer = field(default_factory=Timer)
@@ -134,10 +133,10 @@ class GameState:
             return (len(team) and team.times_played >= len(team) and
                     team.times_played % len(team) == 0 and
                     max(self.player_points(member) for member in team.members) >= self.config.max_score)
-        return (any(self.team_points(t) >= self.config.max_score for t in self.teams.values()) and 
+        return (any(self.team_points(t) >= self.config.max_score for t in self.teams.values()) and
                 all(t.times_played == self.active_team.times_played for t in self.teams.values()))
 
-    def is_winner(self, team: Team): 
+    def is_winner(self, team: Team):
         if len(self.teams) == 1: return False
         if not self.check_win_condition(): return False
         winner = max(self.teams.values(), key=lambda t: self.team_points(t))
@@ -151,7 +150,7 @@ class GameState:
         self.teams_iterator = cycle(self.teams.values())
         self.active_team = next(self.teams_iterator)
         if len(self.teams) == 1:
-            self.leader_index, self.guesser_offset = 0, 1
+            self.turn = 0
             self.set_pair()
         else: self.active_player = next(self.active_team)
         if self.config.player_words:
@@ -208,7 +207,7 @@ class GameState:
         self.skipped_words.clear()
         self.all_words.clear()
         self.word_round = 1
-        self.leader_index, self.guesser_offset = 0, 1
+        self.turn = 0
         self.guess_log.clear()
         self.reset_votes()
         for team in self.teams.values():
@@ -217,22 +216,34 @@ class GameState:
         for attr in ('teams_iterator',):
             if hasattr(self, attr): delattr(self, attr)
 
+    def round_robin_pairs(self) -> List[tuple[int, int]]:
+        players = list(range(len(self.active_team)))
+        if len(players) % 2: players.append(None)
+        m = len(players)
+        pairs = []
+        for _ in range(m - 1):
+            pairs += [(a, b) for a, b in zip(players[:m//2], reversed(players[m//2:])) if a is not None and b is not None]
+            players.insert(1, players.pop())
+        return pairs
+
     def advance_turn(self):
-        team = self.active_team
         if len(self.teams) > 1:
             self.active_team = next(self.teams_iterator)
             self.active_player = next(self.active_team)
         else:
-            if len(team) > 1:
-                self.leader_index = (self.leader_index + 1) % len(team)
-                if self.leader_index == 0:
-                    self.guesser_offset = self.guesser_offset % (len(team) - 1) + 1
+            self.turn += 1
             self.set_pair()
 
     def set_pair(self):
         team = self.active_team
-        self.active_player = team.members[self.leader_index]
-        self.active_guesser = team.members[(self.leader_index + self.guesser_offset) % len(team)]
+        if not len(team): self.active_player = self.active_guesser = None; return
+        if len(team) == 1:
+            self.active_player = self.active_guesser = team.members[0]; return
+        pairs = self.round_robin_pairs()
+        a, b = pairs[self.turn % len(pairs)]
+        if (self.turn // len(pairs)) % 2: a, b = b, a
+        self.active_player = team.members[a]
+        self.active_guesser = team.members[b]
 
     def shuffle_teams(self):
         sizes = [len(team.members) for team in self.teams.values()]
@@ -267,7 +278,7 @@ class GameState:
         guess.points += delta
         return guess
 
-    
+
     def reset_votes(self): self.votes.clear()
 
     def create_team(self) -> Team:

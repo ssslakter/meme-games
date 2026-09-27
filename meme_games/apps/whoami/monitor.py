@@ -1,5 +1,5 @@
 from meme_games.core import *
-from meme_games.domain import GAME_REGISTRY, Lobby, LobbyService
+from meme_games.domain import GAME_REGISTRY, Lobby, LobbyService, BASIC_GAME
 from ..shared import *
 
 lobby_service = DI.get(LobbyService)
@@ -13,6 +13,10 @@ def elapsed_text(started_at: dt.datetime) -> str:
 
 
 def LobbyInfo(lobby: Lobby) -> FT:
+    playing = lobby.current_game != BASIC_GAME and lobby.game_started_at is not None
+    duration = (Span(elapsed_text(lobby.game_started_at), data_elapsed=lobby.game_started_at.astimezone().isoformat(),
+                     cls='mg-monitor-duration') if playing
+                else Span('In lobby', cls='mg-monitor-duration'))
     return Article(
         Div(
             H3(lobby.id, cls='mg-monitor-lobby-title'),
@@ -23,9 +27,8 @@ def LobbyInfo(lobby: Lobby) -> FT:
             Span(GAME_REGISTRY[lobby.current_game].name.title(), cls='mg-monitor-game'),
             cls='mg-monitor-detail'),
         Div(
-            Span('Playing for', cls='mg-monitor-label'),
-            Span(elapsed_text(lobby.game_started_at), data_elapsed=lobby.game_started_at.isoformat(),
-                 cls='mg-monitor-duration'),
+            Span('Playing for' if playing else 'Status', cls='mg-monitor-label'),
+            duration,
             cls='mg-monitor-detail'),
         A('Open lobby', href=game_url(lobby.current_game, lobby.id) or '/', hx_boost='false',
           cls=(ButtonT.primary, 'uk-btn')),
@@ -34,7 +37,8 @@ def LobbyInfo(lobby: Lobby) -> FT:
 
 @settings_rt
 def monitor() -> FT:
-    lobbies = sorted(lobby_service.lobbies.values(), key=lambda lobby: lobby.game_started_at, reverse=True)
+    lobbies = sorted(lobby_service.lobbies.values(),
+                     key=lambda lobby: lobby.game_started_at or dt.datetime.min, reverse=True)
     return LobbyPage(
         Main(
             H1('Lobby monitor', cls='mg-monitor-title'),
