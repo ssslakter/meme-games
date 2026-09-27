@@ -101,6 +101,35 @@ def test_the_host_seat_is_never_left_empty():
     assert lobby.host.uid == guest.uid and lobby.host.is_host
 
 
+def test_host_can_hand_the_seat_to_another_member():
+    users = DI.get(UserManager)
+    leader, guest = users.create(name='giver'), users.create(name='receiver')
+    lobby = service.create_lobby(leader, 'host-transfer', WHOAMI, persistent=True)
+    lobby.create_member(guest)
+
+    assert lobby.transfer_host(guest.uid)
+    assert lobby.host.uid == guest.uid and lobby.get_member(guest.uid).is_host
+    assert not lobby.get_member(leader.uid).is_host
+    assert not lobby.transfer_host(guest.uid)
+    assert not lobby.transfer_host('nobody')
+
+
+def test_transfer_host_lists_everyone_except_the_host():
+    from fasthtml.common import to_xml
+    from meme_games.apps.shared.settings import TransferHost
+    users = DI.get(UserManager)
+    leader, guest = users.create(name='giver-ui'), users.create(name='receiver-ui')
+    lobby = service.create_lobby(leader, 'host-transfer-ui', WHOAMI)
+    lobby.create_member(guest)
+
+    html = to_xml(TransferHost(lobby))
+    assert 'data-ui="transfer-host"' in html
+    assert 'receiver-ui' in html and 'giver-ui' not in html
+    assert f'value="{guest.uid}"' in html
+    assert 'hx-post="/transfer_host"' in html
+    assert TransferHost(service.create_lobby(leader, 'host-transfer-solo', WHOAMI)) is None
+
+
 def test_the_leader_who_leaves_and_comes_back_is_host_again():
     solo = DI.get(UserManager).create(name='boomerang')
     lobby = service.create_lobby(solo, 'host-rejoin', WHOAMI, persistent=True)

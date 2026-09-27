@@ -1,3 +1,5 @@
+import fasthtml.common as fh
+
 from .utils import *
 from meme_games.core import *
 from meme_games.domain import *
@@ -62,6 +64,20 @@ def Section(title: str, *content, open=False, **kwargs):
         open=open, cls='mg-settings-section-group', **kwargs)
 
 
+def TransferHost(lobby: Lobby):
+    '''Host-only: pick another member and give them the host seat.'''
+    others = [m for m in lobby.sorted_members() if not m.is_host]
+    if not others: return None
+    return Form(
+        fh.Select(
+            fh.Option('Transfer host to…', value='', disabled=True, selected=True),
+            *[fh.Option(m.name, value=m.uid) for m in others],
+            name='uid', required=True, cls='uk-select min-w-0 flex-1'),
+        Button('Transfer', cls=(ButtonT.default, 'shrink-0'), type='submit'),
+        hx_post=transfer_host, hx_swap='none',
+        cls='flex items-center gap-2', data_ui='transfer-host')
+
+
 def SwitchGame(lobby: Lobby):
     '''Host-only: moves the whole lobby to another game, keeping everyone in it.'''
     others = [(game, name) for game, (name, _) in GAME_PAGES.items() if game != lobby.current_game]
@@ -76,7 +92,8 @@ def SwitchGame(lobby: Lobby):
 
 def Settings(*lobby_settings, lobby: Lobby = None, member: LobbyMember = None):
     lobby_settings = tuple(lobby_settings or ())
-    if lobby and is_host(member): lobby_settings += (AllowAgents(lobby), SwitchGame(lobby))
+    if lobby and is_host(member):
+        lobby_settings += (AllowAgents(lobby), TransferHost(lobby), SwitchGame(lobby))
     if not any(lobby_settings): return None
     return Div(*lobby_settings, cls='mg-lobby-settings', data_ui='lobby-settings')
 
@@ -153,6 +170,18 @@ async def lock_lobby(req: Request):
     lobby_service.update(lobby)
     def update(*_): return LockLobby(lobby)
     return await notify(p, update)
+
+
+@rt
+async def transfer_host(req: Request, uid: str = ''):
+    lobby, _, member = lobby_state(req)
+    if not is_host(member): return add_toast(req.session, 'Only the host can transfer the host', 'error')
+    if not lobby.transfer_host(uid): return add_toast(req.session, 'Pick someone in the lobby', 'error')
+    lobby_service.update(lobby)
+    url = game_url(lobby.current_game, lobby.id)
+    if not url: return add_toast(req.session, 'Cannot open this lobby', 'error')
+    await notify_all(lobby, lambda *_: GoTo(url), but=member)
+    return Redirect(url)
 
 
 @rt('/agents', methods=['post'])

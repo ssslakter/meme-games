@@ -15,24 +15,34 @@ def RangeSlider(label: str, value: str, min: int, max: int, step: int, name: str
         cls='space-y-2')
 
 
+def SelectEditor(member: LobbyMember, pack, can_select: bool = True) -> FT:
+    from ..routes import select_pack
+    allowed = is_host(member) and can_select
+    label = ('Select wordpack' if allowed else
+             'Players write the words' if not can_select else 'Must be host to select')
+    return WordPackEditor(pack, readonly=True,
+                          form_kwargs=dict(hx_post=select_pack, hx_swap='none'),
+                          submit_button=Button(label, disabled=not allowed),
+                          cls='mg-pack-select-editor',
+                          hx_on__after_request="UIkit.modal('#pack-select').hide()")
+
+
 def PackSelectContents(r: LobbyMember, game_state: gm.GameState) -> FT:
-    from ..routes import editor_readonly, select_pack
+    from ..routes import editor_readonly
     packs = wordpack_manager.get_all()
-    wordpack = game_state.config.wordpack
     return Div(Div(PacksSelect(packs, editor_readonly, hx_target='#editor', hx_swap='outerHTML'),
                    cls='mg-pack-select-list overflow-auto'),
-                WordPackEditor(wordpack, readonly=True,
-                               form_kwargs=dict(hx_post=select_pack, hx_swap='none'),
-                               submit_button=Button('Select wordpack' if is_host(r) else 'Must be host to select',
-                                                    disabled=not is_host(r)),
-                               cls='mg-pack-select-editor',
-                               hx_on__after_request="UIkit.modal('#pack-select').hide()"),
+                SelectEditor(r, game_state.config.wordpack, can_select=not game_state.config.player_words),
                 ModalCloseButton(), cls='mg-pack-select-layout')
 
 
-def PackSelectButton() -> FT:
+def PackSelectButton(game: gm.GameState, oob: bool = False) -> FT:
+    own_words = game.config.player_words
     return Button(UkIcon('book-open', cls='mr-2'), 'Select wordpack',
-                  cls=(ButtonT.default, 'w-full justify-start'), data_uk_toggle='target: #pack-select')
+                  cls=(ButtonT.default, 'w-full justify-start'),
+                  data_uk_toggle=None if own_words else 'target: #pack-select',
+                  disabled=own_words, id='alias-pack-select',
+                  hx_swap_oob='true' if oob else None)
 
 
 def PackSelectModal(game_state: gm.GameState) -> FT:
@@ -44,7 +54,7 @@ def PackSelectModal(game_state: gm.GameState) -> FT:
 
 
 def PackSelect(game_state: gm.GameState) -> FT:
-    return Div(PackSelectButton(), PackSelectModal(game_state))
+    return Div(PackSelectButton(game_state), PackSelectModal(game_state))
 
 def ConfigLobby(r: LobbyMember, game_state: gm.GameState) -> Optional[FT]:
     from ..routes import update_settings
@@ -103,7 +113,8 @@ def HostGameActions(r: LobbyMember, game: gm.GameState):
             Button(UkIcon('shuffle', cls='mr-2 shrink-0'), 'Shuffle teams', hx_post=shuffle_teams, hx_swap='none',
                    disabled=not waiting or len(game.teams) < 2, cls=(ButtonT.default, 'w-full justify-start px-3 py-2')),
             Button(UkIcon('dices', cls='mr-2 shrink-0'), 'Random wordpack', hx_post=random_wordpack, hx_swap='none',
-                   disabled=playing, cls=(ButtonT.default, 'w-full justify-start px-3 py-2')),
+                   disabled=playing or game.config.player_words,
+                   cls=(ButtonT.default, 'w-full justify-start px-3 py-2')),
             cls='grid grid-cols-2 gap-3'),
         id='alias-host-controls', hx_swap_oob='true',
         cls='space-y-4', data_ui='host-game-controls')
@@ -171,8 +182,9 @@ def GameControls(r: LobbyMember, game_state: gm.GameState):
                 data_ui='game-status'),
             Div(
                 P("Word pack", cls=TextT.muted),
-                Button(wordpack.name, cls=ButtonT.text) if wordpack else "No pack selected",
-                data_uk_toggle='target: #pack-select'),
+                P('Players write the words') if game_state.config.player_words else
+                (Button(wordpack.name, cls=ButtonT.text) if wordpack else "No pack selected"),
+                data_uk_toggle=None if game_state.config.player_words else 'target: #pack-select'),
             cls='grid gap-6 text-center sm:grid-cols-2'),
         Div(
             P(f'{game_state.active_player.name} is explaining'),

@@ -104,6 +104,13 @@ class Lobby(Model):
         member.is_host_ = True
         self.host = member
 
+    def transfer_host(self, uid: str) -> bool:
+        '''Hand the host seat to another member already in the lobby.'''
+        member = self.members.get(uid)
+        if not member or member is self.host: return False
+        self.set_host(member)
+        return True
+
     def create_member(self, user: User, send: FunctionType = None, **kwargs) -> LobbyMember:
         '''Create a new member and add it to the lobby'''
         self.last_active = dt.datetime.now()

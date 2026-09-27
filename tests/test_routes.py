@@ -106,6 +106,10 @@ def test_alias_player_words_setting_starts_word_collection():
             'time_limit': '60', 'word_collection_time': '60', 'max_score': '40',
             'max_teams': '4', 'player_words': 'on', 'disable_skip': 'on',
         })
+        pack = lobby.state.config.wordpack
+        host.post('/alias/select_pack', headers=headers, data={'id': pack.id})
+        host.post('/alias/random_wordpack', headers=headers)
+        assert lobby.state.config.wordpack is pack
         host.post('/alias/start_game', headers=headers)
 
         assert lobby.state.config.player_words

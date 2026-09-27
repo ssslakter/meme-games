@@ -3,7 +3,7 @@ import asyncio
 from fasthtml.common import to_xml
 
 from meme_games.apps.alias.components.game import Game
-from meme_games.apps.alias.components.settings import ConfigLobby, GameControls, HostGameActions, PackSelect, PackSelectContents, RestartConfirmation, VoteButton
+from meme_games.apps.alias.components.settings import ConfigLobby, GameControls, HostGameActions, PackSelect, PackSelectButton, PackSelectContents, RestartConfirmation, VoteButton
 from meme_games.apps.alias.components.word_panel import CurrentWord, ExplainerPanel, GuessCount, GuessPanel, RoundLog, WordCollectionPanel, WordEntry, WordPanel
 from meme_games.apps.alias.domain import ALIAS, GameState, GuessEntry
 from meme_games.apps.alias.domain.config import GameConfig
@@ -219,6 +219,20 @@ def test_alias_host_gets_game_management_controls():
     assert 'data-uk-toggle="target: #alias-restart-confirm"' in html
     assert 'hx-post="/alias/restart_game"' in to_xml(RestartConfirmation())
     assert HostGameActions(guest, GameState()) is None
+
+
+def test_player_written_words_block_wordpack_selection():
+    host = LobbyMember(user=User('pack-host', 'Host'), is_host_=True)
+    game = GameState(config=GameConfig(player_words=True))
+    controls = to_xml(HostGameActions(host, game))
+    random_pack = controls.split('Random wordpack')[0].rsplit('<button', 1)[-1]
+    select = to_xml(PackSelectButton(game))
+    board = to_xml(GameControls(host, game))
+
+    assert 'disabled' in random_pack
+    assert 'disabled' in select and 'data-uk-toggle' not in select
+    assert 'Players write the words' in board and 'data-uk-toggle' not in board
+    assert 'data-uk-toggle="target: #pack-select"' in to_xml(PackSelectButton(GameState()))
 
 
 def test_wordpack_modal_refreshes_when_opened():

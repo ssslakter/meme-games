@@ -24,18 +24,14 @@ def pre_init(req: Request) -> tuple[Lobby, GameState, LobbyMember]:
 
 
 def game_update(reciever: LobbyMember, lobby: Lobby):
-    return Game(reciever, lobby, hx_swap_oob='true'), HostGameActions(reciever, lobby.state)
+    return (Game(reciever, lobby, hx_swap_oob='true'), HostGameActions(reciever, lobby.state),
+            PackSelectButton(lobby.state, oob=True))
 
 
 @rt
 def editor_readonly(req: Request, id:str):
-    _,_, p = pre_init(req)
-    pack = wordpack_manager.get_by_id(id)
-    return WordPackEditor(pack, readonly=True,
-                          form_kwargs=dict(hx_post=select_pack, hx_swap='none'),
-                          submit_button=Button("Select wordpack" if is_host(p) else "Must be host to select",
-                                               disabled= not is_host(p)),
-                          hx_on__after_request="UIkit.modal('#pack-select').hide()")
+    _, game, p = pre_init(req)
+    return SelectEditor(p, wordpack_manager.get_by_id(id), can_select=not game.config.player_words)
 
 @rt
 def pack_select(req: Request) -> FT:
@@ -44,8 +40,9 @@ def pack_select(req: Request) -> FT:
 
 @rt
 async def select_pack(req: Request, id: str):
-    lobby, _, p = pre_init(req)
-    if not is_host(p): return
+    lobby, game, p = pre_init(req)
+    if not is_host(p) or game.config.player_words:
+        return add_toast(req.session, 'Cannot select a wordpack now', 'error')
     pack = wordpack_manager.get_by_id(id)
     if not pack: return add_toast(req.session, "Wordpack not found", "error")
     lobby.state.config.wordpack = pack
@@ -143,7 +140,7 @@ async def shuffle_teams(req: Request):
 @rt
 async def random_wordpack(req: Request):
     lobby, game, p = pre_init(req)
-    if not is_host(p) or game.state == gm.StateMachine.ROUND_PLAYING:
+    if not is_host(p) or game.config.player_words or game.state == gm.StateMachine.ROUND_PLAYING:
         return add_toast(req.session, 'Cannot change the wordpack now', 'error')
     packs = wordpack_manager.get_all()
     if not packs: return add_toast(req.session, 'No wordpacks available', 'error')

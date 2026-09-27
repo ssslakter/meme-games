@@ -34,7 +34,7 @@ def Page(reciever: LobbyMember | User, lobby: Lobby) -> Any:
         GameShell(
             Game(reciever, lobby),
             LobbyTools(reciever, lobby,
-                       Div(HostGameActions(reciever, lobby.state), PackSelectButton(),
+                       Div(HostGameActions(reciever, lobby.state), PackSelectButton(lobby.state),
                            ConfigLobby(reciever, lobby.state), cls='w-full space-y-6'),
                        show_chat=False)),
         hx_ext="ws",
