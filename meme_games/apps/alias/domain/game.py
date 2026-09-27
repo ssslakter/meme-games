@@ -91,6 +91,9 @@ class GameState:
                 self.active_word = self.next_word()
                 self.timer.set(self.config.time_limit)
             case StateMachine.ROUND_PLAYING:
+                if self.config.player_words and self.active_word is not None:
+                    self.word_pool.append(self.active_word)
+                    self.active_word = None
                 self.review_team = self.active_team
                 self.review_player = self.active_player
                 self.review_guesser = self.active_guesser
@@ -166,13 +169,19 @@ class GameState:
         random.shuffle(self.word_pool)
         if not self.config.player_words: self.words_iterator = cycle(tuple(self.word_pool))
 
-    def next_word(self) -> Optional[str]:
+    def next_word(self, recycle_skipped: bool = True) -> Optional[str]:
         if self.word_pool: return self.word_pool.pop()
-        if self.config.player_words and self.skipped_words:
+        if self.config.player_words and recycle_skipped and self.skipped_words:
             self.word_pool, self.skipped_words = self.skipped_words, []
             random.shuffle(self.word_pool)
             return self.word_pool.pop()
         if not self.config.player_words: return next(self.words_iterator)
+
+    def end_round_on_timeout(self) -> bool:
+        if (self.state != StateMachine.ROUND_PLAYING or not self.timer.finished or
+                not self.config.player_words or self.config.player_words_last_word): return False
+        self.next_state()
+        return True
 
     def submit_words(self, player: LobbyMember, words: str, finalized: bool = False) -> bool:
         if (self.state != StateMachine.COLLECTING_WORDS or not self.team_by_player(player) or
@@ -244,11 +253,12 @@ class GameState:
         return self.all_voted(self.active_team)
 
     def guess_word(self, player: LobbyMember, correct: bool) -> bool:
-        if self.state != StateMachine.ROUND_PLAYING or player != self.active_player: return False
+        if (self.state != StateMachine.ROUND_PLAYING or player != self.active_player or
+                not correct and self.config.disable_skip): return False
         self.guess_log.append(GuessEntry(self.active_word, self.config.correct_guess_score
                                          if correct else self.config.mistake_penalty, skipped=not correct))
         if self.config.player_words and not correct: self.skipped_words.append(self.active_word)
-        self.active_word = self.next_word()
+        self.active_word = self.next_word(recycle_skipped=correct)
         return self.active_word is None
 
     def change_guess_points(self, guess_id: str, delta: int) -> Optional[GuessEntry]:

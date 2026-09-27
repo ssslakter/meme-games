@@ -9,7 +9,7 @@ from meme_games.apps.alias.domain import ALIAS, GameState, GuessEntry
 from meme_games.apps.alias.domain.config import GameConfig
 from meme_games.apps.alias.domain.game import StateMachine
 from meme_games.apps.alias.domain.team import Team
-from meme_games.apps.alias.routes import set_end_round_timer
+from meme_games.apps.alias.routes import set_end_round_timer, set_end_word_collection_timer
 from meme_games.apps.user.components.general import Avatar
 from meme_games.apps.word_packs.domain import WordPack
 from meme_games.domain import Lobby, LobbyMember, User
@@ -113,6 +113,76 @@ def test_timer_expiry_marks_the_last_word_without_ending_round():
     assert 'Time is up — last word' in panel
 
 
+def test_player_words_timer_ends_round_and_returns_word_to_pool() -> None:
+    member = LobbyMember(user=User('timeout-writer', 'Writer'))
+    team = Team(members=[member])
+    game = GameState(config=GameConfig(player_words=True), state=StateMachine.ROUND_PLAYING,
+                     teams={team.id: team}, active_team=team, active_player=member,
+                     active_word='banana', word_pool=['apple'])
+    game.teams_iterator = iter([team])
+    lobby = Lobby(current_game=ALIAS, states={ALIAS: game}, members={member.uid: member})
+
+    async def finish_timer() -> None:
+        game.timer.finished = True
+
+    game.timer.sleep = finish_timer
+    asyncio.run(set_end_round_timer(lobby))
+
+    assert game.state == StateMachine.REVIEWING
+    assert game.active_word is None
+    assert game.word_pool == ['apple', 'banana']
+    assert game.guess_log == []
+
+
+def test_player_words_can_keep_the_last_word_after_timeout() -> None:
+    member = LobbyMember(user=User('last-word-writer', 'Writer'))
+    team = Team(members=[member])
+    game = GameState(config=GameConfig(player_words=True, player_words_last_word=True),
+                     state=StateMachine.ROUND_PLAYING, teams={team.id: team},
+                     active_team=team, active_player=member, active_word='banana')
+    game.timer.set(game.config.time_limit)
+    lobby = Lobby(current_game=ALIAS, states={ALIAS: game}, members={member.uid: member})
+
+    async def finish_timer() -> None:
+        game.timer.finished = True
+
+    game.timer.sleep = finish_timer
+    asyncio.run(set_end_round_timer(lobby))
+
+    assert game.state == StateMachine.ROUND_PLAYING
+    assert game.active_word == 'banana'
+    assert 'data-phase="last-word"' in to_xml(WordPanel(member, game))
+
+
+def test_player_words_keep_prefetched_word_in_first_word_round() -> None:
+    member = LobbyMember(user=User('prefetched-writer', 'Writer'))
+    team = Team(members=[member])
+    game = GameState(config=GameConfig(player_words=True, player_words_last_word=True),
+                     teams={team.id: team})
+    game.start_game()
+    game.submit_words(member, 'apple\npear')
+    assert game.finish_word_collection()
+    game.next_state()
+    first_word = game.active_word
+    remaining_word = (set(game.all_words) - {first_word}).pop()
+
+    game.timer.finished = True
+    assert not game.guess_word(member, True)
+    assert game.active_word == remaining_word
+    game.next_state()
+
+    assert game.active_word is None
+    assert game.word_pool == [remaining_word]
+    game.next_state()
+    assert game.state == StateMachine.VOTING_TO_START
+    game.next_state()
+    assert game.word_round == 1 and game.active_word == remaining_word
+    assert game.guess_word(member, True)
+    game.next_state()
+    game.next_state()
+    assert game.state == StateMachine.BETWEEN_WORD_ROUNDS
+
+
 def test_restart_preserves_teams_and_resets_match_state():
     member = LobbyMember(user=User('restart-player', 'Player'))
     team = Team(members=[member], points=12, times_played=2)
@@ -163,6 +233,8 @@ def test_alias_settings_only_save_from_the_update_button() -> None:
     html = to_xml(ConfigLobby(host, GameState()))
 
     assert 'name="player_words"' in html
+    assert 'name="player_words_last_word"' in html
+    assert 'name="disable_skip"' in html
     assert html.count('hx-post="/alias/update_settings"') == 1
     assert 'mg-more-settings-body space-y-3 p-3 pt-2' in html
 
@@ -277,7 +349,37 @@ def test_player_words_finish_skipped_words_before_an_explicit_second_round():
     assert game.state == StateMachine.FINISHED
 
 
-def test_player_word_drafts_replace_autosaves_and_lock_after_submit():
+def test_second_word_round_skips_wait_for_the_next_explainer() -> None:
+    players = [LobbyMember(user=User(f'skip-round-two-{i}', f'Player {i}')) for i in range(2)]
+    team = Team(members=players)
+    game = GameState(config=GameConfig(player_words=True), teams={team.id: team})
+    game.start_game()
+    game.start_word_round(['apple', 'pear'], round_number=2)
+    game.state = StateMachine.VOTING_TO_START
+    game.next_state()
+    first_explainer = game.active_player
+
+    assert not game.guess_word(first_explainer, False)
+    assert game.guess_word(first_explainer, False)
+    assert game.active_word is None
+    assert set(game.skipped_words) == {'apple', 'pear'}
+    game.next_state()
+    game.next_state()
+    assert game.state == StateMachine.VOTING_TO_START
+    game.next_state()
+
+    assert game.word_round == 2
+    assert game.active_player != first_explainer
+    assert game.active_word in {'apple', 'pear'}
+    assert {game.active_word, *game.word_pool} == {'apple', 'pear'}
+    assert not game.guess_word(game.active_player, True)
+    assert game.guess_word(game.active_player, True)
+    game.next_state()
+    game.next_state()
+    assert game.state == StateMachine.FINISHED
+
+
+def test_player_word_submission_replaces_draft_and_locks_input() -> None:
     player = LobbyMember(user=User('autosave-writer', 'Writer'))
     team = Team(members=[player])
     game = GameState(state=StateMachine.COLLECTING_WORDS, teams={team.id: team})
@@ -290,9 +392,45 @@ def test_player_word_drafts_replace_autosaves_and_lock_after_submit():
 
     game.timer.set(game.config.word_collection_time)
     html = to_xml(WordCollectionPanel(player, game))
-    assert 'input changed delay:500ms' in html
+    assert 'timer:expired from:#word-collection-timer' not in html
     assert 'Words submitted' in html
     assert 'readonly' in html and 'disabled' in html
+
+
+def test_word_collection_autosubmits_at_timeout() -> None:
+    player = LobbyMember(user=User('deadline-writer', 'Writer'))
+    team = Team(members=[player])
+    game = GameState(config=GameConfig(player_words=True), teams={team.id: team})
+    game.start_game()
+    lobby = Lobby(current_game=ALIAS, states={ALIAS: game}, members={player.uid: player})
+
+    async def finish_timer() -> None:
+        game.timer.finished = True
+
+    async def submit_at_timeout() -> None:
+        timer_task = asyncio.create_task(set_end_word_collection_timer(lobby))
+        await asyncio.sleep(0)
+        assert game.submit_words(player, 'apple\npear\nbanana', finalized=True)
+        await timer_task
+
+    game.timer.sleep = finish_timer
+    asyncio.run(submit_at_timeout())
+
+    assert game.state == StateMachine.VOTING_TO_START
+    assert set(game.all_words) == {'apple', 'pear', 'banana'}
+    assert set(game.word_pool) == set(game.all_words)
+
+
+def test_word_collection_counts_locally_and_submits_on_timer() -> None:
+    player = LobbyMember(user=User('local-count-writer', 'Writer'))
+    game = GameState(state=StateMachine.COLLECTING_WORDS)
+    game.timer.set(game.config.word_collection_time)
+
+    html = to_xml(WordCollectionPanel(player, game))
+
+    assert 'oninput=' in html and 'words entered' in html
+    assert 'timer:expired from:#word-collection-timer' in html
+    assert 'input changed delay:500ms' not in html
 
 
 def test_player_words_hide_skips_from_everyone_except_the_explainer():
@@ -307,6 +445,23 @@ def test_player_words_hide_skips_from_everyone_except_the_explainer():
     observer_log = to_xml(RoundLog(observer, game.guess_log, game))
     assert 'secret' not in observer_log
     assert 'visible' in observer_log
+
+
+def test_player_words_force_hidden_skips_and_disable_skip_removes_action() -> None:
+    member = LobbyMember(user=User('no-skip-writer', 'Writer'))
+    team = Team(members=[member])
+    game = GameState(config=GameConfig(player_words=True, disable_skip=True),
+                     state=StateMachine.ROUND_PLAYING, teams={team.id: team},
+                     active_team=team, active_player=member, active_word='apple')
+
+    assert game.config.hide_skipped_words
+    assert not game.guess_word(member, False)
+    assert game.active_word == 'apple' and game.guess_log == []
+    assert '>Skip<' not in to_xml(ExplainerPanel(member, game))
+    settings = to_xml(ConfigLobby(LobbyMember(user=User('no-skip-host', 'Host'), is_host_=True), game))
+    assert 'name="hide_skipped_words"' in settings
+    hidden_skip_checkbox = settings.split('name="hide_skipped_words"')[1].split('>')[0]
+    assert 'checked' in hidden_skip_checkbox and 'disabled' in hidden_skip_checkbox
 
 
 def test_round_break_is_ready_only_and_names_the_next_pair():

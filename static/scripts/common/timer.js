@@ -21,6 +21,11 @@ function walkTimers(renderType, fn) {
     const duration = parseFloat(el.dataset.duration);
     fn(el, diff, duration);
 
+    if (diff <= 0 && !el.dataset.expired) {
+      el.dataset.expired = 'true';
+      el.dispatchEvent(new CustomEvent('timer:expired', { bubbles: true }));
+    }
+
     if (diff <= 0) {
         // TODO remove this
       el.closest('li')?.remove();

@@ -17,7 +17,8 @@ def CurrentWord(game: gm.GameState):
 
 def WordCollectionStatus(r: LobbyMember, game: gm.GameState) -> FT:
     submitted = len(game.submitted_words.get(r.uid, []))
-    return P(f'{submitted} words saved', id='word-collection-status', cls=TextT.muted)
+    status = 'submitted' if r.uid in game.submitted_players else 'entered'
+    return P(f'{submitted} words {status}', id='word-collection-status', cls=TextT.muted)
 
 
 def WordCollectionPanel(r: LobbyMember, game: gm.GameState) -> FT:
@@ -27,17 +28,19 @@ def WordCollectionPanel(r: LobbyMember, game: gm.GameState) -> FT:
     return Card(
         Div(CircleTimer(game.timer.rem_t, total=game.config.word_collection_time),
             H2('Write words for the shared pack'),
-            P('Add one word per line. Changes are saved automatically.', cls=TextT.muted),
-            cls='flex flex-col items-center gap-3 text-center'),
+            P('Add one word per line. Words are submitted when time runs out.', cls=TextT.muted),
+            id='word-collection-timer', cls='flex flex-col items-center gap-3 text-center'),
         Form(
             TextArea(saved_words, name='words', rows=7, placeholder='apple\nspaceship\n...', cls='w-full resize-y',
-                     readonly=finalized, hx_post=submit_words, hx_trigger='input changed delay:500ms',
-                     hx_target='#word-collection-status', hx_swap='outerHTML'),
+                     readonly=finalized,
+                     oninput="document.getElementById('word-collection-status').textContent = this.value.split(/\\r?\\n/).filter(line => line.trim()).length + ' words entered'"),
             WordCollectionStatus(r, game),
             Button('Words submitted' if finalized else 'Submit words', type='button', disabled=finalized,
                    cls=(ButtonT.primary, 'w-full'), hx_post=submit_words.to(finalized='True'),
                    hx_include='closest form', hx_target='closest .mg-round-center', hx_swap='outerHTML'),
-            cls='space-y-3'),
+            hx_post=submit_words.to(finalized='True') if not finalized else None,
+            hx_trigger='timer:expired from:#word-collection-timer' if not finalized else None,
+            hx_target='closest .mg-round-center', hx_swap='outerHTML', cls='space-y-3'),
         cls='mg-round-center w-full min-w-0 p-6 md:p-10', body_cls='space-y-6',
         data_ui='word-collection')
 
@@ -53,7 +56,7 @@ def ExplainerPanel(r: LobbyMember, game: gm.GameState):
                    hx_post=guess.to(correct='True'), hx_swap='none'),
             Button(UkIcon('circle-x', width=22, height=22), Span('Skip', cls='text-xl font-semibold'),
                    cls=(ButtonT.default, 'inline-flex items-center gap-2 px-7 py-3'),
-                   hx_post=guess.to(correct='False'), hx_swap='none'),
+                   hx_post=guess.to(correct='False'), hx_swap='none') if not game.config.disable_skip else None,
             cls='flex justify-center gap-4'
         ),
         cls='space-y-5'

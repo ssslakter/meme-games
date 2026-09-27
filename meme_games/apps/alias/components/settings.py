@@ -61,8 +61,18 @@ def ConfigLobby(r: LobbyMember, game_state: gm.GameState) -> Optional[FT]:
                          cls='flex items-center gap-2'),
                      Div(
                          CheckboxX(id='hide-skipped-words', name='hide_skipped_words',
-                                   checked=game_state.config.hide_skipped_words),
+                                   checked=game_state.hides_skipped_words(),
+                                   disabled=game_state.config.player_words),
                          FormLabel('Hide skipped words from other players', fr='hide-skipped-words', cls='m-0 cursor-pointer'),
+                         cls='flex items-center gap-2'),
+                     Div(
+                         CheckboxX(id='player-words-last-word', name='player_words_last_word',
+                                   checked=game_state.config.player_words_last_word),
+                         FormLabel('Last word after timer for player-written words', fr='player-words-last-word', cls='m-0 cursor-pointer'),
+                         cls='flex items-center gap-2'),
+                     Div(
+                         CheckboxX(id='disable-skip', name='disable_skip', checked=game_state.config.disable_skip),
+                         FormLabel('Disable skip', fr='disable-skip', cls='m-0 cursor-pointer'),
                          cls='flex items-center gap-2'),
                      RangeSlider('Word collection time', value=str(game_state.config.word_collection_time), min=10, max=180, step=5, name='word_collection_time'),
                      LabelInput('Max score', value=str(game_state.config.max_score), name='max_score'),

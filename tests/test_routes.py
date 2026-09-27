@@ -104,12 +104,21 @@ def test_alias_player_words_setting_starts_word_collection():
 
         host.post('/alias/update_settings', headers=headers, data={
             'time_limit': '60', 'word_collection_time': '60', 'max_score': '40',
-            'max_teams': '4', 'player_words': 'on',
+            'max_teams': '4', 'player_words': 'on', 'disable_skip': 'on',
         })
         host.post('/alias/start_game', headers=headers)
 
         assert lobby.state.config.player_words
+        assert lobby.state.config.hide_skipped_words
+        assert lobby.state.config.disable_skip
         assert lobby.state.state == StateMachine.COLLECTING_WORDS
+
+        lobby.state.state = StateMachine.ROUND_PLAYING
+        lobby.state.active_word = 'apple'
+        lobby.state.timer.set(60)
+        host.post('/alias/guess?correct=false', headers=headers)
+        assert lobby.state.active_word == 'apple'
+        assert lobby.state.guess_log == []
 
 
 def test_alias_settings_update_reaches_other_members() -> None:

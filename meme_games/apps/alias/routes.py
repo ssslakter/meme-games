@@ -77,7 +77,7 @@ async def update_settings(req: Request, config: gm.GameConfig):
     lobby, game_state, p = pre_init(req)
     if game_state.state == gm.StateMachine.ROUND_PLAYING or not is_host(p):
         return add_toast(req.session, "Cannot change lobby settings", "error")
-    game_state.config = config
+    game_state.change_config(config)
     def update(r: LobbyMember, *_: Any) -> tuple[Any, FT]:
         toast = Div(AppToast('Config updated', 'success'),
                     hx_swap_oob='beforeend:#mg-toast-container')
@@ -154,6 +154,7 @@ async def set_end_round_timer(lobby: Lobby):
     game_state: GameState = lobby.state
     await game_state.timer.sleep()
     if lobby.current_game != ALIAS or lobby.state is not game_state: return
+    game_state.end_round_on_timeout()
     def update(r: LobbyMember, *_):
         return game_update(r, lobby)
     await notify_all(lobby, update)
@@ -162,7 +163,13 @@ async def set_end_round_timer(lobby: Lobby):
 async def set_end_word_collection_timer(lobby: Lobby):
     game_state: GameState = lobby.state
     await game_state.timer.sleep()
-    if lobby.current_game != ALIAS or lobby.state is not game_state: return
+    if (lobby.current_game != ALIAS or lobby.state is not game_state or
+            game_state.state != gm.StateMachine.COLLECTING_WORDS or not game_state.timer.finished): return
+    for _ in range(20):
+        if all(member.uid in game_state.submitted_players
+               for team in game_state.teams.values() for member in team.members): break
+        await asyncio.sleep(0.25)
+        if lobby.current_game != ALIAS or lobby.state is not game_state or game_state.state != gm.StateMachine.COLLECTING_WORDS: return
     if not game_state.finish_word_collection():
         game_state.restart()
         lobby.unlock()
@@ -206,8 +213,11 @@ async def start_round(req: Request):
 async def guess(req: Request, correct: bool):
     lobby, game_state, p = pre_init(req)
     if not (p==game_state.active_player and not game_state.timer.paused and
-            game_state.state == gm.StateMachine.ROUND_PLAYING):
+            game_state.state == gm.StateMachine.ROUND_PLAYING and
+            (correct or not game_state.config.disable_skip)):
         return add_toast(req.session, "Cannot guess now", "error")
+    if game_state.end_round_on_timeout():
+        return await notify_all(lobby, lambda r, *_: game_update(r, lobby))
     pool_finished = game_state.guess_word(p, correct)
     if game_state.timer.finished or pool_finished:
         game_state.next_state()
