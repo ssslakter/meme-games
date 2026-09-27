@@ -1,0 +1,30 @@
+meme_games/apps/alias/components/settings.py
+  h_cec284cdd16cba 62,64-65,67-70,76,81,83-84,87-91
+meme_games/apps/alias/components/team.py
+  h_cec284cdd16cba 70
+meme_games/apps/alias/components/word_panel.py
+  h_cec284cdd16cba 72,96-97,100,104-105,109,112-114,125-126,136,141,148,150
+meme_games/apps/alias/domain/game.py
+  h_cec284cdd16cba 70-72,75,101,272
+meme_games/apps/alias/routes.py
+  h_cec284cdd16cba 226,242,247-249
+static/styles/responsive.css
+  h_cec284cdd16cba 81
+tests/test_alias_e2e.py
+  h_cec284cdd16cba 1-347
+tests/test_alias_ui.py
+  h_cec284cdd16cba 39,51-52,66,73,93-95,485-486,498,505
+tests/test_routes.py
+  h_cec284cdd16cba 116
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "83753c1a1004522d3e6c56ebdb0409d32eab9f13",
+  "prompts": {},
+  "humans": {
+    "h_cec284cdd16cba": {
+      "author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
