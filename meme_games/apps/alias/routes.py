@@ -81,7 +81,7 @@ async def update_settings(req: Request, config: gm.GameConfig):
         # the picker stays mounted while the modal is open, so a checkbox change has to
         # replace it too; `shown` only reloads the next time the modal opens
         picker = Div(PackSelectContents(r, game_state), hx_swap_oob='innerHTML:#pack-select-content')
-        return game_update(r, lobby), toast, picker
+        return game_update(r, lobby), toast, picker, ConfigLobby(r, game_state, oob=True)
     await notify_all(lobby, update, but=p)
     return update(p)
 
@@ -223,7 +223,7 @@ async def guess(req: Request, correct: bool):
         game_state.next_state()
         return await notify_all(lobby, lambda r, *_: game_update(r, lobby))
     def update(r: LobbyMember, *_):
-        return RoundLog(r, game_state.guess_log, game_state), GuessCount(game_state)
+        return RoundLog(r, game_state.guess_log, game_state), GuessCount(game_state, r)
     await notify_all(lobby, update)
     return CurrentWord(game_state)
 

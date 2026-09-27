@@ -39,6 +39,22 @@ def test_three_players_sit_at_most_one_round():
         assert active == set(uids), f'window {i}: {active}'
 
 
+def test_each_player_explains_and_guesses_once_per_round():
+    for n in (3, 4, 5):
+        game = make_game(n)
+        game.set_pair()
+        uids = [m.uid for m in game.active_team.members]
+        for _ in range(n - 1):
+            explained, guessed = [], []
+            for _turn in range(n):
+                assert game.active_player.uid != game.active_guesser.uid
+                explained.append(game.active_player.uid)
+                guessed.append(game.active_guesser.uid)
+                game.advance_turn()
+            assert sorted(explained) == sorted(uids)
+            assert sorted(guessed) == sorted(uids)
+
+
 def test_three_players_roles_balance_over_two_cycles():
     game = make_game(3)
     lds = leaders(game, 12)

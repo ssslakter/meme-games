@@ -96,12 +96,12 @@
     flex: 1 1 auto !important;
     flex-direction: column !important;
     height: auto !important;
-    min-height: 0 !important;
+    min-height: 12rem !important;
     overflow: hidden !important;
   }
   [data-page="alias"] [data-ui="round-log"] {
     flex: 1 1 auto !important;
-    min-height: 0 !important;
+    min-height: 8rem !important;
     max-height: none !important;
     overflow-y: auto !important;
   }

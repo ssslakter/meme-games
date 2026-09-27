@@ -56,55 +56,55 @@ def PackSelectModal(game_state: gm.GameState) -> FT:
 def PackSelect(game_state: gm.GameState) -> FT:
     return Div(PackSelectButton(game_state), PackSelectModal(game_state))
 
-def ConfigLobby(r: LobbyMember, game_state: gm.GameState) -> Optional[FT]:
+def ConfigLobby(r: LobbyMember, game_state: gm.GameState, oob: bool = False) -> Optional[FT]:
     from ..routes import update_settings
     if not is_host(r): return None
+    forced_hide = game_state.config.player_words
+
+    def check(id: str, name: str, label: str, checked: bool, disabled: bool = False, extra: str = None):
+        # a disabled box is omitted from the submit, so the value rides on a hidden input
+        return Div(
+            CheckboxX(id=id, name=None if disabled else name, checked=checked, disabled=disabled,
+                      hx_post=update_settings, hx_trigger='change', hx_include='closest form',
+                      hx_swap='none', _=extra),
+            fh.Input(type='hidden', name=name, value='on') if disabled and checked else None,
+            FormLabel(label, fr=id, cls='m-0 cursor-pointer'),
+            cls='flex items-center gap-2')
+
     return Div(
         Form(
              RangeSlider('Time limit', value=str(game_state.config.time_limit), min=1, max=120, step=1, name='time_limit'),
              Details(
                  Summary("Advanced", cls='cursor-pointer px-3 py-2 font-medium'),
                  Div(
-                     Div(
-                         CheckboxX(id='player-words', name='player_words', checked=game_state.config.player_words,
-                                   hx_post=update_settings, hx_trigger='change', hx_include='closest form',
-                                   hx_swap='none',
-                                   _='on change if me.checked '
-                                     'add @disabled to #alias-pack-select '
-                                     'add @disabled to #alias-random-pack '
-                                     'set #alias-pack-name.style.pointerEvents to "none" '
-                                     'call UIkit.modal("#pack-select").hide() '
-                                     'else '
-                                     'remove @disabled from #alias-pack-select '
-                                     'remove @disabled from #alias-random-pack '
-                                     'set #alias-pack-name.style.pointerEvents to "auto" '
-                                     'end'),
-                         FormLabel('Players write the words', fr='player-words', cls='m-0 cursor-pointer'),
-                         cls='flex items-center gap-2'),
-                     Div(
-                         CheckboxX(id='hide-skipped-words', name='hide_skipped_words',
-                                   checked=game_state.hides_skipped_words(),
-                                   disabled=game_state.config.player_words),
-                         FormLabel('Hide skipped words from other players', fr='hide-skipped-words', cls='m-0 cursor-pointer'),
-                         cls='flex items-center gap-2'),
-                     Div(
-                         CheckboxX(id='player-words-last-word', name='player_words_last_word',
-                                   checked=game_state.config.player_words_last_word),
-                         FormLabel('Last word after timer for player-written words', fr='player-words-last-word', cls='m-0 cursor-pointer'),
-                         cls='flex items-center gap-2'),
-                     Div(
-                         CheckboxX(id='disable-skip', name='disable_skip', checked=game_state.config.disable_skip),
-                         FormLabel('Disable skip', fr='disable-skip', cls='m-0 cursor-pointer'),
-                         cls='flex items-center gap-2'),
+                     check('player-words', 'player_words', 'Players write the words',
+                           game_state.config.player_words,
+                           extra='on change if me.checked '
+                                 'add @disabled to #alias-pack-select '
+                                 'add @disabled to #alias-random-pack '
+                                 'set #alias-pack-name.style.pointerEvents to "none" '
+                                 'call UIkit.modal("#pack-select").hide() '
+                                 'else '
+                                 'remove @disabled from #alias-pack-select '
+                                 'remove @disabled from #alias-random-pack '
+                                 'set #alias-pack-name.style.pointerEvents to "auto" '
+                                 'end'),
+                     check('hide-skipped-words', 'hide_skipped_words', 'Hide skipped words from other players',
+                           game_state.hides_skipped_words(), disabled=forced_hide),
+                     check('player-words-last-word', 'player_words_last_word',
+                           'Last word after timer for player-written words',
+                           game_state.config.player_words_last_word),
+                     check('disable-skip', 'disable_skip', 'Disable skip', game_state.config.disable_skip),
                      RangeSlider('Word collection time', value=str(game_state.config.word_collection_time), min=10, max=180, step=5, name='word_collection_time'),
                      LabelInput('Max score', value=str(game_state.config.max_score), name='max_score'),
                      LabelInput('Max teams', value=str(game_state.config.max_teams), name='max_teams'),
                      cls='mg-more-settings-body space-y-3 p-3 pt-2'),
-                 cls='mg-more-settings rounded border'
+                 cls='mg-more-settings rounded border', open=oob
                  ),
              Button("Update settings", cls=(ButtonT.primary, 'w-full'), type='submit'),
              hx_post = update_settings, hx_swap = 'none', cls='space-y-5'
-        )
+        ),
+        id='alias-config', hx_swap_oob='true' if oob else None,
     )
 
 

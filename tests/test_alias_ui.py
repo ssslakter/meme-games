@@ -249,7 +249,7 @@ def test_alias_settings_only_save_from_the_update_button() -> None:
     assert 'name="player_words"' in html
     assert 'name="player_words_last_word"' in html
     assert 'name="disable_skip"' in html
-    assert html.count('hx-post="/alias/update_settings"') == 2
+    assert html.count('hx-post="/alias/update_settings"') == 5
     assert 'hx-trigger="change"' in html and 'hx-include="closest form"' in html
     assert 'mg-more-settings-body space-y-3 p-3 pt-2' in html
 
@@ -271,8 +271,8 @@ def test_one_team_rotates_leaders_and_shifts_guessers_each_circle():
         game.next_state()  # confirm review and advance
 
     assert pairs == [
-        ('pair-0', 'pair-3'), ('pair-1', 'pair-2'), ('pair-0', 'pair-2'), ('pair-3', 'pair-1'),
-        ('pair-0', 'pair-1'), ('pair-2', 'pair-3'), ('pair-3', 'pair-0'), ('pair-2', 'pair-1'),
+        ('pair-0', 'pair-1'), ('pair-1', 'pair-2'), ('pair-2', 'pair-3'), ('pair-3', 'pair-0'),
+        ('pair-0', 'pair-2'), ('pair-1', 'pair-3'), ('pair-2', 'pair-0'), ('pair-3', 'pair-1'),
     ]
     assert game.check_win_condition()
 
@@ -448,6 +448,30 @@ def test_word_collection_counts_locally_and_submits_on_timer() -> None:
     assert 'input changed delay:500ms' not in html
 
 
+def test_hide_skipped_keeps_guesses_visible_and_skips_private():
+    players = [LobbyMember(user=User(f'hide-{i}', f'P{i}')) for i in range(3)]
+    team = Team(members=players)
+    log = [GuessEntry('skipped-plum', 0, skipped=True), GuessEntry('guessed-plum', 1, skipped=False)]
+    game = GameState(config=GameConfig(hide_skipped_words=True), state=StateMachine.ROUND_PLAYING,
+                     teams={team.id: team}, active_team=team, active_player=players[0],
+                     active_guesser=players[1], active_word='live-word', guess_log=log)
+    game.timer.set(game.config.time_limit)
+    lobby = Lobby(current_game=ALIAS, states={ALIAS: game}, members={p.uid: p for p in players})
+
+    explainer = to_xml(Game(players[0], lobby))
+    other = to_xml(Game(players[1], lobby))
+    assert 'skipped-plum' in explainer and 'guessed-plum' in explainer and 'live-word' in explainer
+    assert 'guessed-plum' in other and 'skipped-plum' not in other and 'live-word' not in other
+    assert other.index('data-ui="alias-stage"') < other.index('guessed-plum')
+
+    game.state = StateMachine.REVIEWING
+    game.review_player = players[0]
+    game.active_word = None
+    review = to_xml(Game(players[2], lobby))
+    assert 'guessed-plum' in review and 'skipped-plum' not in review
+    assert 'skipped-plum' in to_xml(Game(players[0], lobby))
+
+
 def test_player_words_hide_skips_from_everyone_except_the_explainer():
     explainer = LobbyMember(user=User('private-skip-explainer', 'Alice'))
     observer = LobbyMember(user=User('private-skip-observer', 'Bob'))
@@ -474,9 +498,9 @@ def test_player_words_force_hidden_skips_and_disable_skip_removes_action() -> No
     assert game.active_word == 'apple' and game.guess_log == []
     assert '>Skip<' not in to_xml(ExplainerPanel(member, game))
     settings = to_xml(ConfigLobby(LobbyMember(user=User('no-skip-host', 'Host'), is_host_=True), game))
-    assert 'name="hide_skipped_words"' in settings
-    hidden_skip_checkbox = settings.split('name="hide_skipped_words"')[1].split('>')[0]
-    assert 'checked' in hidden_skip_checkbox and 'disabled' in hidden_skip_checkbox
+    box = settings[settings.rfind('<input', 0, settings.find('id="hide-skipped-words"')):settings.find('id="hide-skipped-words"')]
+    assert 'checked' in box and 'disabled' in box
+    assert 'type="hidden" name="hide_skipped_words" value="on"' in settings
 
 
 def test_round_break_is_ready_only_and_names_the_next_pair():

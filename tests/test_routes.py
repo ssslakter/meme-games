@@ -140,9 +140,30 @@ def test_alias_settings_update_reaches_other_members() -> None:
             update = websocket.receive_text()
 
         assert response.status_code == 200
-        assert service.lobbies['settings-notify'].state.config.time_limit == 45
+        lobby = service.lobbies['settings-notify']
+        assert lobby.state.config.time_limit == 45
+        assert lobby.state.config.hide_skipped_words
         assert 'Config updated' in response.text
+        assert 'id="alias-config"' in response.text
+        box = response.text[response.text.rfind('<input', 0, response.text.find('id="hide-skipped-words"')):response.text.find('id="hide-skipped-words"')]
+        assert 'name="hide_skipped_words"' in box and 'checked' in box
         assert 'Config updated' in update and 'id="game"' in update
+        assert 'id="alias-config"' not in update
+
+
+def test_alias_settings_keep_the_selected_wordpack() -> None:
+    headers = {'user-agent': 'Mozilla/5.0 Firefox', 'HX-Request': 'true'}
+    with TestClient(app, client=("10.0.0.12", 1)) as host:
+        host.get('/alias/settings-pack', headers=headers)
+        lobby = service.lobbies['settings-pack']
+        pack = lobby.state.config.wordpack
+        host.post('/alias/update_settings', headers=headers, data={
+            'time_limit': '50', 'word_collection_time': '60', 'max_score': '40',
+            'max_teams': '4', 'disable_skip': 'on',
+        })
+        assert lobby.state.config.wordpack is pack
+        assert lobby.state.config.disable_skip
+        assert not lobby.state.config.hide_skipped_words
 
 
 def test_pages_are_never_served_from_the_browser_cache():

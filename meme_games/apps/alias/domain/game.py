@@ -68,6 +68,7 @@ class GameState:
         return self.config.player_words or self.config.hide_skipped_words
 
     def change_config(self, config: GameConfig):
+        config.wordpack = self.config.wordpack
         self.config = config
 
     def can_start(self) -> bool:
@@ -216,16 +217,6 @@ class GameState:
         for attr in ('teams_iterator',):
             if hasattr(self, attr): delattr(self, attr)
 
-    def round_robin_pairs(self) -> List[tuple[int, int]]:
-        players = list(range(len(self.active_team)))
-        if len(players) % 2: players.append(None)
-        m = len(players)
-        pairs = []
-        for _ in range(m - 1):
-            pairs += [(a, b) for a, b in zip(players[:m//2], reversed(players[m//2:])) if a is not None and b is not None]
-            players.insert(1, players.pop())
-        return pairs
-
     def advance_turn(self):
         if len(self.teams) > 1:
             self.active_team = next(self.teams_iterator)
@@ -235,15 +226,15 @@ class GameState:
             self.set_pair()
 
     def set_pair(self):
+        '''One block of n turns: everyone explains once and guesses once. The partner shifts each block.'''
         team = self.active_team
-        if not len(team): self.active_player = self.active_guesser = None; return
-        if len(team) == 1:
-            self.active_player = self.active_guesser = team.members[0]; return
-        pairs = self.round_robin_pairs()
-        a, b = pairs[self.turn % len(pairs)]
-        if (self.turn // len(pairs)) % 2: a, b = b, a
-        self.active_player = team.members[a]
-        self.active_guesser = team.members[b]
+        n = len(team)
+        if not n: self.active_player = self.active_guesser = None; return
+        if n == 1: self.active_player = self.active_guesser = team.members[0]; return
+        offset = (self.turn // n) % (n - 1) + 1
+        explainer = self.turn % n
+        self.active_player = team.members[explainer]
+        self.active_guesser = team.members[(explainer + offset) % n]
 
     def shuffle_teams(self):
         sizes = [len(team.members) for team in self.teams.values()]

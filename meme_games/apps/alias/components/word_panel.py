@@ -86,34 +86,41 @@ def WordEntry(guess: gm.GuessEntry, game: gm.GameState):
                data_ui='word-entry', data_result=result)
 
 
-def RoundLog(r: LobbyMember | None, guesses: list[gm.GuessEntry], game: gm.GameState) -> FT:
+def visible_round_guesses(r: LobbyMember | None, guesses: list[gm.GuessEntry], game: gm.GameState) -> list[gm.GuessEntry]:
+    '''Skipped words stay with the explainer when that setting is on. Everyone else sees guesses.'''
     owner = game.review_player if game.state == gm.StateMachine.REVIEWING else game.active_player
-    visible_guesses = [guess for guess in guesses
-                       if not guess.was_skipped() or not game.hides_skipped_words() or r == owner]
+    if not game.hides_skipped_words() or r == owner: return list(guesses)
+    return [guess for guess in guesses if not guess.was_skipped()]
+
+
+def RoundLog(r: LobbyMember | None, guesses: list[gm.GuessEntry], game: gm.GameState, *, stage: bool = False) -> FT:
+    visible_guesses = visible_round_guesses(r, guesses, game)
     entries = ((WordEntry(guess, game) for guess in reversed(visible_guesses)) if visible_guesses else
                (P('Words will appear here as the round progresses.', cls=TextT.muted),))
-    log_size = 'min-h-0 flex-1 overflow-y-auto pr-1' if game.state == gm.StateMachine.ROUND_PLAYING else 'max-h-[45vh] overflow-y-auto pr-1'
+    scrolling = game.state == gm.StateMachine.ROUND_PLAYING and not stage
+    log_size = 'min-h-32 flex-1 overflow-y-auto pr-1' if scrolling else 'max-h-[45vh] overflow-y-auto pr-1'
     return DivVStacked(entries, cls=f'w-full gap-2 {log_size}', id='guess_log',
                        hx_swap_oob='true', data_ui='round-log')
 
 
-def GuessCount(game: gm.GameState):
-    return Span(len(game.guess_log), id='guess_count', hx_swap_oob='true',
+def GuessCount(game: gm.GameState, r: LobbyMember | None = None):
+    shown = visible_round_guesses(r, game.guess_log, game) if r is not None else game.guess_log
+    return Span(len(shown), id='guess_count', hx_swap_oob='true',
                 cls='rounded-full bg-secondary px-2 py-0.5 text-sm')
 
 
 
-def GuessPanel(r: LobbyMember | None, game: gm.GameState, footer: Any = None) -> Optional[FT]:
+def GuessPanel(r: LobbyMember | None, game: gm.GameState, footer: Any = None, *, stage: bool = False) -> Optional[FT]:
     if game.state not in [gm.StateMachine.ROUND_PLAYING, gm.StateMachine.REVIEWING]: return None
-    playing = game.state == gm.StateMachine.ROUND_PLAYING
+    playing = game.state == gm.StateMachine.ROUND_PLAYING and not stage
     return Card(
-        Div(H3('Finished words'), GuessCount(game),
+        Div(H3('Finished words'), GuessCount(game, r),
             cls='flex items-center justify-between'),
-        RoundLog(r, game.guess_log, game),
+        RoundLog(r, game.guess_log, game, stage=stage),
         footer,
-        cls=('mg-round-history order-2 flex min-h-0 min-w-0 flex-1 flex-col md:order-1' if playing
+        cls=('mg-round-history order-2 flex min-h-32 min-w-0 flex-1 flex-col md:order-1' if playing
              else 'mg-round-history order-2 min-w-0 md:order-1'),
-        body_cls=('flex min-h-0 flex-1 flex-col gap-4 p-4' if playing else 'space-y-4 p-4'),
+        body_cls=('flex min-h-32 flex-1 flex-col gap-4 p-4' if playing else 'space-y-4 p-4'),
         data_ui='round-history')
 
 
@@ -123,7 +130,7 @@ def RoundCenter(r: LobbyMember, game: gm.GameState):
     content = (ExplainerPanel(r, game) if r == game.active_player else
                Div(H2(f'{game.active_player.user.name} is explaining'),
                    P(f"{game.active_guesser.user.name} is guessing" if game.active_guesser else
-                     'Follow along—the results appear in the history on the left.', cls=TextT.muted),
+                     'Guessed words show up below.', cls=TextT.muted),
                    cls='space-y-2 text-center')) if playing else VoteButton(r, game)
     return Card(
         Div(
@@ -145,10 +152,11 @@ def WordPanel(r: LobbyMember, game: gm.GameState):
     if game.state not in [gm.StateMachine.ROUND_PLAYING, gm.StateMachine.REVIEWING]: return None
     if game.state == gm.StateMachine.REVIEWING:
         return Div(
-            GuessPanel(r, game, VoteButton(r, game)),
+            GuessPanel(r, game, VoteButton(r, game), stage=True),
             cls='mg-game-panel mg-word-panel w-full',
             data_ui='word-panel', data_stage='review')
     return Div(
         RoundCenter(r, game),
-        cls='mg-game-panel mg-word-panel w-full',
+        GuessPanel(r, game, stage=True) if r != game.active_player else None,
+        cls='mg-game-panel mg-word-panel flex w-full flex-col gap-4',
         data_ui='word-panel', data_stage='round')
