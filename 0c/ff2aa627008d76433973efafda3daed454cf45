@@ -1,0 +1,22 @@
+meme_games/apps/agent_api/routes.py
+  h_cec284cdd16cba 181-182
+meme_games/apps/shared/settings.py
+  h_cec284cdd16cba 202-208
+meme_games/domain/lobby/lobby.py
+  h_cec284cdd16cba 226,229
+meme_games/domain/lobby/service.py
+  h_cec284cdd16cba 55-67
+tests/test_lobby_cleanup.py
+  h_cec284cdd16cba 90-105
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "0cff2aa627008d76433973efafda3daed454cf45",
+  "prompts": {},
+  "humans": {
+    "h_cec284cdd16cba": {
+      "author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
