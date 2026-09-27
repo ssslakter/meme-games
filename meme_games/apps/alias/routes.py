@@ -223,7 +223,7 @@ async def guess(req: Request, correct: bool):
         game_state.next_state()
         return await notify_all(lobby, lambda r, *_: game_update(r, lobby))
     def update(r: LobbyMember, *_):
-        return RoundLog(r, game_state.guess_log, game_state), GuessCount(game_state, r)
+        return RoundLog(r, game_state), GuessCount(r, game_state)
     await notify_all(lobby, update)
     return CurrentWord(game_state)
 
@@ -239,13 +239,14 @@ async def submit_words(req: Request, words: str = '', finalized: bool = False) -
 
 @rt
 async def change_guess_points(req: Request, guess_id: str, delta: int):
-    _, game_state, p = pre_init(req)
+    lobby, game_state, p = pre_init(req)
     if not is_player(p): return add_toast(req.session, "You cannot change score", "error")
     entry = game_state.change_guess_points(guess_id, delta)
     if not entry: return add_toast(req.session, "Guess not found", "error")
     def update(r: LobbyMember, *_):
-        return WordEntryScore(entry), TeamCard(r, game_state.active_team, game_state)
-    await notify_all(req.state.lobby, update)
+        visible = entry in visible_round_guesses(r, game_state.guess_log, game_state)
+        return WordEntryScore(entry) if visible else None, TeamCard(r, game_state.review_team, game_state)
+    await notify_all(lobby, update)
 
 
 ws_url = lobby_ws('/alias')

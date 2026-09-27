@@ -16,7 +16,3 @@ class GameConfig:
     player_words_last_word: bool = False
     disable_skip: bool = False
     word_collection_time: int = 60
-
-    def __post_init__(self) -> None:
-        if self.player_words:
-            self.hide_skipped_words = True

@@ -67,7 +67,7 @@ def WinnerTag():
 
 
 def PotentialScore(team: gm.Team, game: gm.GameState):
-    if team != game.active_team or game.state != gm.StateMachine.REVIEWING:
+    if team != game.review_team or game.state != gm.StateMachine.REVIEWING:
         return None
     score = sum(g.points for g in game.guess_log)
     return Span("(", ColoredPoints(score), ")")

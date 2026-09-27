@@ -113,7 +113,7 @@ def test_alias_player_words_setting_starts_word_collection():
         host.post('/alias/start_game', headers=headers)
 
         assert lobby.state.config.player_words
-        assert lobby.state.config.hide_skipped_words
+        assert lobby.state.hides_skipped_words()
         assert lobby.state.config.disable_skip
         assert lobby.state.state == StateMachine.COLLECTING_WORDS
 

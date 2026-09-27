@@ -67,8 +67,12 @@ class GameState:
     def hides_skipped_words(self) -> bool:
         return self.config.player_words or self.config.hide_skipped_words
 
+    def in_progress(self) -> bool:
+        return self.state not in (StateMachine.WAITING_FOR_PLAYERS, StateMachine.FINISHED)
+
     def change_config(self, config: GameConfig):
         config.wordpack = self.config.wordpack
+        if self.in_progress(): config.player_words = self.config.player_words
         self.config = config
 
     def can_start(self) -> bool:
@@ -94,6 +98,7 @@ class GameState:
                 if self.config.player_words and self.active_word is not None:
                     self.word_pool.append(self.active_word)
                     self.active_word = None
+                self.timer.stop()
                 self.review_team = self.active_team
                 self.review_player = self.active_player
                 self.review_guesser = self.active_guesser
@@ -264,6 +269,7 @@ class GameState:
         return self.active_word is None
 
     def change_guess_points(self, guess_id: str, delta: int) -> Optional[GuessEntry]:
+        if self.state != StateMachine.REVIEWING: return None
         guess = next((g for g in self.guess_log if g.id == guess_id), None)
         if not guess: return
         guess.points += delta

@@ -36,7 +36,7 @@ def test_review_entries_expose_score_controls():
     assert '>-</button>' in entry
 
 
-def test_review_moves_history_back_to_the_center():
+def test_review_keeps_the_round_layout():
     member = LobbyMember(user=User('player', 'Player'))
     game = GameState(
         state=StateMachine.REVIEWING,
@@ -48,8 +48,8 @@ def test_review_moves_history_back_to_the_center():
     panel = to_xml(WordPanel(member, game))
 
     assert 'data-stage="review"' in panel
-    assert 'data-ui="round-history"' in panel
-    assert 'data-ui="round-center"' not in panel
+    assert panel.index('data-ui="round-center"') < panel.index('data-ui="round-history"')
+    assert "I'm ready" in panel
 
 
 def test_empty_round_keeps_oob_history_target():
@@ -63,14 +63,14 @@ def test_empty_round_keeps_oob_history_target():
 
 def test_guess_count_is_an_oob_update():
     game = GameState(state=StateMachine.ROUND_PLAYING, guess_log=[GuessEntry('apple', 1)])
-    count = to_xml(GuessCount(game))
+    count = to_xml(GuessCount(None, game))
 
     assert 'id="guess_count"' in count
     assert 'hx-swap-oob="true"' in count
     assert '>1</span>' in count
 
 
-def test_round_stacks_history_under_teams_beside_center():
+def test_round_history_lives_in_the_stage_not_the_rail():
     member = LobbyMember(user=User('player-layout', 'Player'))
     team = Team(members=[member])
     game = GameState(
@@ -90,7 +90,9 @@ def test_round_stacks_history_under_teams_beside_center():
     assert 'lg:max-h-[calc(100vh-7rem)]' in board
     assert 'lg:overflow-hidden' in board
     assert 'data-ui="alias-history"' not in board
-    assert board.index('data-ui="alias-teams"') < board.index('data-ui="round-history"') < board.index('data-ui="chat"') < board.index('data-ui="alias-stage"')
+    assert (board.index('data-ui="alias-teams"') < board.index('data-ui="chat"') < board.index('data-ui="alias-stage"')
+            < board.index('data-ui="round-center"') < board.index('data-ui="round-history"'))
+    assert board.count('data-ui="round-history"') == 1
 
 
 def test_timer_expiry_marks_the_last_word_without_ending_round():
@@ -480,8 +482,8 @@ def test_player_words_hide_skips_from_everyone_except_the_explainer():
                      teams={team.id: team}, active_team=team, active_player=explainer,
                      guess_log=[GuessEntry('secret', 0, skipped=True), GuessEntry('visible', 1)])
 
-    assert 'secret' in to_xml(RoundLog(explainer, game.guess_log, game))
-    observer_log = to_xml(RoundLog(observer, game.guess_log, game))
+    assert 'secret' in to_xml(RoundLog(explainer, game))
+    observer_log = to_xml(RoundLog(observer, game))
     assert 'secret' not in observer_log
     assert 'visible' in observer_log
 
@@ -493,14 +495,14 @@ def test_player_words_force_hidden_skips_and_disable_skip_removes_action() -> No
                      state=StateMachine.ROUND_PLAYING, teams={team.id: team},
                      active_team=team, active_player=member, active_word='apple')
 
-    assert game.config.hide_skipped_words
+    assert game.hides_skipped_words() and not game.config.hide_skipped_words
     assert not game.guess_word(member, False)
     assert game.active_word == 'apple' and game.guess_log == []
     assert '>Skip<' not in to_xml(ExplainerPanel(member, game))
     settings = to_xml(ConfigLobby(LobbyMember(user=User('no-skip-host', 'Host'), is_host_=True), game))
     box = settings[settings.rfind('<input', 0, settings.find('id="hide-skipped-words"')):settings.find('id="hide-skipped-words"')]
     assert 'checked' in box and 'disabled' in box
-    assert 'type="hidden" name="hide_skipped_words" value="on"' in settings
+    assert 'name="hide_skipped_words"' not in settings
 
 
 def test_round_break_is_ready_only_and_names_the_next_pair():
