@@ -1,0 +1,47 @@
+meme_games/apps/alias/routes.py
+  s_3369e8729563b6::t_563a88c02c5c01 80,157,216-217,219-220
+  s_3369e8729563b6::t_61570ae4223214 166-168,171
+  s_3369e8729563b6::t_9f1700b0007517 169-170,172
+meme_games/apps/alias/components/word_panel.py
+  s_3369e8729563b6::t_9f1700b0007517 20-21,31-32,35-36,41-43
+  s_3369e8729563b6::t_563a88c02c5c01 59
+meme_games/apps/alias/components/settings.py
+  s_3369e8729563b6::t_563a88c02c5c01 64-65,68-76
+meme_games/apps/alias/domain/game.py
+  s_3369e8729563b6::t_563a88c02c5c01 180-185,256-257
+  s_3369e8729563b6::t_b50bfa33d56b37 172,174,261
+  s_3369e8729563b6::t_876b93a9183eda 94-96
+static/scripts/common/timer.js
+  s_3369e8729563b6::t_9f1700b0007517 24-28
+tests/test_alias_ui.py
+  s_3369e8729563b6::t_dd3266fa8e9869 375-379
+  s_3369e8729563b6::t_0939d518266ecc 116-142,144-156,236-237,450-462
+  s_3369e8729563b6::t_876b93a9183eda 157-185
+  s_3369e8729563b6::t_550ab3ead90202 463
+  s_3369e8729563b6::t_404e5f15a3368d 143,464
+  s_3369e8729563b6::t_b7cced8449197a 352-374,380-381
+  s_3369e8729563b6::t_61570ae4223214 12,382,395,400-433
+  s_3369e8729563b6::t_56bb14048851f8 434-435
+  s_3369e8729563b6::t_8ba87f4e9c18b9 465-466
+tests/test_routes.py
+  s_3369e8729563b6::t_d30378d96e5db7 107,112-113,116-121
+  s_3369e8729563b6::t_7184918a6a6773 122
+meme_games/apps/alias/domain/config.py
+  s_3369e8729563b6::t_563a88c02c5c01 16-17,19-22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "8614d1fade6222b304dc3d8f63c5ce507a893bed",
+  "prompts": {},
+  "sessions": {
+    "s_3369e8729563b6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a09798-03be-7693-8c07-5b76936b3b48",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
