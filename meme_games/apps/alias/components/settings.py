@@ -15,11 +15,12 @@ def RangeSlider(label: str, value: str, min: int, max: int, step: int, name: str
         cls='space-y-2')
 
 
-def SelectEditor(member: LobbyMember, pack, can_select: bool = True) -> FT:
+def SelectEditor(member: LobbyMember, pack, game: gm.GameState) -> FT:
     from ..routes import select_pack
-    allowed = is_host(member) and can_select
+    allowed = is_host(member) and game.can_change_wordpack()
     label = ('Select wordpack' if allowed else
-             'Players write the words' if not can_select else 'Must be host to select')
+             'Players write the words' if game.config.player_words else
+             'Game in progress' if game.in_progress() else 'Must be host to select')
     return WordPackEditor(pack, readonly=True,
                           form_kwargs=dict(hx_post=select_pack, hx_swap='none'),
                           submit_button=Button(label, disabled=not allowed),
@@ -32,16 +33,16 @@ def PackSelectContents(r: LobbyMember, game_state: gm.GameState) -> FT:
     packs = wordpack_manager.get_all()
     return Div(Div(PacksSelect(packs, editor_readonly, hx_target='#editor', hx_swap='outerHTML'),
                    cls='mg-pack-select-list overflow-auto'),
-                SelectEditor(r, game_state.config.wordpack, can_select=not game_state.config.player_words),
+                SelectEditor(r, game_state.config.wordpack, game_state),
                 ModalCloseButton(), cls='mg-pack-select-layout')
 
 
 def PackSelectButton(game: gm.GameState, oob: bool = False) -> FT:
-    own_words = game.config.player_words
+    locked = not game.can_change_wordpack()
     return Button(UkIcon('book-open', cls='mr-2'), 'Select wordpack',
                   cls=(ButtonT.default, 'w-full justify-start'),
-                  data_uk_toggle=None if own_words else 'target: #pack-select',
-                  disabled=own_words, id='alias-pack-select',
+                  data_uk_toggle=None if locked else 'target: #pack-select',
+                  disabled=locked, id='alias-pack-select',
                   hx_swap_oob='true' if oob else None)
 
 
@@ -84,7 +85,7 @@ def ConfigLobby(r: LobbyMember, game_state: gm.GameState, oob: bool = False) -> 
                            disabled=config.player_words),
                      check('player-words-last-word', 'player_words_last_word',
                            'Last word after timer for player-written words',
-                           config.player_words_last_word),
+                           config.player_words_last_word, disabled=not config.player_words),
                      check('disable-skip', 'disable_skip', 'Disable skip', config.disable_skip),
                      RangeSlider('Word collection time', value=str(config.word_collection_time), min=10, max=180, step=5, name='word_collection_time'),
                      LabelInput('Max score', value=str(config.max_score), name='max_score'),
@@ -102,21 +103,20 @@ def ConfigLobby(r: LobbyMember, game_state: gm.GameState, oob: bool = False) -> 
 def HostGameActions(r: LobbyMember, game: gm.GameState):
     from ..routes import pause_game, random_wordpack, shuffle_teams
     if not is_host(r): return None
-    playing = game.state == gm.StateMachine.ROUND_PLAYING
     waiting = game.state == gm.StateMachine.WAITING_FOR_PLAYERS
     return Div(
         H5('Host controls'),
         Div(
             Button(UkIcon('play' if game.timer.paused else 'pause', cls='mr-2 shrink-0'),
                    'Resume' if game.timer.paused else 'Pause', hx_post=pause_game, hx_swap='none',
-                   disabled=not playing, cls=(ButtonT.default, 'w-full justify-start px-3 py-2')),
+                   disabled=not game.can_pause(), cls=(ButtonT.default, 'w-full justify-start px-3 py-2')),
             Button(UkIcon('rotate-ccw', cls='mr-2 shrink-0'), 'Restart', type='button',
                    data_uk_toggle='target: #alias-restart-confirm',
                    cls=(ButtonT.destructive, 'w-full justify-start px-3 py-2')),
             Button(UkIcon('shuffle', cls='mr-2 shrink-0'), 'Shuffle teams', hx_post=shuffle_teams, hx_swap='none',
                    disabled=not waiting or len(game.teams) < 2, cls=(ButtonT.default, 'w-full justify-start px-3 py-2')),
             Button(UkIcon('dices', cls='mr-2 shrink-0'), 'Random wordpack', hx_post=random_wordpack, hx_swap='none',
-                   disabled=playing or game.config.player_words, id='alias-random-pack',
+                   disabled=not game.can_change_wordpack(), id='alias-random-pack',
                    cls=(ButtonT.default, 'w-full justify-start px-3 py-2')),
             cls='grid grid-cols-2 gap-3'),
         id='alias-host-controls', hx_swap_oob='true',
@@ -188,7 +188,7 @@ def GameControls(r: LobbyMember, game_state: gm.GameState):
                 P('Players write the words') if game_state.config.player_words else
                 (Button(wordpack.name, cls=ButtonT.text) if wordpack else "No pack selected"),
                 id='alias-pack-name',
-                data_uk_toggle=None if game_state.config.player_words else 'target: #pack-select'),
+                data_uk_toggle='target: #pack-select' if game_state.can_change_wordpack() else None),
             cls='grid gap-6 text-center sm:grid-cols-2'),
         Div(
             P(f'{game_state.active_player.name} is explaining'),

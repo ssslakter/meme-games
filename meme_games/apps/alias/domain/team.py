@@ -23,7 +23,6 @@ class Team:
     def remove_member(self, player):
         self.members.pop(self.members.index(player))
 
-    def __next__(self):
-        if not hasattr(self, 'iterator'):
-            self.iterator = itertools.cycle(self.members)
-        return next(self.iterator)
+    def explainer(self) -> Optional[LobbyMember]:
+        '''Members take turns by how many rounds the team has played, so joins and leaves never skip anyone.'''
+        return self.members[self.times_played % len(self.members)] if self.members else None

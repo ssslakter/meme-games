@@ -47,54 +47,56 @@ def WordCollectionPanel(r: LobbyMember, game: gm.GameState) -> FT:
 
 def ExplainerPanel(r: LobbyMember, game: gm.GameState):
     from ..routes import guess
-    if not r == game.active_player: return None
+    if r != game.active_player: return None
+    def action(icon: str, label: str, style, correct: bool):
+        return Button(UkIcon(icon, width=22, height=22), Span(label, cls='text-xl font-semibold'),
+                      cls=(style, 'inline-flex items-center gap-2 px-7 py-3'),
+                      hx_post=guess.to(correct=str(correct)), hx_swap='none')
     return Div(
         CurrentWord(game),
-        Div(
-            Button(UkIcon('circle-check', width=22, height=22), Span('Guessed', cls='text-xl font-semibold'),
-                   cls=(ButtonT.primary, 'inline-flex items-center gap-2 px-7 py-3'),
-                   hx_post=guess.to(correct='True'), hx_swap='none'),
-            Button(UkIcon('circle-x', width=22, height=22), Span('Skip', cls='text-xl font-semibold'),
-                   cls=(ButtonT.default, 'inline-flex items-center gap-2 px-7 py-3'),
-                   hx_post=guess.to(correct='False'), hx_swap='none') if not game.config.disable_skip else None,
-            cls='flex justify-center gap-4'
-        ),
-        cls='space-y-5'
-    )
+        Div(action('circle-check', 'Guessed', ButtonT.primary, True),
+            None if game.config.disable_skip else action('circle-x', 'Skip', ButtonT.default, False),
+            cls='flex justify-center gap-4'),
+        cls='space-y-5')
 
 
 def WordEntryScore(guess: gm.GuessEntry):
-        return Div(" Score: ", ColoredPoints(guess.points), cls='p-1', id=f'sc-{guess.id}', hx_swap_oob='true')
+    return Div(" Score: ", ColoredPoints(guess.points), cls='p-1', id=f'sc-{guess.id}', hx_swap_oob='true')
+
+
+RESULT_CLS = {
+    'guessed': 'bg-green-50/80 border-green-200 dark:bg-green-950/40 dark:border-green-800',
+    'skipped': 'bg-red-50/80 border-red-200 dark:bg-red-950/40 dark:border-red-900',
+}
 
 
 def WordEntry(guess: gm.GuessEntry, game: gm.GameState):
     from ..routes import change_guess_points
-    body = Span(guess.word, cls='text-lg break-words text-center', data_ui='word-text')
-    if game.state == gm.StateMachine.REVIEWING:
-        btn = lambda delta: Button(hx_post=change_guess_points.to(guess_id=guess.id, delta=delta), hx_swap='none', cls=(ButtonT.default, ' flex-shrink-0'))
-        score = WordEntryScore(guess)
-        mid = Div(score, body, cls='flex flex-col items-center justify-between min-w-0')
-        body = Div(btn(-1)('-'), mid, btn(1)('+'), cls='flex w-full items-center justify-between gap-3')
     result = 'skipped' if guess.was_skipped() else 'guessed'
-    if game.state != gm.StateMachine.REVIEWING:
-        body = Div(body, UkIcon('circle-check' if result == 'guessed' else 'circle-x', width=18, height=18),
+    word = Span(guess.word, cls='text-lg break-words text-center', data_ui='word-text')
+    if game.state == gm.StateMachine.REVIEWING:
+        def adjust(delta: int, label: str):
+            return Button(label, hx_post=change_guess_points.to(guess_id=guess.id, delta=delta),
+                          hx_swap='none', cls=(ButtonT.default, 'flex-shrink-0'))
+        body = Div(adjust(-1, '-'),
+                   Div(WordEntryScore(guess), word, cls='flex flex-col items-center justify-between min-w-0'),
+                   adjust(1, '+'), cls='flex w-full items-center justify-between gap-3')
+    else:
+        body = Div(word, UkIcon('circle-check' if result == 'guessed' else 'circle-x', width=18, height=18),
                    cls='flex items-center justify-between gap-3')
-    result_cls = ('bg-green-50/80 border-green-200 dark:bg-green-950/40 dark:border-green-800'
-                  if result == 'guessed' else
-                  'bg-red-50/80 border-red-200 dark:bg-red-950/40 dark:border-red-900')
-    return Div(body, cls=f'mg-game-card mg-word-entry w-full px-3 py-2 uk-card {result_cls}',
+    return Div(body, cls=f'mg-game-card mg-word-entry w-full px-3 py-2 uk-card {RESULT_CLS[result]}',
                data_ui='word-entry', data_result=result)
 
 
-def visible_round_guesses(r: LobbyMember | None, guesses: list[gm.GuessEntry], game: gm.GameState) -> list[gm.GuessEntry]:
+def visible_round_guesses(r: LobbyMember | None, game: gm.GameState) -> list[gm.GuessEntry]:
     '''Skipped words stay with the explainer when that setting is on. Everyone else sees guesses.'''
     owner = game.review_player if game.state == gm.StateMachine.REVIEWING else game.active_player
-    if not game.hides_skipped_words() or r == owner: return list(guesses)
-    return [guess for guess in guesses if not guess.was_skipped()]
+    if not game.hides_skipped_words() or r == owner: return list(game.guess_log)
+    return [guess for guess in game.guess_log if not guess.was_skipped()]
 
 
 def RoundLog(r: LobbyMember | None, game: gm.GameState) -> FT:
-    visible_guesses = visible_round_guesses(r, game.guess_log, game)
+    visible_guesses = visible_round_guesses(r, game)
     entries = ((WordEntry(guess, game) for guess in reversed(visible_guesses)) if visible_guesses else
                (P('Words will appear here as the round progresses.', cls=TextT.muted),))
     return DivVStacked(entries, cls='w-full gap-2 max-h-[45vh] overflow-y-auto pr-1', id='guess_log',
@@ -102,7 +104,7 @@ def RoundLog(r: LobbyMember | None, game: gm.GameState) -> FT:
 
 
 def GuessCount(r: LobbyMember | None, game: gm.GameState):
-    return Span(len(visible_round_guesses(r, game.guess_log, game)), id='guess_count', hx_swap_oob='true',
+    return Span(len(visible_round_guesses(r, game)), id='guess_count', hx_swap_oob='true',
                 cls='rounded-full bg-secondary px-2 py-0.5 text-sm')
 
 
@@ -115,24 +117,42 @@ def GuessPanel(r: LobbyMember | None, game: gm.GameState) -> Optional[FT]:
         data_ui='round-history')
 
 
+ROUND_STATUS = {
+    'paused': 'Paused',
+    'last-word': 'Time is up — last word',
+    'playing': 'Round in progress',
+    'review': 'Review the round',
+}
+
+
+def round_phase(game: gm.GameState) -> str:
+    if game.state != gm.StateMachine.ROUND_PLAYING: return 'review'
+    if game.timer.paused: return 'paused'
+    return 'last-word' if game.timer.finished else 'playing'
+
+
+def RoundContent(r: LobbyMember, game: gm.GameState):
+    if game.state != gm.StateMachine.ROUND_PLAYING:
+        return VoteButton(r, game) or P('Waiting for the next team to confirm the score.', cls=TextT.muted)
+    if r == game.active_player: return ExplainerPanel(r, game)
+    return Div(H2(f'{game.active_player.user.name} is explaining'),
+               P(f"{game.active_guesser.user.name} is guessing" if game.active_guesser else
+                 'Guessed words show up below.', cls=TextT.muted),
+               cls='space-y-2 text-center')
+
+
 def RoundCenter(r: LobbyMember, game: gm.GameState):
-    playing = game.state == gm.StateMachine.ROUND_PLAYING
-    last_word = playing and game.timer.finished
-    content = (ExplainerPanel(r, game) if r == game.active_player else
-               Div(H2(f'{game.active_player.user.name} is explaining'),
-                   P(f"{game.active_guesser.user.name} is guessing" if game.active_guesser else
-                     'Guessed words show up below.', cls=TextT.muted),
-                   cls='space-y-2 text-center')) if playing else (
-               VoteButton(r, game) or P('Waiting for the next team to confirm the score.', cls=TextT.muted))
+    phase = round_phase(game)
+    playing = phase != 'review'
     return Card(
         Div(
             CircleTimer(game.timer.rem_t, total=game.config.time_limit, paused=game.timer.paused) if playing
             else UkIcon('clipboard-check', width=48, height=48),
-            P('Paused' if game.timer.paused else 'Time is up — last word' if last_word else 'Round in progress' if playing else 'Review the round',
-              cls='font-semibold text-amber-600 dark:text-amber-400' if last_word or game.timer.paused else TextT.muted,
-              data_ui='round-status', data_phase='paused' if game.timer.paused else 'last-word' if last_word else 'playing' if playing else 'review'),
+            P(ROUND_STATUS[phase],
+              cls='font-semibold text-amber-600 dark:text-amber-400' if phase in ('paused', 'last-word') else TextT.muted,
+              data_ui='round-status', data_phase=phase),
             cls='flex flex-col items-center gap-2'),
-        content,
+        RoundContent(r, game),
         cls=f'mg-round-center flex w-full min-w-0 flex-col justify-center gap-8 p-6 md:p-10 {"min-h-[20rem]" if playing else ""}',
         data_ui='round-center')
 

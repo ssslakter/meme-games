@@ -12,7 +12,7 @@ def Game(reciever: LobbyMember | User, lobby: Lobby, **kwargs: Any) -> FT:
             Div(
                 H3('Teams'),
                 Div(*[TeamCard(reciever, team, state) for team in state.teams.values()],
-                    NewTeamCard() if state.state == gm.StateMachine.WAITING_FOR_PLAYERS and not state.team_by_player(reciever) else None,
+                    NewTeamCard() if state.can_add_team() and not state.team_by_player(reciever) else None,
                     cls='mg-team-grid flex flex-col gap-3', data_ui='team-grid'),
                 cls='mg-alias-team-content flex min-h-0 flex-col gap-4'),
             ChatPanel(reciever, lobby, cls='mg-alias-chat'),

@@ -60,15 +60,29 @@ class GameState:
 
     def all_voted(self, team: Team) -> bool: return all(self.has_voted(m) for m in team.members)
 
+    def players(self) -> list[LobbyMember]: return [m for team in self.teams.values() for m in team.members]
+
     def all_players_voted(self) -> bool:
-        players = [member for team in self.teams.values() for member in team.members]
+        players = self.players()
         return bool(players) and all(self.has_voted(member) for member in players)
+
+    def all_words_submitted(self) -> bool:
+        return all(member.uid in self.submitted_players for member in self.players())
 
     def hides_skipped_words(self) -> bool:
         return self.config.player_words or self.config.hide_skipped_words
 
     def in_progress(self) -> bool:
         return self.state not in (StateMachine.WAITING_FOR_PLAYERS, StateMachine.FINISHED)
+
+    def can_change_wordpack(self) -> bool:
+        return not self.config.player_words and not self.in_progress()
+
+    def can_add_team(self) -> bool:
+        return self.state == StateMachine.WAITING_FOR_PLAYERS and len(self.teams) < self.config.max_teams
+
+    def can_pause(self) -> bool:
+        return self.state == StateMachine.ROUND_PLAYING and not self.timer.finished
 
     def change_config(self, config: GameConfig):
         config.wordpack = self.config.wordpack
@@ -86,14 +100,10 @@ class GameState:
             case StateMachine.WAITING_FOR_PLAYERS:
                 if self.can_start(): self.start_game()
             case StateMachine.VOTING_TO_START:
-                self.state = StateMachine.ROUND_PLAYING
-                self.active_word = self.next_word()
-                self.timer.set(self.config.time_limit)
+                self.start_round()
             case StateMachine.BETWEEN_WORD_ROUNDS:
                 self.start_word_round(self.all_words, round_number=2)
-                self.state = StateMachine.ROUND_PLAYING
-                self.active_word = self.next_word()
-                self.timer.set(self.config.time_limit)
+                self.start_round()
             case StateMachine.ROUND_PLAYING:
                 if self.config.player_words and self.active_word is not None:
                     self.word_pool.append(self.active_word)
@@ -106,7 +116,7 @@ class GameState:
                 self.advance_turn()
                 self.state = StateMachine.REVIEWING
             case StateMachine.REVIEWING:
-                points = sum(g.points for g in self.guess_log)
+                points = self.round_points
                 if len(self.teams) == 1:
                     self.review_player.add_score(points)
                     if self.review_guesser and self.review_guesser != self.review_player:
@@ -123,13 +133,19 @@ class GameState:
                     self.state = StateMachine.VOTING_TO_START
         if reset_votes: self.reset_votes()
 
+    def start_round(self) -> None:
+        self.state = StateMachine.ROUND_PLAYING
+        self.active_word = self.next_word()
+        self.timer.set(self.config.time_limit)
+
+    @property
+    def round_points(self) -> int: return sum(g.points for g in self.guess_log)
+
     def team_points(self, team: Team):
-        extra = sum(g.points for g in self.guess_log)
-        return team.points + extra*(team==self.review_team)
+        return team.points + self.round_points * (team == self.review_team)
 
     def player_points(self, player: LobbyMember):
-        extra = sum(g.points for g in self.guess_log)
-        return player.score + extra * (player in (self.review_player, self.review_guesser))
+        return player.score + self.round_points * (player in (self.review_player, self.review_guesser))
 
     def check_win_condition(self) -> bool:
         if self.config.player_words: return self.state == StateMachine.FINISHED
@@ -153,12 +169,8 @@ class GameState:
                 self.player_points(player) == max(self.player_points(member) for member in self.active_team.members))
 
     def start_game(self):
-        self.teams_iterator = cycle(self.teams.values())
-        self.active_team = next(self.teams_iterator)
-        if len(self.teams) == 1:
-            self.turn = 0
-            self.set_pair()
-        else: self.active_player = next(self.active_team)
+        self.turn = 0
+        self.assign_turn()
         if self.config.player_words:
             self.state = StateMachine.COLLECTING_WORDS
             self.timer.set(self.config.word_collection_time)
@@ -172,15 +184,15 @@ class GameState:
         self.word_pool = list(words)
         self.skipped_words.clear()
         random.shuffle(self.word_pool)
-        if not self.config.player_words: self.words_iterator = cycle(tuple(self.word_pool))
 
     def next_word(self, recycle_skipped: bool = True) -> Optional[str]:
         if self.word_pool: return self.word_pool.pop()
-        if self.config.player_words and recycle_skipped and self.skipped_words:
+        if not self.config.player_words:
+            self.word_pool = random.sample(self.all_words, len(self.all_words))
+        elif recycle_skipped and self.skipped_words:
             self.word_pool, self.skipped_words = self.skipped_words, []
             random.shuffle(self.word_pool)
-            return self.word_pool.pop()
-        if not self.config.player_words: return next(self.words_iterator)
+        return self.word_pool.pop() if self.word_pool else None
 
     def end_round_on_timeout(self) -> bool:
         if (self.state != StateMachine.ROUND_PLAYING or not self.timer.finished or
@@ -219,16 +231,24 @@ class GameState:
         for team in self.teams.values():
             team.points = team.times_played = 0
             for member in team.members: member.reset_score()
-        for attr in ('teams_iterator',):
-            if hasattr(self, attr): delattr(self, attr)
 
     def advance_turn(self):
-        if len(self.teams) > 1:
-            self.active_team = next(self.teams_iterator)
-            self.active_player = next(self.active_team)
-        else:
-            self.turn += 1
+        self.turn += 1
+        self.assign_turn()
+
+    def assign_turn(self):
+        '''Derive who plays from `turn` alone, so a team or member leaving never desyncs the order.'''
+        teams = list(self.teams.values())
+        if not teams:
+            self.active_team = self.active_player = self.active_guesser = None
+            return
+        if len(teams) == 1:
+            self.active_team = teams[0]
             self.set_pair()
+            return
+        self.active_team = teams[self.turn % len(teams)]
+        self.active_player = self.active_team.explainer()
+        self.active_guesser = None
 
     def set_pair(self):
         '''One block of n turns: everyone explains once and guesses once. The partner shifts each block.'''
@@ -243,7 +263,7 @@ class GameState:
 
     def shuffle_teams(self):
         sizes = [len(team.members) for team in self.teams.values()]
-        members = [member for team in self.teams.values() for member in team.members]
+        members = self.players()
         random.shuffle(members)
         offset = 0
         for team, size in zip(self.teams.values(), sizes):
@@ -256,12 +276,12 @@ class GameState:
     def add_vote(self, player: LobbyMember):
         if self.team_by_player(player): self.votes.add(player.uid)
 
-    def check_all_voted(self):
-        return self.all_voted(self.active_team)
+    def can_guess(self, player: LobbyMember, correct: bool) -> bool:
+        return (self.state == StateMachine.ROUND_PLAYING and player == self.active_player and
+                not self.timer.paused and (correct or not self.config.disable_skip))
 
     def guess_word(self, player: LobbyMember, correct: bool) -> bool:
-        if (self.state != StateMachine.ROUND_PLAYING or player != self.active_player or
-                not correct and self.config.disable_skip): return False
+        if not self.can_guess(player, correct): return False
         self.guess_log.append(GuessEntry(self.active_word, self.config.correct_guess_score
                                          if correct else self.config.mistake_penalty, skipped=not correct))
         if self.config.player_words and not correct: self.skipped_words.append(self.active_word)
@@ -289,12 +309,20 @@ class GameState:
 
     def remove_player(self, uid: str):
         self.votes.discard(uid)
-        removed = [m for team in self.teams.values() for m in team.members if m.uid == uid]
         for team in list(self.teams.values()):
-            had_member = any(m.uid == uid for m in team.members)
+            removed = [m for m in team.members if m.uid == uid]
+            if not removed: continue
             team.members[:] = [m for m in team.members if m.uid != uid]
-            if had_member and not len(team): self.delete_team(team.id)
-        if removed: removed[0].reset_score()
+            removed[0].reset_score()
+            if not len(team): self.delete_team(team.id)
+            self._after_leave(removed[0])
+
+    def _after_leave(self, member: LobbyMember) -> None:
+        if not self.in_progress(): return
+        if not self.teams: return self.restart()
+        if member not in (self.active_player, self.active_guesser): return
+        if self.state == StateMachine.ROUND_PLAYING: self.next_state()
+        else: self.assign_turn()
 
 
 ALIAS = 'alias'

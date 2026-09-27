@@ -121,7 +121,6 @@ def test_player_words_timer_ends_round_and_returns_word_to_pool() -> None:
     game = GameState(config=GameConfig(player_words=True), state=StateMachine.ROUND_PLAYING,
                      teams={team.id: team}, active_team=team, active_player=member,
                      active_word='banana', word_pool=['apple'])
-    game.teams_iterator = iter([team])
     lobby = Lobby(current_game=ALIAS, states={ALIAS: game}, members={member.uid: member})
 
     async def finish_timer() -> None:
@@ -246,12 +245,13 @@ def test_wordpack_modal_refreshes_when_opened():
 
 def test_alias_settings_only_save_from_the_update_button() -> None:
     host = LobbyMember(user=User('settings-host', 'Host'), is_host_=True)
-    html = to_xml(ConfigLobby(host, GameState()))
+    html = to_xml(ConfigLobby(host, GameState(config=GameConfig(player_words=True))))
 
     assert 'name="player_words"' in html
     assert 'name="player_words_last_word"' in html
     assert 'name="disable_skip"' in html
     assert html.count('hx-post="/alias/update_settings"') == 5
+    assert 'name="player_words_last_word"' not in to_xml(ConfigLobby(host, GameState()))
     assert 'hx-trigger="change"' in html and 'hx-include="closest form"' in html
     assert 'mg-more-settings-body space-y-3 p-3 pt-2' in html
 
@@ -527,3 +527,77 @@ def test_wordpack_picker_is_rendered_for_guests_with_disabled_selection():
     assert 'mg-pack-select-layout' in html
     assert 'mg-pack-select-list' in html and 'mg-pack-select-editor' in html
     assert 'Must be host to select' in html and 'disabled' in html
+
+
+def _teams(*sizes: int, prefix: str) -> tuple[GameState, list[Team]]:
+    teams = [Team(members=[LobbyMember(user=User(f'{prefix}-{t}-{i}', f'P{t}{i}')) for i in range(n)])
+             for t, n in enumerate(sizes)]
+    game = GameState(config=GameConfig(wordpack=WordPack(words_='apple\npear')), teams={t.id: t for t in teams})
+    return game, teams
+
+
+def _play_turn(game: GameState) -> None:
+    game.next_state()  # start round
+    game.next_state()  # review
+    game.next_state()  # confirm
+
+
+def test_member_who_joins_after_restart_gets_to_explain():
+    game, (first, second) = _teams(2, 1, prefix='late')
+    game.start_game()
+    _play_turn(game)
+    game.restart()
+    late = LobbyMember(user=User('late-joiner', 'Late'))
+    first.append(late)
+
+    game.start_game()
+    explainers = []
+    for _ in range(6):
+        explainers.append(game.active_player.uid)
+        _play_turn(game)
+    assert late.uid in explainers
+    assert explainers[0] == first.members[0].uid
+
+
+def test_teams_alternate_and_skip_a_team_that_left():
+    game, (a, b, c) = _teams(1, 1, 1, prefix='order')
+    game.start_game()
+    assert game.active_team is a
+    _play_turn(game)
+    assert game.active_team is b
+    game.remove_player(c.members[0].uid)
+    _play_turn(game)
+    assert game.active_team in (a, b) and c.id not in game.teams
+
+
+def test_explainer_leaving_mid_round_moves_the_game_on():
+    game, (team,) = _teams(3, prefix='leaver')
+    game.start_game()
+    game.next_state()
+    leaver = game.active_player
+    game.remove_player(leaver.uid)
+
+    assert game.state == StateMachine.REVIEWING
+    assert game.active_player != leaver and game.active_player in team
+
+
+def test_wordpack_deck_reshuffles_instead_of_replaying_the_same_order():
+    game, _ = _teams(1, prefix='deck')
+    game.start_game()
+    game.next_state()
+    dealt = {game.active_word, game.next_word(), game.next_word()}
+    assert dealt == {'apple', 'pear'}
+
+
+def test_lobby_rules_are_shared_by_buttons_and_state():
+    host = LobbyMember(user=User('rules-host', 'Host'), is_host_=True)
+    game, _ = _teams(1, prefix='rules')
+    game.config.max_teams = 1
+    assert not game.can_add_team()
+    lobby = Lobby(current_game=ALIAS, states={ALIAS: game}, members={host.uid: host})
+    assert 'data-ui="new-team-card"' not in to_xml(Game(host, lobby))
+
+    game.start_game()
+    assert not game.can_change_wordpack()
+    assert 'disabled' in to_xml(PackSelectButton(game))
+    assert 'Game in progress' in to_xml(PackSelectContents(host, game))
