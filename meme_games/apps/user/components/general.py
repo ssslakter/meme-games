@@ -107,6 +107,7 @@ def CustomCssSettings():
                     fh.Option('Autumn Grove', value='/static/styles/themes/autumn-grove.css'),
                     fh.Option('Cyberpunk 2077', value='/static/styles/themes/cyberpunk-2077.css'),
                     fh.Option('Deep Sea', value='/static/styles/themes/deep-sea.css'),
+                    fh.Option('Retro Web', value='/static/styles/themes/retro.css'),
                     fh.Option('Sakura', value='/static/styles/themes/sakura.css'),
                     id='custom-css-template', cls='uk-select w-full sm:max-w-sm',
                     onchange="if (this.value) { loadCustomCssTemplate(this.value, this.options[this.selectedIndex].text); this.value = ''; }"),

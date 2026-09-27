@@ -19,23 +19,23 @@
 }
 
 html:not(.dark) {
-  --background: 187 52% 94% !important;
-  --foreground: 197 46% 14% !important;
-  --card: 186 60% 98% !important;
-  --card-foreground: 197 46% 14% !important;
-  --popover: 186 60% 98% !important;
-  --popover-foreground: 197 46% 14% !important;
-  --primary: 184 64% 34% !important;
-  --primary-foreground: 186 60% 98% !important;
-  --secondary: 195 44% 86% !important;
-  --secondary-foreground: 197 46% 18% !important;
-  --muted: 187 40% 89% !important;
-  --muted-foreground: 197 26% 36% !important;
-  --accent: 172 58% 78% !important;
-  --accent-foreground: 197 46% 16% !important;
-  --border: 188 34% 74% !important;
-  --input: 188 34% 74% !important;
-  --ring: 184 64% 34% !important;
+  --background: 192 38% 88% !important;
+  --foreground: 198 55% 12% !important;
+  --card: 180 45% 98% !important;
+  --card-foreground: 198 55% 12% !important;
+  --popover: 180 45% 98% !important;
+  --popover-foreground: 198 55% 12% !important;
+  --primary: 186 78% 24% !important;
+  --primary-foreground: 180 45% 98% !important;
+  --secondary: 195 32% 80% !important;
+  --secondary-foreground: 197 50% 14% !important;
+  --muted: 190 24% 82% !important;
+  --muted-foreground: 197 28% 26% !important;
+  --accent: 172 42% 70% !important;
+  --accent-foreground: 197 55% 12% !important;
+  --border: 188 32% 52% !important;
+  --input: 188 32% 52% !important;
+  --ring: 186 78% 24% !important;
 }
 
 html.dark {
@@ -57,6 +57,8 @@ html.dark {
   --input: 191 40% 28% !important;
   --ring: 172 68% 56% !important;
 }
+
+.mg-page { background: transparent !important; }
 
 body {
   background-color: hsl(var(--background)) !important;
@@ -104,9 +106,21 @@ body {
   position: relative;
   border: 1px solid color-mix(in srgb, var(--mg-sea-glow) 30%, hsl(var(--border))) !important;
   border-radius: 1.25rem !important;
+  background: hsl(var(--card)) !important;
+  box-shadow: 0 12px 32px rgba(2, 18, 26, .16) !important;
+  backdrop-filter: blur(9px);
+}
+
+html.dark .mg-game-card,
+html.dark .mg-round-history,
+html.dark .mg-round-center,
+html.dark .mg-settings-panel,
+html.dark .mg-panel,
+html.dark .mg-settings-section,
+html.dark .mg-spectators,
+html.dark .mg-content-card > * {
   background: color-mix(in srgb, hsl(var(--card)) 92%, transparent) !important;
   box-shadow: 0 12px 32px rgba(2, 18, 26, .22), 0 0 20px rgba(79, 227, 208, .10) !important;
-  backdrop-filter: blur(9px);
 }
 
 /* Kept inside the 1.7rem the Codenames team header reserves, so it never lands on
@@ -129,25 +143,35 @@ h1, h2, h3, h4, h5,
   letter-spacing: .012em;
 }
 
-.uk-btn {
+.uk-btn:not(.mg-theme-toggle) {
   border-radius: 999px !important;
+  border: 1px solid hsl(var(--border)) !important;
+  background: hsl(var(--card)) !important;
+  color: hsl(var(--foreground)) !important;
   font-family: inherit !important;
   transition: transform .15s ease, box-shadow .15s ease;
 }
 
-.uk-btn-primary {
+.uk-btn.uk-btn-primary {
   border-color: transparent !important;
   background: linear-gradient(135deg, #0f7f86, #14b8a6) !important;
   color: #f2fffd !important;
   box-shadow: 0 6px 18px rgba(15, 127, 134, .35) !important;
 }
 
-.uk-btn:hover {
+.uk-btn.uk-btn-destructive {
+  border-color: #c2412d !important;
+  background: hsl(var(--card)) !important;
+  color: #c2412d !important;
+  box-shadow: none !important;
+}
+
+.uk-btn:not(.mg-theme-toggle):hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 22px rgba(15, 127, 134, .3), 0 0 16px rgba(79, 227, 208, .25) !important;
 }
 
-.uk-btn:active { transform: translateY(0) scale(.97); }
+.uk-btn:not(.mg-theme-toggle):active { transform: translateY(0) scale(.97); }
 
 .uk-input,
 .uk-textarea,
@@ -184,6 +208,13 @@ h1, h2, h3, h4, h5,
   --mg-timer-track: rgba(127, 214, 255, .24);
   color: var(--mg-sea-glow) !important;
   filter: drop-shadow(0 0 6px rgba(79, 227, 208, .45));
+}
+
+html:not(.dark) .mg-timer {
+  --mg-timer-progress: #0f6e78;
+  --mg-timer-track: rgba(15, 110, 120, .22);
+  color: #0f6e78 !important;
+  filter: none;
 }
 
 .mg-theme-toggle {

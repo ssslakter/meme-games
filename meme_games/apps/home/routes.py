@@ -17,13 +17,13 @@ GAME_BLURBS = {
 
 def GameCard(title, desc, href):
     return A(
-        H2(title, cls="text-xl font-semibold mb-2 text-gray-900 dark:text-[color:var(--card-foreground)]"),
-        P(desc, cls="text-sm text-gray-600 dark:text-[color:var(--muted-foreground)]"),
+        H2(title, cls="text-xl font-semibold mb-2 text-[color:hsl(var(--card-foreground))]"),
+        P(desc, cls="text-sm text-[color:hsl(var(--muted-foreground))]"),
         href=href,
         cls=(
             "mg-game-card mg-game-link p-6 rounded-xl shadow hover:shadow-lg transition "
-            "bg-white dark:bg-[color:var(--card)] "
-            "border border-gray-200 dark:border-[color:var(--border)]"
+            "bg-[color:hsl(var(--card))] "
+            "border border-[color:hsl(var(--border))]"
         ), data_ui='game-card'
     )
 
@@ -33,16 +33,16 @@ def GameCard(title, desc, href):
 def index():
     footer = Footer(Div(
                 P("© 2025 Meme games. All rights reserved.",
-                  cls="text-gray-600 dark:text-[color:var(--muted-foreground)]"),
+                  cls="text-[color:hsl(var(--muted-foreground))]"),
                 Div(
                     DivHStacked(
                         UkIcon("github"),
                         A("Repo",href="https://github.com/ssslakter/meme-games", cls="hover:underline",), cls=""),
-                    cls="flex space-x-4 mt-4 sm:mt-0 text-gray-600 dark:text-[color:var(--muted-foreground)]"
+                    cls="flex space-x-4 mt-4 sm:mt-0 text-[color:hsl(var(--muted-foreground))]"
                 ),
                 cls="max-w-5xl mx-auto px-4 py-8 flex flex-col sm:flex-row justify-between items-center text-sm"
             ),
-             cls="bg-gray-100 dark:bg-[color:var(--secondary)] border-t border-gray-200 dark:border-[color:var(--border)] mt-12"
+             cls="bg-[color:hsl(var(--card))] border-t border-[color:hsl(var(--border))] mt-12"
         )
     return (Title("Home"),
             Div(
@@ -51,11 +51,11 @@ def index():
             Section(
                 H1(
                     "Welcome to Meme games",
-                    cls="text-4xl font-bold mb-6 text-center text-gray-900 dark:text-[color:var(--foreground)]"
+                    cls="text-4xl font-bold mb-6 text-center text-[color:hsl(var(--foreground))]"
                 ),
                 P(
                     "Play fun party games with friends or enjoy streaming together — all in one place.",
-                    cls="text-lg mb-12 text-center text-gray-700 dark:text-[color:var(--muted-foreground)]"
+                    cls="text-lg mb-12 text-center text-[color:hsl(var(--muted-foreground))]"
                 ),
                 Div(
                     *[GameCard(name, desc, page_url(PAGES_REGISTRY[name]))
@@ -63,8 +63,7 @@ def index():
                     cls="mg-game-cards grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
                 ),
                 cls=(
-                    "max-w-5xl mx-auto px-4 py-12 "
-                    "bg-gray-50 dark:bg-[color:var(--background)]"
+                    "max-w-5xl mx-auto px-4 py-12"
                 )
             ),
             # Section(
@@ -86,6 +85,6 @@ def index():
             cls="mg-page-content flex-1", data_ui='page-content'
         ),
         footer,
-        cls="mg-page flex flex-col min-h-screen pt-20 bg-gray-50 dark:bg-[color:var(--background)]",
+        cls="mg-page flex flex-col min-h-screen pt-20 bg-gray-50 dark:bg-transparent",
         data_page='home', data_ui='page'
     ))

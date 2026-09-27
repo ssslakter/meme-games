@@ -18,23 +18,23 @@
 }
 
 html:not(.dark) {
-  --background: 36 100% 98% !important;
-  --foreground: 333 38% 20% !important;
-  --card: 350 100% 98% !important;
-  --card-foreground: 333 38% 20% !important;
-  --popover: 350 100% 98% !important;
-  --popover-foreground: 333 38% 20% !important;
-  --primary: 343 70% 64% !important;
+  --background: 350 48% 93% !important;
+  --foreground: 330 46% 14% !important;
+  --card: 36 70% 99% !important;
+  --card-foreground: 330 46% 14% !important;
+  --popover: 36 70% 99% !important;
+  --popover-foreground: 330 46% 14% !important;
+  --primary: 343 64% 38% !important;
   --primary-foreground: 0 0% 100% !important;
-  --secondary: 101 20% 88% !important;
-  --secondary-foreground: 132 18% 27% !important;
-  --muted: 350 38% 92% !important;
-  --muted-foreground: 333 22% 42% !important;
-  --accent: 343 75% 89% !important;
-  --accent-foreground: 333 48% 25% !important;
-  --border: 345 42% 79% !important;
-  --input: 345 42% 79% !important;
-  --ring: 343 70% 64% !important;
+  --secondary: 100 18% 84% !important;
+  --secondary-foreground: 132 24% 18% !important;
+  --muted: 348 32% 88% !important;
+  --muted-foreground: 333 28% 30% !important;
+  --accent: 343 62% 84% !important;
+  --accent-foreground: 333 48% 20% !important;
+  --border: 343 36% 62% !important;
+  --input: 343 36% 62% !important;
+  --ring: 343 64% 38% !important;
 }
 
 html.dark {
@@ -56,6 +56,8 @@ html.dark {
   --input: 342 32% 38% !important;
   --ring: 343 72% 70% !important;
 }
+
+.mg-page { background: transparent !important; }
 
 body {
   background-color: hsl(var(--background)) !important;
@@ -106,9 +108,20 @@ body {
   position: relative;
   border: 1px solid hsl(var(--border)) !important;
   border-radius: 18px 6px 18px 6px !important;
-  background: color-mix(in srgb, hsl(var(--card)) 94%, transparent) !important;
+  background: hsl(var(--card)) !important;
   box-shadow: 0 10px 28px rgba(91, 41, 68, .12) !important;
   backdrop-filter: blur(8px);
+}
+
+html.dark .mg-game-card,
+html.dark .mg-round-history,
+html.dark .mg-round-center,
+html.dark .mg-settings-panel,
+html.dark .mg-panel,
+html.dark .mg-settings-section,
+html.dark .mg-spectators,
+html.dark .mg-content-card > * {
+  background: color-mix(in srgb, hsl(var(--card)) 94%, transparent) !important;
 }
 
 .mg-game-card::after,
@@ -137,8 +150,11 @@ h1::after {
   vertical-align: middle;
 }
 
-.uk-btn {
+.uk-btn:not(.mg-theme-toggle) {
   border-radius: 999px !important;
+  border: 1px solid hsl(var(--border)) !important;
+  background: hsl(var(--card)) !important;
+  color: hsl(var(--foreground)) !important;
   font-family: inherit !important;
   font-size: .8125rem;
   transition: transform .15s ease, box-shadow .15s ease;
@@ -146,19 +162,26 @@ h1::after {
 
 /* White on the pale end of the old gradient came out at roughly 1.9:1 - the label was
    there but you had to hunt for it. The blossom pink stays as the glow, not the ground. */
-.uk-btn-primary {
+.uk-btn.uk-btn-primary {
   border-color: var(--mg-sakura-deep) !important;
   background: linear-gradient(135deg, var(--mg-sakura-deep), #9d3352) !important;
   color: white !important;
   box-shadow: 0 4px 12px rgba(190, 71, 104, .25) !important;
 }
 
-.uk-btn:hover {
+.uk-btn.uk-btn-destructive {
+  border-color: #9d3352 !important;
+  background: #fff !important;
+  color: #9d3352 !important;
+  box-shadow: none !important;
+}
+
+.uk-btn:not(.mg-theme-toggle):hover {
   transform: translateY(-2px) rotate(-1deg);
   box-shadow: 0 6px 16px rgba(190, 71, 104, .25) !important;
 }
 
-.uk-btn:active {
+.uk-btn:not(.mg-theme-toggle):active {
   transform: translateY(0) scale(.97) rotate(0deg);
 }
 

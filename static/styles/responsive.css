@@ -61,9 +61,6 @@
   [data-page="alias"] .mg-alias-teams {
     grid-column: 1;
     grid-row: 1 / span 2;
-    height: auto !important;
-    max-height: none !important;
-    overflow: visible !important;
   }
   [data-page="alias"] .mg-alias-stage {
     grid-column: 2;
@@ -78,23 +75,35 @@
   }
 }
 
-@media (min-width: 1280px) {
+@media (min-width: 600px) {
+  /* Tailwind's lg:h / lg:overflow-hidden lose to the narrower-layout overrides,
+     and the JIT sheet is injected after this file, so the lock needs !important.
+     The column stays put; only the finished-words log scrolls. */
+  [data-page="alias"] .mg-alias-teams {
+    height: calc(100vh - 7rem) !important;
+    max-height: calc(100vh - 7rem) !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
   [data-page="alias"] .mg-alias-team-content {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow: hidden;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
   }
   [data-page="alias"] .mg-alias-team-content > .mg-round-history,
   [data-page="alias"] .mg-alias-team-content > .mg-round-history > .uk-card-body {
-    display: flex;
-    flex: 1 1 auto;
-    flex-direction: column;
-    height: auto;
-    min-height: 0;
-    overflow: hidden;
-  }
-  [data-page="alias"] .mg-alias-team-content > .mg-round-history {
+    display: flex !important;
     flex: 1 1 auto !important;
+    flex-direction: column !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+  [data-page="alias"] [data-ui="round-log"] {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow-y: auto !important;
   }
 }
 

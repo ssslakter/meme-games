@@ -80,6 +80,13 @@ html.dark .mg-theme-toggle-thumb {
   transform: translateX(1.5rem);
 }
 
+.mg-theme-toggle:hover {
+  background: var(--mg-theme-toggle-bg, hsl(var(--muted))) !important;
+  color: var(--mg-theme-toggle-icon, hsl(var(--muted-foreground))) !important;
+  box-shadow: none !important;
+  transform: none;
+}
+
 .mg-monitor {
   width: min(100%, 64rem);
   margin-inline: auto;

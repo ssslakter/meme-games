@@ -19,23 +19,23 @@
 }
 
 html:not(.dark) {
-  --background: 38 52% 93% !important;
-  --foreground: 25 40% 17% !important;
-  --card: 40 62% 97% !important;
-  --card-foreground: 25 40% 17% !important;
-  --popover: 40 62% 97% !important;
-  --popover-foreground: 25 40% 17% !important;
-  --primary: 27 72% 42% !important;
-  --primary-foreground: 40 62% 97% !important;
-  --secondary: 78 24% 84% !important;
-  --secondary-foreground: 82 26% 22% !important;
-  --muted: 38 38% 88% !important;
-  --muted-foreground: 26 24% 38% !important;
-  --accent: 36 66% 82% !important;
-  --accent-foreground: 25 40% 19% !important;
-  --border: 32 34% 73% !important;
-  --input: 32 34% 73% !important;
-  --ring: 27 72% 42% !important;
+  --background: 34 42% 86% !important;
+  --foreground: 24 48% 13% !important;
+  --card: 40 62% 96% !important;
+  --card-foreground: 24 48% 13% !important;
+  --popover: 40 62% 96% !important;
+  --popover-foreground: 24 48% 13% !important;
+  --primary: 20 74% 34% !important;
+  --primary-foreground: 40 70% 97% !important;
+  --secondary: 78 22% 78% !important;
+  --secondary-foreground: 82 30% 16% !important;
+  --muted: 36 28% 80% !important;
+  --muted-foreground: 26 32% 26% !important;
+  --accent: 36 70% 74% !important;
+  --accent-foreground: 25 48% 14% !important;
+  --border: 28 36% 52% !important;
+  --input: 28 36% 52% !important;
+  --ring: 20 74% 34% !important;
 }
 
 html.dark {
@@ -57,6 +57,8 @@ html.dark {
   --input: 27 28% 34% !important;
   --ring: 29 82% 58% !important;
 }
+
+.mg-page { background: transparent !important; }
 
 body {
   background-color: hsl(var(--background)) !important;
@@ -104,8 +106,19 @@ body {
   position: relative;
   border: 1px solid color-mix(in srgb, var(--mg-autumn-amber) 34%, hsl(var(--border))) !important;
   border-radius: 1.1rem .35rem 1.1rem .35rem !important;
-  background: color-mix(in srgb, hsl(var(--card)) 95%, transparent) !important;
+  background: hsl(var(--card)) !important;
   box-shadow: 0 9px 24px rgba(58, 38, 24, .16) !important;
+}
+
+html.dark .mg-game-card,
+html.dark .mg-round-history,
+html.dark .mg-round-center,
+html.dark .mg-settings-panel,
+html.dark .mg-panel,
+html.dark .mg-settings-section,
+html.dark .mg-spectators,
+html.dark .mg-content-card > * {
+  background: color-mix(in srgb, hsl(var(--card)) 95%, transparent) !important;
 }
 
 /* Kept inside the 1.7rem the Codenames team header reserves, so it never lands on
@@ -129,25 +142,35 @@ h1, h2, h3, h4, h5,
   letter-spacing: .015em;
 }
 
-.uk-btn {
+.uk-btn:not(.mg-theme-toggle) {
   border-radius: .8rem .25rem .8rem .25rem !important;
+  border: 1px solid hsl(var(--border)) !important;
+  background: hsl(var(--card)) !important;
+  color: hsl(var(--foreground)) !important;
   font-family: inherit !important;
   transition: transform .15s ease, box-shadow .15s ease;
 }
 
-.uk-btn-primary {
+.uk-btn.uk-btn-primary {
   border-color: var(--mg-autumn-rust) !important;
   background: linear-gradient(135deg, var(--mg-autumn-rust), var(--mg-autumn-amber)) !important;
   color: #fff6e8 !important;
   box-shadow: 0 4px 12px rgba(156, 63, 34, .3) !important;
 }
 
-.uk-btn:hover {
+.uk-btn.uk-btn-destructive {
+  border-color: var(--mg-autumn-rust) !important;
+  background: hsl(var(--card)) !important;
+  color: var(--mg-autumn-rust) !important;
+  box-shadow: none !important;
+}
+
+.uk-btn:not(.mg-theme-toggle):hover {
   transform: translateY(-2px) rotate(-.5deg);
   box-shadow: 0 7px 18px rgba(156, 63, 34, .28) !important;
 }
 
-.uk-btn:active { transform: translateY(0) scale(.97) rotate(0deg); }
+.uk-btn:not(.mg-theme-toggle):active { transform: translateY(0) scale(.97) rotate(0deg); }
 
 .uk-input,
 .uk-textarea,
