@@ -52,6 +52,19 @@ class LobbyService:
         self.lobbies.pop(id, None)
         self.repo.delete(id)
 
+    def leave(self, lobby: Lobby, uid: str) -> Optional[bool]:
+        """Drop a member. Deletes the lobby once nobody is left.
+
+        Returns whether a round was abandoned, or None if the lobby is gone.
+        """
+        lobby.remove_member(uid)
+        if not lobby.members:
+            self.delete_lobby(lobby.id)
+            return None
+        abandoned = lobby.reset_game()
+        self.update(lobby)
+        return abandoned
+
     def evict_lobby(self, id: str):
         """Free a lobby's in-memory slot. Persistent lobbies stay in the DB and reload on demand."""
         self.lobbies.pop(id, None)

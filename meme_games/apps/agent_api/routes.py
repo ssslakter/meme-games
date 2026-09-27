@@ -178,8 +178,6 @@ async def leave(req: Request):
     session, lobby, member = _player(data.get('player_session'))
     sessions.close(data['player_session'])
     _last_seen.pop(str(data.get('player_session', '')), None)
-    lobby.remove_member(member.uid)
-    lobby.reset_game()  # the round cannot continue a player short
-    lobbies.update(lobby)
-    await lobby_events.publish(lobby, 'roster', 'game')
+    if lobbies.leave(lobby, member.uid) is not None:
+        await lobby_events.publish(lobby, 'roster', 'game')
     return {'ok': True, 'message': 'Left lobby', 'revision': lobby.revision}

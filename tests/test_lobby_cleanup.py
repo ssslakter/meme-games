@@ -87,6 +87,22 @@ def test_cleanup_purges_dead_lobbies_from_db():
     assert member_count('deadlobby') == 0
 
 
+def test_last_member_leaving_deletes_the_lobby():
+    lobby = service.create_lobby(host, 'emptylobby', persistent=True)
+    other = DI.get(UserManager).create(name='stayer')
+    kept = service.create_lobby(host, 'staylobby', persistent=True)
+    kept.create_member(other)
+    service.update(kept)
+
+    assert service.leave(lobby, host.uid) is None
+    assert service.get_lobby('emptylobby') is None
+    assert 'emptylobby' not in service.repo.ids()
+    assert member_count('emptylobby') == 0
+
+    assert service.leave(kept, host.uid) is False
+    assert other.uid in service.get_lobby('staylobby').members
+
+
 def test_live_lobbies_are_never_purged_from_db():
     lobby = service.create_lobby(host, 'livelobby', persistent=True)
     lobby.last_active = dt.datetime.now() - service.lobby_ttl - dt.timedelta(days=7)

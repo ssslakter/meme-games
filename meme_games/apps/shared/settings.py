@@ -199,13 +199,11 @@ async def leave_lobby(req: Request):
     lobby: Lobby = req.state.lobby
     uid = req.state.user.uid
     if not lobby: return
-    lobby.remove_member(uid)
-    # a round cannot be finished a player short, so walking out ends it for everyone
-    was_playing = lobby.reset_game()
-    lobby_service.update(lobby)
-    def update(*_): return UserRemover(uid)
-    await notify_all(lobby, update)
-    # always a roster event: someone leaving can hand the host seat to whoever is left,
-    # and the controls that come with it have to appear without a reload
-    await lobby_events.publish(lobby, *(('roster', 'game') if was_playing else ('roster',)))
+    # None means the last person left and the lobby is already gone
+    abandoned = lobby_service.leave(lobby, uid)
+    if abandoned is not None:
+        await notify_all(lobby, lambda *_: UserRemover(uid))
+        # always a roster event: someone leaving can hand the host seat to whoever is left,
+        # and the controls that come with it have to appear without a reload
+        await lobby_events.publish(lobby, *(('roster', 'game') if abandoned else ('roster',)))
     return Redirect('/')

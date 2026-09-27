@@ -223,9 +223,10 @@ class LobbyRepo(DataRepository[Lobby]):
         return lobby
 
     def delete(self, id: str):
-        # Session handles and event history have no meaning after their lobby is gone.
+        # Session handles, members and event history have no meaning after their lobby is gone.
         for table in ('agent_player_sessions', 'lobby_events'):
             if table in self.db.t: self.db.q(f'DELETE FROM {table} WHERE lobby_id = ?', [id])
+        self.db.q(f'DELETE FROM {DI.get(MemberRepo).members} WHERE lobby_id = ?', [id])
         if id in self.lobbies: return super().delete(id)
 
     def ids(self) -> list[str]: return [el['id'] for el in self.lobbies(select='id', as_cls=False)]
