@@ -26,8 +26,10 @@ def SideBar():
         DividerSplit(), 
         H4("Create custom wordpack"),
         Form(FormLabel("Upload from text file ('\\n' separated list)"),
-            UploadZone(DivCentered(Span("Upload Zone"), UkIcon("upload")), 
-            name='file', accept='text/plain'),
+            UploadZone(DivCentered(Span("Upload Zone"), UkIcon("upload")),
+            name='file', accept='.txt,text/plain', cls='mg-wordpack-upload',
+            ondragover='event.preventDefault()',
+            ondrop="event.preventDefault(); const i = this.querySelector('input[type=file]'); if (!i || !event.dataTransfer.files.length) return; i.files = event.dataTransfer.files; i.dispatchEvent(new Event('change', {bubbles: true}))"),
             hx_trigger='change', hx_swap='none',
             _='on htmx:afterRequest trigger change on #packs_search then get first <[name="file"]/> in me then set its value to ""',
             hx_post=upload),
@@ -99,7 +101,7 @@ def WordPackEditor(wp: Optional[WordPack] = None,
     
     head = DivFullySpaced(
         Div(H4("Pack name: ", cls='inline'), Span(wp.name, data_pack=wp.id), cls='w-full truncate'),
-        DivRAligned(H4("Words: ", cls='inline'), Span(len(wp.words)-1)))
+        DivRAligned(H4("Words: ", cls='inline'), Span(len(wp.words))))
     
     return editor(head,
         Form(**(form_kwargs or dict(hx_post=save)),

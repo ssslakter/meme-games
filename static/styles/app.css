@@ -690,3 +690,9 @@ html.dark .mg-theme-toggle-thumb {
     max-width: 100%;
   }
 }
+
+/* The file input only covered the placeholder's content box, so clicks on the
+   padding never opened the dialog. Padding lives on the label instead. */
+.mg-wordpack-upload.uk-placeholder { position: relative; padding: 0; }
+.mg-wordpack-upload .uk-form-custom { display: block; width: 100%; }
+.mg-wordpack-upload .uk-form-custom > span { display: block; padding: 2rem 1rem; }

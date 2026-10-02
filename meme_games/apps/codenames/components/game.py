@@ -3,8 +3,7 @@ from meme_games.domain import *
 from meme_games.apps.shared import *
 from meme_games.apps.shared.spectators import register_game_view
 from meme_games.apps.user import UserInfo
-from meme_games.apps.word_packs.domain import WordPackRepo
-from meme_games.apps.word_packs.components import PacksSelect
+from meme_games.apps.word_packs.components import PacksSelect, WordPackEditor, wordpack_manager
 
 from ..domain import *
 
@@ -166,20 +165,46 @@ def Board(reciever, state):
         cls='min-w-0 space-y-5')
 
 
-def PackSelect(state: CodenamesState):
+def SelectEditor(member: LobbyMember | User, pack, state: CodenamesState) -> FT:
+    from ..routes import select_pack
+    waiting = state.phase == GamePhase.WAITING
+    allowed = is_host(member) and waiting
+    label = ('Select wordpack' if allowed else
+             'Game in progress' if not waiting else 'Must be host to select')
+    return WordPackEditor(pack, readonly=True,
+                          form_kwargs=dict(hx_post=select_pack, hx_swap='none'),
+                          submit_button=Button(label, disabled=not allowed),
+                          cls='mg-pack-select-editor',
+                          hx_on__after_request="UIkit.modal('#pack-select').hide()")
+
+
+def PackSelectContents(member: LobbyMember | User, state: CodenamesState) -> FT:
     from ..routes import editor_readonly
-    packs = DI.get(WordPackRepo).get_all()
+    return Div(Div(PacksSelect(wordpack_manager.get_all(), editor_readonly,
+                               hx_target='#editor', hx_swap='outerHTML'),
+                   cls='mg-pack-select-list overflow-auto'),
+               SelectEditor(member, state.wordpack, state),
+               ModalCloseButton(), cls='mg-pack-select-layout')
+
+
+def PackSelectButton(state: CodenamesState) -> FT:
+    locked = state.phase != GamePhase.WAITING
+    name = state.wordpack.name if state.wordpack else 'No pack selected'
     return Div(
-        Button(UkIcon('book-open', cls='mr-2'), 'Select wordpack',
-               cls=(ButtonT.default, 'w-full justify-start'), data_uk_toggle='target: #pack-select'),
-        Modal(ModalTitle('Wordpack selection'),
-              Grid(Div(PacksSelect(packs, editor_readonly, hx_target='#editor', hx_swap='outerHTML'),
-                       cls='overflow-auto col-span-2 border-r-2'),
-                   Div(hx_post=editor_readonly.to(id=state.wordpack.id) if state.wordpack else None,
-                       hx_trigger='load' if state.wordpack else None, cls='col-span-3 h-full'),
-                   ModalCloseButton(),
-                   cols=5),
-              id='pack-select'))
+        Button(UkIcon('book-open', cls='mr-2 shrink-0'), 'Select wordpack',
+               cls=(ButtonT.default, 'w-full justify-start'),
+               data_uk_toggle=None if locked else 'target: #pack-select',
+               disabled=locked),
+        P(name, cls=(TextT.muted, 'truncate text-sm'), data_ui='codenames-wordpack'),
+        cls='space-y-1', data_ui='codenames-pack-select')
+
+
+def PackSelectModal() -> FT:
+    from ..routes import pack_select
+    return Modal(ModalTitle('Wordpack selection'),
+                 Div(P('Loading wordpacks…', cls=TextT.muted), id='pack-select-content'),
+                 id='pack-select', hx_get=pack_select, hx_trigger='shown',
+                 hx_target='#pack-select-content', hx_swap='innerHTML', cls='mg-pack-select-modal')
 
 
 def HostSettings(reciever, lobby, oob=False):
@@ -189,7 +214,7 @@ def HostSettings(reciever, lobby, oob=False):
     waiting = state.phase == GamePhase.WAITING
     return Div(
         H5('Host controls'),
-        PackSelect(state),
+        PackSelectButton(state),
         Form(
             LabelInput('Clue seconds (0 = no limit)', name='clue_seconds', type='number', min=0, max=600,
                        value=str(state.clue_seconds)),
@@ -224,10 +249,12 @@ def Game(reciever: LobbyMember | User, lobby: Lobby, **kwargs):
 
 def Page(reciever: LobbyMember | User, lobby: Lobby):
     from ..routes import ws_url
-    return LobbyPage(
+    # the modal sits beside the page: .mg-page's stacking context paints it under the navbar
+    return (*LobbyPage(
         GameShell(Game(reciever, lobby), LobbyTools(reciever, lobby, HostSettings(reciever, lobby))),
         hx_ext='ws', ws_connect=ws_url, no_image=True, user=reciever,
-        title=f'Codenames lobby: {lobby.id}', page='codenames')
+        title=f'Codenames lobby: {lobby.id}', page='codenames'),
+        PackSelectModal())
 
 
 register_game_view(CODENAMES, Game)

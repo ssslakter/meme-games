@@ -9,10 +9,18 @@ register_route(rt)
 # ---------------------------------#
 
 
+def words_from_upload(raw: bytes) -> str:
+    '''Word lists arrive as UTF-8, UTF-16 (Notepad "Unicode"), or Windows-1251.'''
+    if raw.startswith((b'\xff\xfe', b'\xfe\xff')): return raw.decode('utf-16')
+    try: return raw.decode('utf-8-sig')
+    except UnicodeDecodeError: return raw.decode('cp1251')
+
+
 @rt("/upload", methods=["post"])
-async def upload(sess, file: UploadFile):
-    text = await file.read()
-    return save(sess, file.filename.split(".")[0], text.decode("utf-8"))
+async def upload(file: UploadFile):
+    name = (file.filename or 'wordpack').rsplit('.', 1)[0] or 'wordpack'
+    pack = WordPack(name=name, words_=words_from_upload(await file.read()))
+    return WordPackEditor(pack, hx_swap_oob='true')
 
 @rt("/delete", methods=["post"])
 def delete(sess: dict, id: str):

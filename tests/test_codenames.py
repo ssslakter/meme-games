@@ -6,7 +6,9 @@ from starlette.testclient import TestClient
 
 from meme_games.apps.codenames import domain as codenames_domain
 from meme_games.apps.codenames.actions import codenames_actions
-from meme_games.apps.codenames.components.game import BoardCard, EventLog
+from meme_games.apps.codenames.components.game import (BoardCard, EventLog, HostSettings, PackSelectButton,
+                                                      PackSelectContents)
+from meme_games.apps.word_packs.domain import WordPackRepo
 from meme_games.apps.codenames.domain import (CardColor, CODENAMES, CodenamesState, GamePhase,
                                               LogEntry, TeamColor, WordCard)
 from meme_games.core import DI
@@ -206,6 +208,34 @@ def test_the_event_log_narrates_play_without_naming_hidden_colours():
     assert f'"{neutral.word}"' in markup
     # the colours are what makes the log readable at a glance, so they are part of it
     assert f'data-team="{turn.value}"' in markup and 'mg-log-card' in markup
+
+
+def test_wordpack_picker_is_outside_the_page_and_selects():
+    headers = {'user-agent': 'Mozilla/5.0 Chrome/120', 'HX-Request': 'true'}
+    with TestClient(app, client=('10.0.0.31', 1)) as host:
+        page = host.get('/codenames/cn-pack', headers=headers)
+        lobby = service.lobbies['cn-pack']
+        controls = to_xml(HostSettings(lobby.host, lobby))
+        extra = DI.get(WordPackRepo).upsert(WordPack(name='Codenames Extra', words_='alpha\nbeta\ngamma'))
+
+        assert page.status_code == 200
+        assert 'id="pack-select"' not in controls
+        assert 'mg-pack-select-modal' in page.text and 'hx-trigger="shown"' in page.text
+        assert 'data-uk-toggle="target: #pack-select"' in controls
+        assert lobby.state.wordpack.name in controls
+
+        picked = host.post('/codenames/select_pack', headers=headers, data={'id': extra.id})
+        assert picked.status_code == 200
+        assert lobby.state.wordpack.id == extra.id
+        picker = host.get('/codenames/pack_select', headers=headers).text
+        assert 'mg-pack-select-layout' in picker and 'id="editor"' in picker
+        assert 'Codenames Extra' in picker and 'Select wordpack' in picker
+
+        lobby.state.phase = GamePhase.CLUE
+        assert 'disabled' in to_xml(PackSelectButton(lobby.state))
+        assert 'Game in progress' in to_xml(PackSelectContents(lobby.host, lobby.state))
+        denied = host.post('/codenames/select_pack', headers=headers, data={'id': lobby.state.wordpack.id})
+        assert 'Cannot select that wordpack' in denied.text
 
 
 def test_shuffle_teams_keeps_sizes_and_clears_spymasters():

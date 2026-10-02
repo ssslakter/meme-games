@@ -1,7 +1,6 @@
 from meme_games.core import *
 from meme_games.domain import *
 from meme_games.apps.word_packs.domain import WordPackRepo
-from meme_games.apps.word_packs.components import WordPackEditor
 from meme_games.apps.shared import *
 from meme_games.apps.shared.spectators import Spectators
 from meme_games.apps.shared.ws_route import lobby_ws
@@ -80,19 +79,20 @@ async def toggle_spymaster(req: Request):
 
 @rt
 def editor_readonly(req: Request, id: str):
-    _, _, member = pre_init(req)
-    pack = wordpack_manager.get_by_id(id)
-    return WordPackEditor(pack, readonly=True,
-                          form_kwargs=dict(hx_post=select_pack.to(pack_id=id), hx_swap='none'),
-                          submit_button=Button('Select wordpack' if is_host(member) else 'Must be host to select',
-                                               disabled=not is_host(member)),
-                          hx_on__after_request="UIkit.modal('#pack-select').hide()")
+    _, state, member = pre_init(req)
+    return SelectEditor(member, wordpack_manager.get_by_id(id), state)
 
 
 @rt
-async def select_pack(req: Request, pack_id: str):
+def pack_select(req: Request):
+    _, state, member = pre_init(req)
+    return PackSelectContents(member, state)
+
+
+@rt
+async def select_pack(req: Request, id: str):
     lobby, _, member = pre_init(req)
-    try: await codenames_actions.select_pack(lobby, member, pack_id)
+    try: await codenames_actions.select_pack(lobby, member, id)
     except ActionRejected as error: return rejected(req, error)
 
 
