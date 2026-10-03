@@ -1,0 +1,46 @@
+meme_games/apps/alias/components/game.py
+  h_cec284cdd16cba 2,9-10
+meme_games/apps/alias/routes.py
+  h_cec284cdd16cba 6,10-11
+meme_games/apps/codenames/actions.py
+  h_cec284cdd16cba 4,13,25
+meme_games/apps/codenames/agent.py
+  h_cec284cdd16cba 6-8
+meme_games/apps/codenames/components/game.py
+  h_cec284cdd16cba 10-11
+meme_games/apps/codenames/domain.py
+  h_cec284cdd16cba 183,186-187,228-230
+meme_games/apps/codenames/routes.py
+  h_cec284cdd16cba 3,13-14
+meme_games/apps/whoami/actions.py
+  h_cec284cdd16cba 10-11
+meme_games/apps/whoami/agent.py
+  h_cec284cdd16cba 8-10
+meme_games/apps/whoami/components/cards.py
+  h_cec284cdd16cba 3,8-9
+meme_games/apps/whoami/components/game.py
+  h_cec284cdd16cba 4,9-10
+meme_games/apps/whoami/components/notes.py
+  h_cec284cdd16cba 4,7-8
+meme_games/apps/whoami/components/settings.py
+  h_cec284cdd16cba 6-7
+meme_games/apps/whoami/routes.py
+  h_cec284cdd16cba 6,12-13
+meme_games/domain/lobby/lobby.py
+  h_cec284cdd16cba 6-7,9-10,62,87,91
+meme_games/domain/timer.py
+  h_cec284cdd16cba 5,22-25,29-34,36-37,44,50-51,53-54
+tests/test_codenames.py
+  h_cec284cdd16cba 176-249
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "a1841f4f042f45043e824bb68c8e612ca304a77d",
+  "prompts": {},
+  "humans": {
+    "h_cec284cdd16cba": {
+      "author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
