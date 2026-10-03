@@ -173,6 +173,41 @@ def test_changing_a_pick_during_the_countdown_cancels_the_reveal(monkeypatch):
     assert state.consensus() is None
 
 
+def test_the_timer_waits_for_a_pending_pick_before_ending_the_turn(monkeypatch):
+    monkeypatch.setattr(codenames_domain, 'COMMIT_SECONDS', 0.5)
+    lobby, state, _, operatives = _clued_lobby('codenames-timer-waits', extra_operatives=1)
+    card = next(card for card in state.board if card.color == state.turn.card_color)
+    old_turn = state.turn
+    state.guess_seconds = 30
+    state.timer.set(0.05)
+
+    async def play():
+        codenames_actions._watch_turn(lobby)
+        for operative in operatives: await codenames_actions.vote(lobby, operative, card.id)
+        await asyncio.sleep(1.2)
+
+    asyncio.run(play())
+    assert card.revealed, 'a pick made before the deadline must not be cancelled by it'
+    assert not state.votes
+    assert state.phase == GamePhase.CLUE
+    assert state.turn == old_turn.other
+
+
+def test_an_unpicked_turn_still_times_out_after_the_wait_loop():
+    lobby, state, _, _ = _clued_lobby('codenames-timer-expiry')
+    old_turn = state.turn
+    state.guess_seconds = 30
+    state.timer.set(0.01)
+
+    async def play():
+        codenames_actions._watch_turn(lobby)
+        await asyncio.sleep(0.4)
+
+    asyncio.run(play())
+    assert state.phase == GamePhase.CLUE
+    assert state.turn == old_turn.other
+
+
 def test_a_clue_may_contain_several_words():
     _, members, state = ready_lobby('codenames-multiword')
     assert state.start()

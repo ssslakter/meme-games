@@ -1,7 +1,7 @@
 import asyncio
 
 from meme_games.core import DI
-from meme_games.domain import Lobby, LobbyMember, LobbyService, is_host
+from meme_games.domain import Lobby, LobbyMember, LobbyService, is_host, lobby_events
 from meme_games.apps.shared.actions import ActionRejected, ActionResult, GameActions
 from meme_games.apps.word_packs.domain import WordPackRepo
 
@@ -18,6 +18,7 @@ class CodenamesActions(GameActions):
         super().__init__(lobbies)
         self.wordpacks = wordpacks
         self._watched: dict[str, int] = {}
+        self._pending: dict[str, asyncio.Event] = {}
 
     def _watch_turn(self, lobby: Lobby):
         '''One watcher per armed turn timer; the token keeps stale ones from firing.'''
@@ -28,20 +29,36 @@ class CodenamesActions(GameActions):
 
     async def _turn_timeout(self, lobby: Lobby, state: CodenamesState, token: int):
         await state.timer.sleep()
-        if (lobby.current_game != CODENAMES or lobby.state is not state
-                or state.timer_token != token or not state.timer.finished): return
-        try: await self._change(lobby, state.timeout, 'Time is up', ('game', 'turn'))
-        except ActionRejected: pass
-        self._watch_turn(lobby)
+        lock = self._locks[lobby.id]
+        while True:
+            await lock.acquire()
+            try:
+                if (lobby.current_game != CODENAMES or lobby.state is not state
+                        or state.timer_token != token or not state.timer.finished): return
+                pending = self._pending.get(lobby.id)
+                if not pending:
+                    if not state.timeout(): return
+                    self.lobbies.update(lobby)
+                    await lobby_events.publish(lobby, 'game', 'turn')
+                    self._watch_turn(lobby)
+                    return
+            finally:
+                lock.release()
+            await pending.wait()
 
-    async def _commit_vote(self, lobby: Lobby, state: CodenamesState, version: int, card_id: str):
-        await asyncio.sleep(domain.COMMIT_SECONDS)
-        if lobby.state is not state or state.votes_version != version: return
-        if state.consensus() != card_id: return
-        member = lobby.members.get(next(iter(state.votes), ''))
-        if not member: return
-        try: await self.reveal_card(lobby, member, card_id)
-        except ActionRejected: pass
+    async def _commit_vote(self, lobby: Lobby, state: CodenamesState, version: int, card_id: str,
+                           done: asyncio.Event):
+        try:
+            await asyncio.sleep(domain.COMMIT_SECONDS)
+            if lobby.state is not state or state.votes_version != version: return
+            if state.consensus() != card_id: return
+            member = lobby.members.get(next(iter(state.votes), ''))
+            if not member: return
+            try: await self.reveal_card(lobby, member, card_id)
+            except ActionRejected: pass
+        finally:
+            if self._pending.get(lobby.id) is done: self._pending.pop(lobby.id, None)
+            done.set()
 
     async def join_team(self, lobby: Lobby, member: LobbyMember, team: str):
         try: team = TeamColor(team)
@@ -111,12 +128,15 @@ class CodenamesActions(GameActions):
 
     async def vote(self, lobby: Lobby, member: LobbyMember, card_id: str):
         state: CodenamesState = lobby.state
-        result = await self._change(
-            lobby, lambda: state.vote(member, card_id), 'Pick registered', ('game', 'vote'),
-            rejected='You cannot pick that card')
-        if state.consensus() == card_id:
-            asyncio.create_task(self._commit_vote(lobby, state, state.votes_version, card_id))
-        return result
+        def mutate():
+            if not state.vote(member, card_id): return False
+            if state.consensus() == card_id:
+                done = asyncio.Event()
+                self._pending[lobby.id] = done
+                asyncio.create_task(self._commit_vote(lobby, state, state.votes_version, card_id, done))
+            return True
+        return await self._change(lobby, mutate, 'Pick registered', ('game', 'vote'),
+                                  rejected='You cannot pick that card')
 
     async def reveal_card(self, lobby: Lobby, member: LobbyMember, card_id: str):
         result = await self._change(
