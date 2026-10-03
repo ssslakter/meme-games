@@ -1,9 +1,12 @@
 from ...shared import *
 from ...user import *
 from ..domain import *
+from meme_games.domain import Lobby as _Lobby
 from .cards import *
 from .notes import *
 from .settings import *
+
+Lobby = _Lobby[WhoAmIState]
 
 
 def BoardTransform():

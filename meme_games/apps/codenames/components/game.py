@@ -7,6 +7,8 @@ from meme_games.apps.word_packs.components import PacksSelect, WordPackEditor, w
 
 from ..domain import *
 
+Lobby = Lobby[CodenamesState]
+
 
 TEAM_STYLE = {
     TeamColor.RED: 'border-red-300/70 bg-red-50/70 dark:border-red-900 dark:bg-red-950/25',

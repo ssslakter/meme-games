@@ -180,8 +180,11 @@ class CodenamesState:
         self.timer.set(seconds) if seconds else self.timer.stop()
 
     def timeout(self) -> bool:
+        '''End the turn. A unanimous pick already made is opened as this turn closes.'''
         if self.phase not in (GamePhase.CLUE, GamePhase.GUESSING) or not self.turn: return False
         self._log('timeout', team=self.turn.value)
+        opened = (card_id := self.consensus()) and self._reveal(card_id)
+        if opened and self.phase != GamePhase.GUESSING: return True
         return self.end_turn()
 
     def give_clue(self, member: LobbyMember, clue: str, number: int):
@@ -222,6 +225,9 @@ class CodenamesState:
     def reveal(self, member: LobbyMember, card_id: str):
         if (self.phase != GamePhase.GUESSING or self.team_of(member) != self.turn or
                 member.uid in self.spymasters): return False
+        return self._reveal(card_id)
+
+    def _reveal(self, card_id: str):
         card = next((card for card in self.board if card.id == card_id and not card.revealed), None)
         if not card: return False
         card.revealed, self.last_revealed, self.last_revealed_by = True, card.id, self.turn.value

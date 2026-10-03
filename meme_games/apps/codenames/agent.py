@@ -3,7 +3,9 @@ from meme_games.apps.shared.agent import AgentGame, register_agent_game
 from meme_games.domain import Lobby, LobbyMember
 
 from .actions import codenames_actions
-from .domain import CODENAMES, GamePhase, TeamColor
+from .domain import CODENAMES, CodenamesState, GamePhase, TeamColor
+
+Lobby = Lobby[CodenamesState]
 
 __all__ = ['CodenamesAgentGame']
 

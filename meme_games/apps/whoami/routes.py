@@ -3,10 +3,13 @@ from ..shared.ws_route import lobby_ws
 from ..shared.utils import register_route, lobby_state
 from meme_games.core import *
 from meme_games.domain import *
+from meme_games.domain import Lobby as _Lobby
 from ..shared import *
 from .domain import *
 from .actions import *
 from .components import *
+
+Lobby = _Lobby[WhoAmIState]
 
 #---------------------------------#
 #------------- Routes ------------#

@@ -1,5 +1,6 @@
 from meme_games.core import *
 from meme_games.domain import *
+from meme_games.domain import Lobby as _Lobby
 from meme_games.apps.word_packs.domain import WordPackRepo
 from meme_games.apps.shared import *
 from meme_games.apps.shared.spectators import Spectators
@@ -8,6 +9,8 @@ from meme_games.apps.shared.ws_route import lobby_ws
 from .domain import *
 from .actions import *
 from .components import *
+
+Lobby = _Lobby[CodenamesState]
 
 
 rt = APIRouter('/codenames')

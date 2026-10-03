@@ -1,7 +1,7 @@
 import asyncio
 
 from meme_games.core import DI
-from meme_games.domain import Lobby, LobbyMember, LobbyService, is_host
+from meme_games.domain import Lobby as _Lobby, LobbyMember, LobbyService, is_host
 from meme_games.apps.shared.actions import ActionRejected, ActionResult, GameActions
 from meme_games.apps.word_packs.domain import WordPackRepo
 
@@ -10,6 +10,7 @@ from .domain import CODENAMES, CodenamesState, GamePhase, TeamColor
 
 __all__ = ['ActionRejected', 'ActionResult', 'CodenamesActions', 'codenames_actions']
 
+Lobby = _Lobby[CodenamesState]
 
 class CodenamesActions(GameActions):
     """The shared application boundary used by browser routes and agent calls."""
@@ -21,7 +22,7 @@ class CodenamesActions(GameActions):
 
     def _watch_turn(self, lobby: Lobby):
         '''One watcher per armed turn timer; the token keeps stale ones from firing.'''
-        state: CodenamesState = lobby.state
+        state = lobby.state
         if not state.turn_seconds() or self._watched.get(lobby.id) == state.timer_token: return
         self._watched[lobby.id] = state.timer_token
         asyncio.create_task(self._turn_timeout(lobby, state, state.timer_token))

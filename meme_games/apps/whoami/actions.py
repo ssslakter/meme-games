@@ -7,6 +7,8 @@ from meme_games.apps.shared.actions import ActionRejected, ActionResult, GameAct
 
 from .domain import CARD_MAX, NOTES_MAX, TOPIC_MAX, WHOAMI, WhoAmIPhase, WhoAmIState
 
+Lobby = Lobby[WhoAmIState]
+
 logger = logging.getLogger(__name__)
 
 __all__ = ['ActionRejected', 'ActionResult', 'WhoAmIActions', 'whoami_actions']

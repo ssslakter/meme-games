@@ -3,6 +3,8 @@ from ...shared.settings import Setting
 from ..domain import *
 from meme_games.domain import Lobby, LobbyMember, User, is_host
 
+Lobby = Lobby[WhoAmIState]
+
 
 def PrivateNotesSetting(lobby: Lobby):
     from ..routes import toggle_private_notes

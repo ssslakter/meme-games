@@ -1,9 +1,12 @@
 from ..domain import GameState, ALIAS
+from meme_games.domain import Lobby as _Lobby
 from ...shared import *
 from ...shared.spectators import register_game_view
 from ...user import *
 from .team import *
 from .settings import *
+
+Lobby = _Lobby[GameState]
 
 def Game(reciever: LobbyMember | User, lobby: Lobby, **kwargs: Any) -> FT:
     state: GameState = lobby.state

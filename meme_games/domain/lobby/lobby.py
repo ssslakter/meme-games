@@ -3,7 +3,11 @@ __all__ = ['Lobby', 'LobbyRepo', 'MemberRepo', 'is_player', 'is_host', 'ChatMess
            'GameSpec', 'GAME_REGISTRY', 'register_game', 'BASIC_GAME', 'CHAT_MAX']
 
 import json
+from typing import Any, Generic, TypeVar
+
 from meme_games.core import *
+
+StateT = TypeVar('StateT', default=Any)
 from ..user import *
 from .member import *
 
@@ -55,7 +59,7 @@ def register_game(name: str, state_cls: Optional[type] = None, persist: bool = F
 
 
 @dataclass
-class Lobby(Model):
+class Lobby(Model, Generic[StateT]):
     '''A room of members that can switch between games, keeping everyone in place.'''
     _ignore = ('members', 'host', 'states', 'chat')
 
@@ -80,11 +84,11 @@ class Lobby(Model):
             self.game_started_at = dt.datetime.fromisoformat(self.game_started_at)
 
     @property
-    def state(self):
+    def state(self) -> StateT:
         '''State of the game currently being played, or None for a plain lobby.'''
         return self.states.get(self.current_game)
 
-    def play_game(self, name: str):
+    def play_game(self, name: str) -> Any:
         '''Switch to `name`, keeping every member and the state of the game they left.'''
         if name not in GAME_REGISTRY: raise ValueError(f'Unknown game {name}, available: {list(GAME_REGISTRY)}')
         self.current_game = name

@@ -1,8 +1,10 @@
 from ...shared import *
 from ...user import *
 from ..domain import *
-from meme_games.domain import User, LobbyMember
+from meme_games.domain import User, LobbyMember, Lobby as _Lobby
 from .basic import *
+
+Lobby = _Lobby[WhoAmIState]
 
 
 def NotesCard(reciever: LobbyMember | User, owner: LobbyMember, data: PlayerNotes, state: WhoAmIState):

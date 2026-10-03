@@ -3,8 +3,11 @@ from ..shared.ws_route import lobby_ws
 from ..shared.spectators import notify_roster_changed
 from meme_games.core import *
 from meme_games.domain import *
+from meme_games.domain import Lobby as _Lobby
 from meme_games.apps.word_packs.components import *
 from .components import *
+
+Lobby = _Lobby[GameState]
 
 
 #---------------------------------#

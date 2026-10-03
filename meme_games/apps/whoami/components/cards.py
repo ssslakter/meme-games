@@ -1,9 +1,11 @@
 from ...shared import *
 from meme_games.apps.user import *
-from meme_games.domain import Lobby, LobbyMember, User, is_player
+from meme_games.domain import Lobby as _Lobby, LobbyMember, User, is_player
 from ..domain import *
 from .notes import *
 from .basic import *
+
+Lobby = _Lobby[WhoAmIState]
 
 
 def PlayerLabelText(r: LobbyMember | User, owner: LobbyMember, data: PlayerNotes, lobby: Lobby = None):

@@ -173,6 +173,80 @@ def test_changing_a_pick_during_the_countdown_cancels_the_reveal(monkeypatch):
     assert state.consensus() is None
 
 
+def test_timeout_opens_a_unanimous_pick_as_the_turn_closes():
+    _, state, _, operatives = _clued_lobby('codenames-timeout-commit', extra_operatives=1)
+    card = next(c for c in state.board if c.color == CardColor.NEUTRAL)
+    turn = state.turn
+    for operative in operatives: assert state.vote(operative, card.id)
+
+    assert state.timeout()
+    assert card.revealed
+    assert state.phase == GamePhase.CLUE
+    assert state.turn == turn.other
+    assert [entry.kind for entry in state.log].index('timeout') < [entry.kind for entry in state.log].index('reveal')
+
+
+def test_timeout_opens_an_own_card_and_still_ends_the_turn():
+    _, state, _, operatives = _clued_lobby('codenames-timeout-own', extra_operatives=1)
+    card = next(c for c in state.board if c.color == state.turn.card_color)
+    turn = state.turn
+    for operative in operatives: assert state.vote(operative, card.id)
+
+    assert state.timeout()
+    assert card.revealed
+    assert state.phase == GamePhase.CLUE
+    assert state.turn == turn.other
+    assert state.guesses_left == 0
+
+
+def test_timeout_on_a_unanimous_bomb_ends_the_game():
+    _, state, _, operatives = _clued_lobby('codenames-timeout-bomb', extra_operatives=1)
+    bomb = next(c for c in state.board if c.color == CardColor.BOMB)
+    turn = state.turn
+    for operative in operatives: assert state.vote(operative, bomb.id)
+
+    assert state.timeout()
+    assert bomb.revealed
+    assert state.phase == GamePhase.FINISHED
+    assert state.winner == turn.other
+    kinds = [entry.kind for entry in state.log]
+    assert 'turn' not in kinds[kinds.index('timeout'):]
+
+
+def test_timeout_without_consensus_just_ends_the_turn():
+    _, state, _, operatives = _clued_lobby('codenames-timeout-split', extra_operatives=1)
+    card = state.board[0]
+    assert state.vote(operatives[0], card.id)
+
+    assert state.timeout()
+    assert not card.revealed
+    assert state.phase == GamePhase.CLUE
+
+
+def test_an_expiring_round_opens_the_agreed_card_before_the_commit_countdown(monkeypatch):
+    monkeypatch.setattr(codenames_domain, 'COMMIT_SECONDS', 0.8)
+    lobby, members, state = ready_lobby('codenames-timeout-race')
+    state.guess_seconds = 0.2
+    extra = _extra_operative(lobby, state, TeamColor.RED, 'codenames-timeout-race-red')
+    extra_blue = _extra_operative(lobby, state, TeamColor.BLUE, 'codenames-timeout-race-blue')
+
+    async def play():
+        await codenames_actions.start(lobby, members[0])
+        red = state.turn == TeamColor.RED
+        spymaster = members[0] if red else members[2]
+        operatives = [members[1], extra] if red else [members[3], extra_blue]
+        await codenames_actions.give_clue(lobby, spymaster, 'signal', 3)
+        card = next(c for c in state.board if c.color == CardColor.NEUTRAL)
+        for operative in operatives: await codenames_actions.vote(lobby, operative, card.id)
+        await asyncio.sleep(1.1)
+        return card
+
+    card = asyncio.run(play())
+    assert card.revealed
+    assert state.phase == GamePhase.CLUE
+    assert state.consensus() is None
+
+
 def test_a_clue_may_contain_several_words():
     _, members, state = ready_lobby('codenames-multiword')
     assert state.start()
