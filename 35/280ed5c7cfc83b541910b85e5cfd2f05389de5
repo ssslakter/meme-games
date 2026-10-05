@@ -1,0 +1,79 @@
+meme_games/apps/shared/spectators.py
+  s_ffae15237aec16::t_12c90642573eac 15-16
+static/styles/app.css
+  s_a4f52a358c984c::t_2027bcd766ce53 696-699,701-707
+tests/test_alias_ui.py
+  s_a4f52a358c984c::t_77bedeedcb6158 5
+  s_a4f52a358c984c::t_7e1da5ed721752 598,600-601
+meme_games/apps/codenames/agent.py
+  s_a4f52a358c984c::t_38cfb90dadaf5f 41-42,116-117
+tests/test_codenames.py
+  s_a4f52a358c984c::t_fe30ba236948fd 9-10
+  s_a4f52a358c984c::t_a9a5d49dbf40d8 328-329
+  s_a4f52a358c984c::t_4dd16ad1df2986 338-340
+  s_a4f52a358c984c::t_737dd1088d51d2 315-318
+  s_a4f52a358c984c::t_1046264da1aa60 335-337,341-380
+meme_games/apps/shared/rules.py
+  s_a4f52a358c984c::t_ce15f83374c8c6 47-49
+  s_a4f52a358c984c::t_35b2b8bfa6a88e 25-26,31
+meme_games/apps/codenames/domain.py
+  s_a4f52a358c984c::t_0d1a1a9b7b05fe 80
+  s_a4f52a358c984c::t_f5b63c258f18ce 250
+static/styles/codenames.css
+  s_a4f52a358c984c::t_c51400b8657687 108-128,131-136,142-172,175-188
+  s_a4f52a358c984c::t_6a8d96b63441ea 173-174
+  s_a4f52a358c984c::t_7a1c434ba6e4c0 193,200
+  s_a4f52a358c984c::t_2f67c7118e6462 7-8,10-11
+meme_games/apps/shared/settings.py
+  s_a4f52a358c984c::t_fb3c47eb1eb87b 130-131,133,137
+meme_games/apps/codenames/actions.py
+  s_a4f52a358c984c::t_492326a79415ed 71-72,75-82
+meme_games/apps/word_packs/components.py
+  s_a4f52a358c984c::t_72e1848d7d68b5 93
+  s_a4f52a358c984c::t_8ff51c06845887 118
+tests/test_word_packs.py
+  s_a4f52a358c984c::t_137ef38cb16156 33,36-40
+meme_games/apps/word_packs/routes.py
+  s_a4f52a358c984c::t_3eadf977f4d6b4 20-23,25
+  s_a4f52a358c984c::t_a69dd8bd24f62a 44-48
+  s_a4f52a358c984c::t_5211f6a89db340 24
+meme_games/apps/codenames/routes.py
+  s_a4f52a358c984c::t_813624406ff54c 103-104,106-107
+meme_games/apps/home/routes.py
+  s_ffae15237aec16::t_ce6a347cda11c3 62
+  s_ffae15237aec16::t_2493c19cef7d49 56
+static/styles/themes/cyberpunk-2077.css
+  s_a4f52a358c984c::t_630959bc63cf34 254,260,266
+meme_games/apps/codenames/components/game.py
+  s_a4f52a358c984c::t_dff1e4004783fa 265
+  s_a4f52a358c984c::t_49d74ea850c469 104
+  s_a4f52a358c984c::t_1e57b17b091518 225-231
+  s_a4f52a358c984c::t_5707741f917823 140-141,144
+  s_a4f52a358c984c::t_f8e071ebde2a6e 233
+  s_a4f52a358c984c::t_627002a0e58869 264
+  s_a4f52a358c984c::t_a7661785f86f21 195,198,200
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "35280ed5c7cfc83b541910b85e5cfd2f05389de5",
+  "prompts": {},
+  "sessions": {
+    "s_a4f52a358c984c": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "9697acb1-f023-4e89-a283-aab02c13dbec",
+        "model": "grok-4.7"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    },
+    "s_ffae15237aec16": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "cd54872b-fcea-42a8-98f4-0e7e67371afe",
+        "model": "grok-4.7"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
