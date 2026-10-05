@@ -30,5 +30,11 @@ def test_upload_fills_the_editor_so_the_pack_can_be_named_and_saved():
         saved = client.post('/word_packs/save', headers=HEADERS,
                             data={'id': 'pack-zveri', 'name': 'Звери', 'words': 'кот\nпёс\n'})
         assert saved.status_code == 200
+        assert 'hx-swap-oob="true"' in saved.text and 'Звери' in saved.text
         pack = DI.get(WordPackRepo).get_by_id('pack-zveri')
         assert pack.name == 'Звери' and pack.words == ['кот', 'пёс']
+
+        # a follow-up change from clearing the file input must not replace the editor
+        empty = client.post('/word_packs/upload', headers=HEADERS,
+                            files={'file': ('', b'', 'application/octet-stream')})
+        assert empty.status_code == 200 and 'name="words"' not in empty.text

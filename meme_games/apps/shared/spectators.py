@@ -12,8 +12,8 @@ register_route(rt)
 GAME_VIEWS: dict[str, Callable[[LobbyMember | User, Lobby], Any]] = {}
 
 def register_game_view(game: str, view_fn: Callable[[LobbyMember | User, Lobby], Any]):
-    '''How to re-render `game`'s board for one member. Lobbies without a board
-    (video) simply do not register one.'''
+    '''How to re-render `game`'s board for one member. A game without a board
+    simply does not register one.'''
     GAME_VIEWS[game] = view_fn
 
 

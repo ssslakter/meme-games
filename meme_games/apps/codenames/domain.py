@@ -77,6 +77,7 @@ class CodenamesState:
     last_revealed_by: Optional[str] = None  # and the team that turned it, before the turn flips
     clue_seconds: int = 0
     guess_seconds: int = 0
+    unlimited_guesses: bool = True
     log: list[LogEntry] = field(default_factory=list)
     votes: dict[str, str] = field(default_factory=dict)
     votes_version: int = 0
@@ -246,7 +247,7 @@ class CodenamesState:
             self.end_turn()
         else:
             self.guesses_left -= 1
-            if self.guesses_left <= 0: self.end_turn()
+            if not self.unlimited_guesses and self.guesses_left <= 0: self.end_turn()
         return True
 
     def _finish(self, winner: TeamColor):

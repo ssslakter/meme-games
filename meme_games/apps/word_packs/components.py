@@ -90,7 +90,7 @@ def Packs(wordpacks: list[WordPack], author_id: str = ''):
 def WordPackEditor(wp: Optional[WordPack] = None,
                    readonly: bool = False,
                    disable_submit: bool = False,
-                   submit_button = Button("Save", cls=ButtonT.primary),
+                   submit_button = Button("Save", cls=(ButtonT.primary, 'w-full')),
                    form_kwargs = None,
                    **kwargs):
     from .routes import save
@@ -115,7 +115,7 @@ def WordPackEditor(wp: Optional[WordPack] = None,
                 submit_button(disabled=True) if disable_submit else submit_button,
                 style="display: flex; flex-direction: row; gap: 10px;",
             ),
-            style="display: flex; flex-direction: column; gap: 10px; align-items: flex-start;",
+            style="display: flex; flex-direction: column; gap: 10px; align-items: stretch; width: 100%;",
         ),
     )
     

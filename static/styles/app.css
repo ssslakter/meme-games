@@ -693,6 +693,15 @@ html.dark .mg-theme-toggle-thumb {
 
 /* The file input only covered the placeholder's content box, so clicks on the
    padding never opened the dialog. Padding lives on the label instead. */
-.mg-wordpack-upload.uk-placeholder { position: relative; padding: 0; }
-.mg-wordpack-upload .uk-form-custom { display: block; width: 100%; }
+/* The native file control is font-sized to 500px so its hit target fills the
+   zone. Without a clip that target spills over the editor and eats the Save click. */
+.mg-wordpack-upload.uk-placeholder { position: relative; padding: 0; overflow: hidden; }
+.mg-wordpack-upload .uk-form-custom { display: block; width: 100%; overflow: hidden; }
 .mg-wordpack-upload .uk-form-custom > span { display: block; padding: 2rem 1rem; }
+
+.mg-word-pack-editor form {
+  align-items: stretch !important;
+  width: 100% !important;
+}
+.mg-word-pack-editor input[name="name"],
+.mg-word-pack-editor textarea { width: 100%; }

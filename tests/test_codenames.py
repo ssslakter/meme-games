@@ -6,8 +6,8 @@ from starlette.testclient import TestClient
 
 from meme_games.apps.codenames import domain as codenames_domain
 from meme_games.apps.codenames.actions import codenames_actions
-from meme_games.apps.codenames.components.game import (BoardCard, EventLog, HostSettings, PackSelectButton,
-                                                      PackSelectContents)
+from meme_games.apps.codenames.components.game import (BoardCard, CluePanel, EventLog, HostSettings,
+                                                      PackSelectButton, PackSelectContents)
 from meme_games.apps.word_packs.domain import WordPackRepo
 from meme_games.apps.codenames.domain import (CardColor, CODENAMES, CodenamesState, GamePhase,
                                               LogEntry, TeamColor, WordCard)
@@ -312,8 +312,10 @@ def test_wordpack_picker_is_outside_the_page_and_selects():
         assert page.status_code == 200
         assert 'id="pack-select"' not in controls
         assert 'mg-pack-select-modal' in page.text and 'hx-trigger="shown"' in page.text
-        assert 'data-uk-toggle="target: #pack-select"' in controls
-        assert lobby.state.wordpack.name in controls
+        # every member can open the browser; it is not buried in host-only controls
+        assert 'data-uk-toggle="target: #pack-select"' in page.text
+        assert 'data-uk-toggle="target: #pack-select"' not in controls
+        assert lobby.state.wordpack.name in page.text
 
         picked = host.post('/codenames/select_pack', headers=headers, data={'id': extra.id})
         assert picked.status_code == 200
@@ -323,10 +325,57 @@ def test_wordpack_picker_is_outside_the_page_and_selects():
         assert 'Codenames Extra' in picker and 'Select wordpack' in picker
 
         lobby.state.phase = GamePhase.CLUE
-        assert 'disabled' in to_xml(PackSelectButton(lobby.state))
+        button = to_xml(PackSelectButton(lobby.state))
+        assert 'data-uk-toggle="target: #pack-select"' in button and 'disabled' not in button
         assert 'Game in progress' in to_xml(PackSelectContents(lobby.host, lobby.state))
         denied = host.post('/codenames/select_pack', headers=headers, data={'id': lobby.state.wordpack.id})
         assert 'Cannot select that wordpack' in denied.text
+
+
+def test_guesses_stay_open_until_the_host_caps_them():
+    lobby, members, state = ready_lobby('codenames-unlimited')
+    assert state.unlimited_guesses
+    controls = to_xml(HostSettings(lobby.host, lobby))
+    assert 'name="unlimited_guesses"' in controls
+    assert 'enctype="application/x-www-form-urlencoded"' in controls
+    assert 'checked' in to_xml(HostSettings(lobby.host, lobby))
+    assert state.start()
+    spymaster = members[0] if state.turn == TeamColor.RED else members[2]
+    operative = members[1] if state.turn == TeamColor.RED else members[3]
+    assert state.give_clue(spymaster, 'signal', 1)
+    assert 'guesses remaining' not in to_xml(CluePanel(operative, state))
+    own = [card for card in state.board if card.color == state.turn.card_color]
+    for card in own[:3]: assert state.reveal(operative, card.id)
+    assert state.phase == GamePhase.GUESSING
+
+    state.restart()
+    state.unlimited_guesses = False
+    assert state.start()
+    spymaster = members[0] if state.turn == TeamColor.RED else members[2]
+    operative = members[1] if state.turn == TeamColor.RED else members[3]
+    assert state.give_clue(spymaster, 'signal', 1)
+    assert '2 guesses remaining' in to_xml(CluePanel(operative, state))
+    own = [card for card in state.board if card.color == state.turn.card_color and not card.revealed]
+    assert state.reveal(operative, own[0].id)
+    assert state.phase == GamePhase.GUESSING
+    assert state.reveal(operative, own[1].id)
+    assert state.phase == GamePhase.CLUE
+
+
+def test_host_can_toggle_unlimited_guesses():
+    headers = {'user-agent': 'Mozilla/5.0 Chrome/120', 'HX-Request': 'true'}
+    with TestClient(app, client=('10.0.0.41', 1)) as host:
+        host.get('/codenames/cn-unlimited', headers=headers)
+        lobby = service.lobbies['cn-unlimited']
+        off = host.post('/codenames/update_settings', headers=headers,
+                        data={'clue_seconds': '30', 'guess_seconds': '20'})
+        assert off.status_code == 200
+        assert lobby.state.unlimited_guesses is False
+        assert lobby.state.clue_seconds == 30
+        on = host.post('/codenames/update_settings', headers=headers,
+                       data={'clue_seconds': '30', 'guess_seconds': '20', 'unlimited_guesses': '1'})
+        assert on.status_code == 200
+        assert lobby.state.unlimited_guesses is True
 
 
 def test_shuffle_teams_keeps_sizes_and_clears_spymasters():

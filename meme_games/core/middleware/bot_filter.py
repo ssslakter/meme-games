@@ -9,7 +9,6 @@ __all__ = ['BotFilterMiddleware', 'BOT_UA_PATTERN', 'LOBBY_PATTERNS']
 LOBBY_PATTERNS = [
     r"^/alias/[a-z0-9]+$",
     r"^/whoami/[a-z0-9]+$",
-    r"^/video/[a-z0-9]+$",
     r"^/codenames/[a-z0-9]+$",
 ]
 

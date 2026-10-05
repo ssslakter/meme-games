@@ -54,7 +54,6 @@ hdrs = [
     Statics(ext='css', static_path='static', wc='styles/*.css'),
     Statics(ext='js', static_path='static', wc='scripts/common/**/*.js'),
     Statics(ext='js', static_path='static', wc='scripts/whoami/**/*.js'),
-    Statics(ext='js', static_path='static', wc='scripts/video/**/*.js', defer=True),
     style
 ]
 

@@ -4,9 +4,11 @@
   user-select: none;
 }
 
+/* A guessed card keeps its colour. Saturating and fading it mixed the page
+   background into the fill, which turned every theme's red and blue muddy. */
 .mg-word-card[data-revealed='true'] {
-  filter: saturate(0.45);
-  opacity: 0.55;
+  filter: none;
+  opacity: 1;
 }
 
 .mg-word-card[data-revealed='true']::before {
@@ -103,25 +105,99 @@ html.dark {
   display: block !important;
 }
 
+/* Themes paint `.mg-game-card` with a blurred, sometimes translucent fill.
+   That blur shows through a guessed card and dirties the colour. */
+[data-page="codenames"] .mg-word-card {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+[data-page="codenames"] .mg-word-card[data-color] {
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+/* Default theme only: bundled themes restyle this afterwards. On a dark page a
+   slate-900 bomb is the same colour as the table, so it needs a light ring. */
+[data-page="codenames"] .mg-word-card[data-color="bomb"] {
+  background: #070707 !important;
+  color: #fff !important;
+  border-color: #fff !important;
+  box-shadow: 0 0 0 1px #070707, 0 0 0 3px #fff !important;
+}
+
 /*-------------------------------- Event log ---------------------------------*/
 
-.mg-codenames-log-panel { flex: 1; min-height: 14rem; }
+/* Fixed height, not a growing max-height. Once the log is tall enough to bring
+   in a scrollbar, a flexible track reflows the board on every new line and the
+   words jitter. The gutter stays reserved so the width does not jump either. */
+.mg-codenames-teams { min-width: 0; overflow-x: clip; }
+
+.mg-codenames-log-panel { flex: 0 0 auto; min-height: 0; }
 
 .mg-codenames-log {
   display: flex;
   flex-direction: column;
   gap: .3rem;
-  max-height: 26rem;
+  height: 18rem;
+  max-height: 18rem;
+  min-width: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overflow-anchor: none;
+  scrollbar-gutter: stable;
+  overflow-wrap: anywhere;
+}
+
+html:has([data-page="codenames"]) { scrollbar-gutter: stable; }
+
+/* The tools rail used to grow past the viewport, so the chat slid off the
+   bottom and the page scrolled out from under it. It stays on screen; the
+   settings above it scroll if they do not fit. */
+@media (min-width: 1280px) {
+  [data-page="codenames"] .mg-lobby-tools {
+    position: sticky;
+    top: 4.75rem;
+    height: calc(100vh - 6rem) !important;
+    max-height: calc(100vh - 6rem) !important;
+    min-height: 0 !important;
+    overflow: hidden;
+  }
+
+  [data-page="codenames"] .mg-lobby-tools-head {
+    flex: 0 1 auto;
+    overflow-y: auto;
+  }
+
+  [data-page="codenames"] .mg-lobby-talk {
+    flex: 1 1 24rem;
+    min-height: 24rem;
+    overflow: hidden;
+  }
+
+  [data-page="codenames"] .mg-lobby-talk .mg-chat,
+  [data-page="codenames"] .mg-lobby-talk .mg-chat > .uk-card-body {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  [data-page="codenames"] .mg-lobby-talk .mg-chat-messages {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+  }
 }
 
 .mg-log-line {
   margin: 0;
+  min-width: 0;
   padding: .15rem .5rem;
   border-left: 3px solid transparent;
   border-radius: .25rem;
   background: hsl(var(--muted) / .35);
   font-size: .82rem;
   line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 [data-page="codenames"] .mg-log-line[data-team="red"] { border-left-color: hsl(var(--mg-cn-red)); }

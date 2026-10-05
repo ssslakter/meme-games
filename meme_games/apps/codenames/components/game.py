@@ -101,7 +101,7 @@ def BoardCard(reciever: LobbyMember | User, state: CodenamesState, card: WordCar
                    cls='mg-vote-dots') if voters else None)
     return Div(
         *content,
-        cls=f'mg-game-card mg-word-card flex aspect-[5/3] min-w-0 flex-col items-center justify-center gap-1 border p-3 text-center shadow-sm transition {classes}'
+        cls=f'mg-game-card mg-word-card flex aspect-[5/3] min-w-0 flex-col items-center justify-center gap-1 border p-3 text-center shadow-sm transition-colors {classes}'
             + (' cursor-pointer' if clickable else ''),
         data_ui='word-card', data_card=card.id,
         data_color=visible_color.value if visible_color else 'hidden',
@@ -137,9 +137,11 @@ def CluePanel(reciever: LobbyMember | User, state: CodenamesState):
                 Button(UkIcon('send', cls='mr-2'), 'Give clue', cls=ButtonT.primary),
                 hx_post=submit_clue, hx_swap='none', cls='grid items-end gap-3 sm:grid-cols-[1fr_8rem_auto]')
         return P(f'Waiting for the {state.turn.value} spymaster to give a clue.', cls=TextT.muted)
+    remaining = (None if state.unlimited_guesses else
+                 f'{max(state.guesses_left, 0)} guesses remaining')
     return Div(
         Div(P('Clue', cls=TextT.muted), H2(f'{state.clue} · {state.clue_number}'),
-            P(f'{state.guesses_left} guesses remaining', cls=TextT.muted), cls='text-center'),
+            P(remaining, cls=TextT.muted) if remaining else None, cls='text-center'),
         Button('End guessing', hx_post=end_turn, hx_swap='none', cls=ButtonT.default)
             if mine == state.turn and not is_spymaster else None,
         cls='flex flex-wrap items-center justify-center gap-5')
@@ -190,13 +192,12 @@ def PackSelectContents(member: LobbyMember | User, state: CodenamesState) -> FT:
 
 
 def PackSelectButton(state: CodenamesState) -> FT:
-    locked = state.phase != GamePhase.WAITING
+    '''Opens the pack browser for every member. Picking one stays host-only, inside the modal.'''
     name = state.wordpack.name if state.wordpack else 'No pack selected'
     return Div(
-        Button(UkIcon('book-open', cls='mr-2 shrink-0'), 'Select wordpack',
+        Button(UkIcon('book-open', cls='mr-2 shrink-0'), 'Wordpacks',
                cls=(ButtonT.default, 'w-full justify-start'),
-               data_uk_toggle=None if locked else 'target: #pack-select',
-               disabled=locked),
+               data_uk_toggle='target: #pack-select'),
         P(name, cls=(TextT.muted, 'truncate text-sm'), data_ui='codenames-wordpack'),
         cls='space-y-1', data_ui='codenames-pack-select')
 
@@ -216,14 +217,20 @@ def HostSettings(reciever, lobby, oob=False):
     waiting = state.phase == GamePhase.WAITING
     return Div(
         H5('Host controls'),
-        PackSelectButton(state),
         Form(
             LabelInput('Clue seconds (0 = no limit)', name='clue_seconds', type='number', min=0, max=600,
                        value=str(state.clue_seconds)),
             LabelInput('Guess seconds (0 = no limit)', name='guess_seconds', type='number', min=0, max=600,
                        value=str(state.guess_seconds)),
-            P('First round runs twice as long.', cls=(TextT.muted, 'text-sm')),
+            Div(
+                CheckboxX(id='unlimited-guesses', name='unlimited_guesses', value='1',
+                          checked=state.unlimited_guesses, cls='shrink-0'),
+                FormLabel('Unlimited guesses', fr='unlimited-guesses', cls='m-0 cursor-pointer'),
+                cls='flex items-center gap-2'),
+            P('Off: guessing stops after the clue number, plus one. First round runs twice as long.',
+              cls=(TextT.muted, 'text-sm')),
             Button('Update settings', cls=(ButtonT.primary, 'w-full')),
+            enctype='application/x-www-form-urlencoded',
             hx_post=update_settings, hx_swap='none', cls='space-y-3'),
         Div(
             Button(UkIcon('play' if state.timer.paused else 'pause', cls='mr-2 shrink-0'),
@@ -254,7 +261,8 @@ def Page(reciever: LobbyMember | User, lobby: Lobby):
     from ..routes import ws_url
     # the modal sits beside the page: .mg-page's stacking context paints it under the navbar
     return (*LobbyPage(
-        GameShell(Game(reciever, lobby), LobbyTools(reciever, lobby, HostSettings(reciever, lobby))),
+        GameShell(Game(reciever, lobby),
+                  LobbyTools(reciever, lobby, PackSelectButton(lobby.state), HostSettings(reciever, lobby))),
         hx_ext='ws', ws_connect=ws_url, no_image=True, user=reciever,
         title=f'Codenames lobby: {lobby.id}', page='codenames'),
         PackSelectModal())

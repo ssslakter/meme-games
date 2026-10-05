@@ -251,19 +251,19 @@ body::after {
 [data-page="codenames"] .mg-word-card:not([data-commit])::after { display: none; }
 [data-page="codenames"] .mg-word-card[data-color="red"] {
   border-color: var(--mg-cyber-red) !important;
-  background-color: rgba(104, 9, 29, .94) !important;
+  background-color: #68091d !important;
   color: #fff0f4 !important;
   box-shadow: 4px 4px 0 var(--mg-cyber-red), 0 0 16px rgba(255, 52, 95, .35) !important;
 }
 [data-page="codenames"] .mg-word-card[data-color="blue"] {
   border-color: var(--mg-cyber-cyan) !important;
-  background-color: rgba(0, 44, 54, .94) !important;
+  background-color: #002c36 !important;
   color: #e8fbff !important;
   box-shadow: 4px 4px 0 var(--mg-cyber-cyan), 0 0 16px rgba(0, 240, 255, .3) !important;
 }
 [data-page="codenames"] .mg-word-card[data-color="neutral"] {
   border-color: #8b9296 !important;
-  background-color: rgba(47, 52, 55, .96) !important;
+  background-color: #2f3437 !important;
   color: #f4f4f2 !important;
   box-shadow: 4px 4px 0 #697176 !important;
 }

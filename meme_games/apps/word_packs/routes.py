@@ -17,8 +17,12 @@ def words_from_upload(raw: bytes) -> str:
 
 
 @rt("/upload", methods=["post"])
-async def upload(file: UploadFile):
-    name = (file.filename or 'wordpack').rsplit('.', 1)[0] or 'wordpack'
+async def upload(file: UploadFile = None):
+    # Clearing the file input after a successful upload fires `change` again in
+    # some browsers, with no filename. Swapping that into the editor wipes the
+    # pack the user was about to save.
+    if not isinstance(file, UploadFile) or not file.filename: return
+    name = file.filename.rsplit('.', 1)[0] or 'wordpack'
     pack = WordPack(name=name, words_=words_from_upload(await file.read()))
     return WordPackEditor(pack, hx_swap_oob='true')
 
@@ -37,7 +41,11 @@ def save(sess: dict, name: str, words: str, id: str = None):
     if existing and existing.author_id != sess.get('uid'):
         raise HTTPException(403, 'You can only edit your own wordpacks')
     wordpack_manager.upsert(WordPack(id=id, name=name, words_=words, author_id=author.uid if author else ''))
-    return WordPackEditor(hx_swap_oob='true')
+    # The list used to refresh only if a hyperscript `change` on the search form
+    # landed. When it didn't, Save cleared the editor and the pack never appeared.
+    listing = Packs(wordpack_manager.get_all(), sess.get('uid'))
+    listing.attrs['hx-swap-oob'] = 'true'
+    return WordPackEditor(hx_swap_oob='true'), listing
 
 @rt
 def new_creation():

@@ -68,12 +68,18 @@ class CodenamesActions(GameActions):
             return True
         return await self._change(lobby, mutate, 'Wordpack selected', 'settings', 'Cannot select that wordpack')
 
-    async def update_settings(self, lobby: Lobby, member: LobbyMember, clue_seconds: int, guess_seconds: int):
+    async def update_settings(self, lobby: Lobby, member: LobbyMember, clue_seconds: int,
+                              guess_seconds: int, unlimited_guesses: bool):
         def mutate():
             if not is_host(member): return False
-            lobby.state.clue_seconds = max(0, clue_seconds)
-            lobby.state.guess_seconds = max(0, guess_seconds)
-            lobby.state._arm_timer()
+            state = lobby.state
+            state.clue_seconds = max(0, clue_seconds)
+            state.guess_seconds = max(0, guess_seconds)
+            state.unlimited_guesses = unlimited_guesses
+            state._arm_timer()
+            if (not unlimited_guesses and state.phase == GamePhase.GUESSING
+                    and state.guesses_left <= 0):
+                state.end_turn()
             return True
         result = await self._change(lobby, mutate, 'Settings updated', 'settings',
                                     rejected='Only the host can change settings')

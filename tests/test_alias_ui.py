@@ -2,7 +2,7 @@ import asyncio
 
 from fasthtml.common import to_xml
 
-from meme_games.apps.alias.components.game import Game
+from meme_games.apps.alias.components.game import Game, Page
 from meme_games.apps.alias.components.settings import ConfigLobby, GameControls, HostGameActions, PackSelect, PackSelectButton, PackSelectContents, RestartConfirmation, VoteButton
 from meme_games.apps.alias.components.word_panel import CurrentWord, ExplainerPanel, GuessCount, GuessPanel, RoundLog, WordCollectionPanel, WordEntry, WordPanel
 from meme_games.apps.alias.domain import ALIAS, GameState, GuessEntry
@@ -595,7 +595,10 @@ def test_lobby_rules_are_shared_by_buttons_and_state():
     game.config.max_teams = 1
     assert not game.can_add_team()
     lobby = Lobby(current_game=ALIAS, states={ALIAS: game}, members={host.uid: host})
+    page = to_xml(Page(host, lobby))
     assert 'data-ui="new-team-card"' not in to_xml(Game(host, lobby))
+    # the rules control has to sit above the settings or a tall host panel pushes it off screen
+    assert page.find('>Rules<') != -1 and page.find('>Rules<') < page.find('Game settings')
 
     game.start_game()
     assert not game.can_change_wordpack()

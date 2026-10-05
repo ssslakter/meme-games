@@ -127,12 +127,14 @@ def LobbyTools(reciever: LobbyMember | User, lobby: Lobby, *lobby_settings: Any,
     from .chat import ChatPanel
     return GameRail(
         Div(
-            SettingsPanel(*lobby_settings, lobby=lobby, member=reciever),
+            # Rules sit above the settings: an open host panel is taller than a laptop
+            # screen, and the page under it does not always scroll the button into view.
             GameRules(lobby),
+            SettingsPanel(*lobby_settings, lobby=lobby, member=reciever),
             Button(UkIcon('log-out', cls='mr-2', width=20, height=20), 'Leave lobby',
                    cls=(ButtonT.destructive, 'inline-flex w-full items-center justify-center whitespace-nowrap px-4 py-2'),
                    hx_post=leave_lobby, hx_swap='none', data_ui='leave-lobby'),
-            cls='w-full space-y-3'),
+            cls='mg-lobby-tools-head w-full min-h-0 space-y-3'),
         Div(ChatPanel(reciever, lobby) if show_chat else None, Spectators(reciever, lobby),
             cls='mg-lobby-talk flex w-full min-h-0 flex-1 flex-col gap-3'),
         cls=('mg-lobby-tools justify-between', cls),

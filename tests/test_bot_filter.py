@@ -60,7 +60,6 @@ class TestBotFilterMiddleware:
         mw = BotFilterMiddleware(MockApp())
         assert mw._is_lobby_route("/alias/abc12", "GET")
         assert mw._is_lobby_route("/whoami/xyz99", "GET")
-        assert mw._is_lobby_route("/video/test1", "GET")
         assert mw._is_lobby_route("/codenames/room1", "GET")
         assert not mw._is_lobby_route("/", "GET")
         assert not mw._is_lobby_route("/alias", "GET")

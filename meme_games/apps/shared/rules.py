@@ -22,13 +22,13 @@ The board is 25 words. The team that moves first has 9 cards, the other has 8,
 
 On your team's turn the spymaster gives a clue plus a number. The clue must not
 be one of the words visible on the board. The number says how many of your
-cards the clue is meant to point at; your operatives get that many guesses plus
-one extra.
+cards the clue is meant to point at. Guessing is unlimited unless the host turns
+that off: then the turn stops after that many correct guesses, plus one extra.
 
 Operatives then reveal cards one at a time. What happens depends on the colour
 underneath:
 
-- your own colour: it counts, and you may keep guessing while guesses remain
+- your own colour: it counts, and you may keep guessing (until the limit, if the host set one)
 - neutral or the other team's colour: your turn ends immediately
 - the assassin: the game ends at once and the other team wins
 
@@ -44,9 +44,9 @@ round in a single guess. Say the number honestly - it is the only quantity your
 operatives have.
 
 As an operative, guess in the order you are most confident about; the strongest
-match first, so a wrong turn costs the least. The bonus guess is real but
-optional. If none of the remaining candidates feels like your colour, ending the
-turn is a legitimate move, not a forfeit.
+match first, so a wrong turn costs the least. If the host has capped guesses,
+the bonus one is real but optional. If none of the remaining candidates feels
+like your colour, ending the turn is a legitimate move, not a forfeit.
 
 Fair play: the spymaster gives a clue and a number and nothing else. No hints
 about position, no letters, no gestures, no commenting on guesses in progress,

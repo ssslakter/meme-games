@@ -11,7 +11,6 @@ GAME_BLURBS = {
     "Alias": "Guess the words before time runs out!",
     "Codenames": "Give clever clues to find your team's words.",
     "Who Am I": "Ask yes/no questions to guess your identity.",
-    "Videos 🚧": "Sync videos and enjoy them with friends.",
 }
 
 
@@ -54,13 +53,13 @@ def index():
                     cls="text-4xl font-bold mb-6 text-center text-[color:hsl(var(--foreground))]"
                 ),
                 P(
-                    "Play fun party games with friends or enjoy streaming together — all in one place.",
+                    "Play fun party games with friends — all in one place.",
                     cls="text-lg mb-12 text-center text-[color:hsl(var(--muted-foreground))]"
                 ),
                 Div(
                     *[GameCard(name, desc, page_url(PAGES_REGISTRY[name]))
                       for name, desc in GAME_BLURBS.items() if name in PAGES_REGISTRY],
-                    cls="mg-game-cards grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
+                    cls="mg-game-cards grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
                 ),
                 cls=(
                     "max-w-5xl mx-auto px-4 py-12"

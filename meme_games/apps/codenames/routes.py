@@ -100,9 +100,11 @@ async def select_pack(req: Request, id: str):
 
 
 @rt
-async def update_settings(req: Request, clue_seconds: int = 0, guess_seconds: int = 0):
+async def update_settings(req: Request, clue_seconds: int = 0, guess_seconds: int = 0,
+                          unlimited_guesses: bool = False):
     lobby, _, member = pre_init(req)
-    try: await codenames_actions.update_settings(lobby, member, clue_seconds, guess_seconds)
+    try: await codenames_actions.update_settings(
+        lobby, member, clue_seconds, guess_seconds, unlimited_guesses)
     except ActionRejected as error: return rejected(req, error)
 
 

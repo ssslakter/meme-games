@@ -38,7 +38,8 @@ class CodenamesAgentGame(AgentGame):
             'turn': state.turn.value if state.turn else None,
             'winner': state.winner.value if state.winner else None,
             'clue': {'word': state.clue, 'number': state.clue_number,
-                     'guesses_left': state.guesses_left} if state.clue else None,
+                     'guesses_left': None if state.unlimited_guesses else state.guesses_left,
+                     'unlimited': state.unlimited_guesses} if state.clue else None,
             'teams': {team.value: [{'name': name(uid),
                                     'role': 'spymaster' if uid in state.spymasters else 'operative'}
                                    for uid in state.team_uids(team) if uid in lobby.members]
@@ -112,7 +113,8 @@ class CodenamesAgentGame(AgentGame):
             'turn': state.turn.value if state.turn else None,
             'winner': state.winner.value if state.winner else None,
             'clue': {'word': state.clue, 'number': state.clue_number,
-                     'guesses_left': state.guesses_left} if state.clue else None,
+                     'guesses_left': None if state.unlimited_guesses else state.guesses_left,
+                     'unlimited': state.unlimited_guesses} if state.clue else None,
             'you': {'id': member.uid, 'name': member.name,
                     'team': state.team_of(member).value if state.team_of(member) else None,
                     'role': 'spymaster' if knows_key else 'operative' if state.team_of(member) else 'spectator'},

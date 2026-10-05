@@ -1,1 +1,0 @@
-from .routes import rt as video_rt
