@@ -170,9 +170,13 @@ class CodenamesState:
         return True
 
     def turn_seconds(self) -> int:
-        if self.phase == GamePhase.CLUE: return max(0, self.clue_seconds)
-        if self.phase == GamePhase.GUESSING: return max(0, self.guess_seconds)
-        return 0
+        '''Clue or guess limit. The opening turn runs twice as long.'''
+        if self.phase == GamePhase.CLUE: base = self.clue_seconds
+        elif self.phase == GamePhase.GUESSING: base = self.guess_seconds
+        else: return 0
+        base = max(0, base)
+        opening = not any(entry.kind == 'turn' for entry in self.log)
+        return base * 2 if base and opening else base
 
     def _arm_timer(self):
         self.timer_token += 1

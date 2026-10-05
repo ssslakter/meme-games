@@ -222,6 +222,7 @@ def HostSettings(reciever, lobby, oob=False):
                        value=str(state.clue_seconds)),
             LabelInput('Guess seconds (0 = no limit)', name='guess_seconds', type='number', min=0, max=600,
                        value=str(state.guess_seconds)),
+            P('First round runs twice as long.', cls=(TextT.muted, 'text-sm')),
             Button('Update settings', cls=(ButtonT.primary, 'w-full')),
             hx_post=update_settings, hx_swap='none', cls='space-y-3'),
         Div(

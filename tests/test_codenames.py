@@ -35,6 +35,23 @@ def ready_lobby(lobby_id='codenames-rules'):
     return lobby, members, state
 
 
+def test_the_opening_turn_runs_twice_as_long():
+    _, members, state = ready_lobby('codenames-opening-clock')
+    state.clue_seconds, state.guess_seconds = 60, 45
+    assert state.start()
+    assert state.timer.total == 120
+
+    spymaster = members[0] if state.turn == TeamColor.RED else members[2]
+    assert state.give_clue(spymaster, 'signal', 1)
+    assert state.timer.total == 90
+
+    assert state.end_turn()
+    assert state.timer.total == 60
+    nxt = members[0] if state.turn == TeamColor.RED else members[2]
+    assert state.give_clue(nxt, 'echo', 1)
+    assert state.timer.total == 45
+
+
 def test_start_builds_standard_board_and_role_requirements():
     _, members, state = ready_lobby('codenames-board')
     assert state.can_start()
