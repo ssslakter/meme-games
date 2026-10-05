@@ -1,0 +1,23 @@
+tests/test_codenames.py
+  s_c466e1fb23ce7f::t_af69546623034c 38-54
+meme_games/apps/codenames/components/game.py
+  s_c466e1fb23ce7f::t_b24bb3566b910a 225
+meme_games/apps/codenames/domain.py
+  s_c466e1fb23ce7f::t_edfaaa20d45dae 173-179
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e8a73fcd394abd2bb5517b7b4ab2c1c6f2516e38",
+  "prompts": {},
+  "sessions": {
+    "s_c466e1fb23ce7f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "d4b6543b-3096-4628-857f-1f8f876dbe7d",
+        "model": "grok-4.7"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
