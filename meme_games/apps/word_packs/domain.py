@@ -68,11 +68,14 @@ class WordPackRepo(DataRepository[WordPack]):
     
 
     def init_defaults(self):
-        default_words: str = files('meme_games.apps.word_packs').joinpath('data/default.txt').read_text(encoding='utf-8')
-        default: Optional[WordPack] = self.find('default')
-        if default:
-            if not default.author_id and default.words_ != default_words:
-                default.words_ = default_words
-                self.upsert(default)
-            return
-        self.upsert(WordPack(name='Default', words_=default_words))
+        '''The packs the app ships with: a word list, and a Hive Mind deck of prompts.
+        A pack the user has edited (it has an author) is left alone.'''
+        data = files('meme_games.apps.word_packs').joinpath('data')
+        for name, fname in (('Default', 'default.txt'), ('Prompts', 'prompts.txt')):
+            words = data.joinpath(fname).read_text(encoding='utf-8')
+            pack = self.find(name)
+            if not pack:
+                self.upsert(WordPack(name=name, words_=words))
+            elif not pack.author_id and pack.words_ != words:
+                pack.words_ = words
+                self.upsert(pack)

@@ -1,5 +1,6 @@
 from ..services import db  # composition root first: app modules resolve services at import
 from .codenames import *
+from .hivemind import *
 from .shared import *
 from .word_packs import *
 from .whoami import *

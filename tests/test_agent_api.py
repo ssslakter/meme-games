@@ -520,7 +520,7 @@ def test_an_empty_chat_message_is_refused(monkeypatch):
 def test_rules_are_public_to_an_authenticated_gateway(monkeypatch):
     monkeypatch.setenv('MCP_GATEWAY_SECRET', 'test-gateway')
     with TestClient(app, raise_server_exceptions=False) as client:
-        for game in ('codenames', 'alias', 'whoami'):
+        for game in ('codenames', 'alias', 'whoami', 'hivemind'):
             answer = client.post('/internal/agents/rules', headers=headers(), json={'game': game})
             assert answer.status_code == 200 and answer.json()['game'] == game
             assert len(answer.json()['rules']) > 500
@@ -528,7 +528,7 @@ def test_rules_are_public_to_an_authenticated_gateway(monkeypatch):
         unknown = client.post('/internal/agents/rules', headers=headers(), json={'game': 'chess'})
         assert unknown.status_code == 404
         assert unknown.json()['detail'] == 'unknown_game:chess'
-        assert unknown.json()['valid_games'] == ['codenames', 'alias', 'whoami']
+        assert unknown.json()['valid_games'] == ['codenames', 'alias', 'whoami', 'hivemind']
 
         assert client.post('/internal/agents/rules', headers=headers('wrong'),
                            json={'game': 'alias'}).status_code == 401

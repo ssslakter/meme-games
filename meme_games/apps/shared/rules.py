@@ -169,10 +169,65 @@ in a handful of questions - obscure enough to be interesting, known enough to be
 guessable, and inside the topic.'''
 
 
+HIVEMIND_RULES = '''# Hive Mind
+
+Everyone answers the same question at the same time, in secret. Then the
+answers are revealed and compared: if your answer agrees with at least one
+other player's, you score a point. An answer nobody else gave scores nothing.
+So the winning move is not to be clever - it is to be *ordinary*. The game
+runs for a fixed number of rounds and the highest score wins.
+
+## Setup
+
+The host picks the deck and the number of rounds (5 by default) in game
+settings. A deck is a wordpack - one question per line - so you can write your
+own under Word Packs and play it here, the same way Codenames and Alias use
+theirs. The app ships one called "Prompts". Rounds past the end of the deck
+start again from the top. The deck and the round count can only change between
+games, not mid-match.
+
+At least two players join the game, then the host starts it. The lobby locks
+while a match is running.
+
+## A round
+
+A question goes up - something like "Name a pizza topping". Every player types
+one answer. Answers stay hidden while the round is open: the board shows only
+how many are in, never who wrote what. You may submit again to replace your
+answer until the round closes.
+
+The round closes when the host presses "Reveal answers" - the host cannot wait
+forever for one idle player.
+
+## Scoring
+
+Answers are compared as text: capitals, extra spaces and trailing punctuation
+do not matter, so "Pizza!", "pizza" and "  pizza " are the same answer.
+
+- your answer matches at least one other player's: **1 point**
+- nobody else wrote your answer: **0 points**
+
+A group of two and a group of five pay the same point; agreeing at all is what
+scores. The reveal shows the matching groups first, then the answers that went
+nobody's way. The next round is dealt when the host says so.
+
+## Playing well
+
+Answer with the first ordinary thing that comes to mind, not the funniest or
+the most precise: "pizza topping" wants pepperoni, not truffle oil. If a
+question has an obvious local or cultural answer, that is usually the hive's
+answer too.
+
+Read the room between rounds: the reveal tells you what this table finds
+obvious, and it is often not what the answer would be for people in general.
+Scores reset when a new game starts.'''
+
+
 RULES: dict[str, str] = {
     'codenames': CODENAMES_RULES,
     'alias': ALIAS_RULES,
     'whoami': WHOAMI_RULES,
+    'hivemind': HIVEMIND_RULES,
 }
 
 GAMES_WITH_RULES: list[str] = list(RULES)

@@ -8,7 +8,8 @@ from meme_games.apps.alias.domain.game import StateMachine
 service = DI.get(LobbyService)
 
 ACTION_PATHS = ['/alias/vote', '/alias/guess', '/alias/start_game', '/whoami/play', '/whoami/notes',
-                '/codenames/join_team', '/codenames/start_game', '/codenames/vote_card']
+                '/codenames/join_team', '/codenames/start_game', '/codenames/vote_card',
+                '/hivemind/play', '/hivemind/advance', '/hivemind/submit_answer']
 
 
 def test_action_routes_do_not_create_lobbies():
