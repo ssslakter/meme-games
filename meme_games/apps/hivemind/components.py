@@ -14,72 +14,113 @@ def player_uids(lobby: Lobby) -> list[str]:
 def QuestionCard(lobby: Lobby, **kwargs):
     state: HiveMindState = lobby.state
     if state.phase == HivePhase.WAITING:
-        body = (H3('Everyone answers the same question'),
-                P('You score by agreeing with somebody else: the most ordinary answer wins, '
-                  'and an answer nobody else gave scores nothing.', cls=TextT.muted))
+        body = (H3('Everyone answers the same questions'),
+                P('Up to six words each round. Every word somebody else also wrote scores '
+                  'you a point; a word nobody shares scores nothing - so the most ordinary '
+                  'answer wins.', cls=TextT.muted))
     else:
-        body = (Span(f'Round {state.round_number} of {state.total_rounds}',
-                     cls='text-xs uppercase tracking-wide opacity-60'),
+        body = (Div(Span(f'Round {state.round_number} of {state.total_rounds}',
+                         cls='text-xs uppercase tracking-wide opacity-60'),
+                    CircleTimer(state.timer.time, total=state.timer.total)
+                        if state.seconds and state.phase == HivePhase.WRITING else None,
+                    cls='flex items-center justify-between gap-3'),
                 H2(state.question, cls='m-0'))
     return Card(*body, id='hivemind-question', cls='mg-panel text-center',
-                body_cls='space-y-2 p-6', data_ui='hivemind-question', **kwargs)
+                body_cls='space-y-3 p-6', data_ui='hivemind-question', **kwargs)
 
 
 def Status(reciever: LobbyMember | User, lobby: Lobby, **kwargs):
-    """How many answers are in. A count only: a name would give the round away."""
+    """Who is done, as a count only: a name would hint at what they wrote."""
     state: HiveMindState = lobby.state
     uids = player_uids(lobby)
-    answered = state.answered(uids)
-    count = ('Everyone has answered' if state.all_answered(uids) else
-             f'{answered} of {len(uids)} answered' if uids else 'Nobody is playing yet')
-    hint = ('Your answer is in - submit again to change it.'
-            if is_player(reciever) and state.has_answer(reciever.uid) else
-            'Your answer stays hidden until everyone is in.' if is_player(reciever) else
-            'Answers stay hidden until everyone is in.')
-    return Div(Div(UkIcon('users', width=16, height=16), Span(count, cls='font-medium'),
-                   cls='flex items-center gap-2'),
-               P(hint, cls=(TextT.muted, TextT.sm, 'm-0')),
+    done = sum(1 for uid in uids if state.is_ready(uid))
+    count = ('Everyone is done' if state.all_ready(uids) else
+             f'{done} of {len(uids)} done' if uids else 'Nobody is playing yet')
+    return Div(Span(count, cls='font-medium'),
+               Span('the round closes when everyone is done, or when the clock runs out',
+                    cls=(TextT.muted, TextT.sm)),
                id='hivemind-status', cls='space-y-1', data_ui='hivemind-status', **kwargs)
 
 
 def AnswerArea(reciever: LobbyMember | User, lobby: Lobby, **kwargs):
-    from .routes import submit_answer
-    if lobby.state.phase != HivePhase.WRITING: return None
+    """Six cells that save as you type, and one button that says you are finished."""
+    from .routes import set_ready, set_word
+    state: HiveMindState = lobby.state
+    if state.phase != HivePhase.WRITING or not is_player(reciever): return None
+    words = state.words(reciever.uid)
+    ready = state.is_ready(reciever.uid)
+    cells = [Input(name='text', value=words[index] if index < len(words) else '',
+                   maxlength=ANSWER_MAX, autocomplete='off', readonly=ready,
+                   placeholder=f'word {index + 1}',
+                   hx_post=None if ready else set_word.to(index=index),
+                   hx_trigger=None if ready else 'input changed delay:600ms',
+                   hx_swap='none', cls=classes('uk-input w-full', 'opacity-60' if ready else None),
+                   data_ui='hivemind-cell')
+             for index in range(ANSWERS_PER_ROUND)]
     return Card(
+        DivLAligned(H3('Your list', cls='m-0'),
+                    Span(f'{len(words)} of {ANSWERS_PER_ROUND} filled',
+                         cls=(TextT.muted, TextT.sm))),
+        Div(*cells, cls='grid grid-cols-2 gap-2 sm:grid-cols-3'),
+        Button('Done' if not ready else 'Not done yet',
+               hx_post=set_ready.to(is_ready=not ready), hx_swap='none',
+               cls=(ButtonT.primary if not ready else ButtonT.default, 'w-full')),
         Status(reciever, lobby),
-        Form(Input(name='answer', required=True, maxlength=ANSWER_MAX, autocomplete='off',
-                   placeholder='One answer', cls='uk-input min-w-0 flex-1'),
-             Button(UkIcon('send', cls='mr-2'), 'Submit', type='submit',
-                    cls=(ButtonT.primary, 'shrink-0')),
-             hx_post=submit_answer, hx_swap='none', cls='flex gap-2')
-            if is_player(reciever) else None,
-        id='hivemind-answers', cls='mg-panel mg-hivemind-answer', body_cls='space-y-2 p-4',
+        id='hivemind-answers', cls='mg-panel mg-hivemind-answer', body_cls='space-y-3 p-4',
         data_ui='hivemind-answer', **kwargs)
 
 
 def RevealBoard(reciever: LobbyMember | User, lobby: Lobby, **kwargs):
-    """The round just played: what agreed first, then who went nobody's way."""
+    """Every player's list with a mark on each word that agreed - and the words are
+    editable, so a typo or a paraphrase can be made to count before the scores settle."""
+    from .routes import edit_word
     state: HiveMindState = lobby.state
     played = state.last()
     if state.phase != HivePhase.REVEAL or not played: return None
+    agreed, points = played.matched_positions(), played.points()
 
-    def name(uid: str):
-        return MemberName(reciever, lobby.members[uid], cls='mg-hivemind-name') if uid in lobby.members else None
+    def cell(uid: str, index: int, word: str):
+        matched = (uid, index) in agreed
+        editable = isinstance(reciever, LobbyMember) and (reciever.uid == uid or reciever.is_host)
+        return Div(
+            UkIcon('check' if matched else 'minus', width=14, height=14, cls='shrink-0'),
+            Input(name='text', value=word, maxlength=ANSWER_MAX, readonly=not editable,
+                  hx_post=edit_word.to(uid=uid, index=index) if editable else None,
+                  hx_trigger='input changed delay:600ms' if editable else None,
+                  hx_swap='none',
+                  cls=classes('mg-hivemind-word w-full bg-transparent px-1',
+                              'font-medium' if matched else 'opacity-60')),
+            title=('Somebody else wrote this too' if matched
+                   else 'Nobody else wrote this - no point'),
+            cls=classes('flex items-center gap-1 rounded border px-2 py-1',
+                        'border-primary/60 bg-primary/10' if matched else 'border-border'),
+            data_ui='hivemind-word', data_matched='true' if matched else 'false')
 
-    matches = [Div(Span(answer, cls='font-medium'),
-                   Span(f'+1 each · {len(uids)}', cls='text-sm tabular-nums'),
-                   Div(*[name(uid) for uid in uids], cls='text-sm'), cls='space-y-1',
-                   data_ui='hivemind-match')
-               for answer, uids in played.groups().items()]
-    uniques = [Div(name(uid), Span(text), Span('0', cls=TextT.muted),
-                   cls='flex items-center justify-between gap-2', data_ui='hivemind-unique')
-               for uid, text in played.uniques().items()]
-    return Card(H5(f'What everyone wrote: {played.question}'),
-                Div(*matches or [P('Nobody agreed with anybody - no points this round.',
-                                   cls=TextT.muted)], cls='space-y-3'),
-                Div(*uniques, cls='space-y-1') if uniques else None,
-                id='hivemind-reveal', cls='mg-panel', body_cls='space-y-3 p-4',
-                data_ui='hivemind-reveal', **kwargs)
+    rows = [Div(DivLAligned(MemberName(reciever, member, cls='mg-hivemind-name'),
+                            Span(f'{points.get(uid, 0)} this round', cls=(TextT.muted, TextT.sm))),
+                Div(*[cell(uid, index, word)
+                      for index, word in enumerate(played.answers.get(uid, []))],
+                    cls='flex flex-wrap gap-1'),
+                cls='space-y-1', data_ui='hivemind-row')
+            for uid, member in ((member.uid, member) for member in lobby.sorted_members()
+                                if member.is_player and member.uid in played.answers)]
+
+    shared = [Div(Span(word, cls='font-medium'),
+                  Span(', '.join(member.name for uid, member in
+                                 ((uid, lobby.members.get(uid)) for uid in uids) if member),
+                       cls=(TextT.muted, TextT.sm)),
+                  cls='flex items-center justify-between gap-2', data_ui='hivemind-agreed')
+              for word, uids in played.matches().items()]
+    return Card(
+        H5(f'What everyone wrote: {played.question}'),
+        Div(*rows or [P('Nobody wrote anything this round.', cls=TextT.muted)],
+            cls='space-y-3'),
+        Div(H5('Words that agreed', cls='m-0'), *shared, cls='space-y-1') if shared
+            else P('No two players wrote the same word.', cls=TextT.muted),
+        P('Any word can be rewritten here: fix a typo, or reword a paraphrase so it counts. '
+          'The scores follow the words.', cls=(TextT.muted, TextT.sm)),
+        id='hivemind-reveal', cls='mg-panel', body_cls='space-y-3 p-4',
+        data_ui='hivemind-reveal', **kwargs)
 
 
 def Scoreboard(reciever: LobbyMember | User, lobby: Lobby, **kwargs):
@@ -115,8 +156,9 @@ def JoinCard(reciever: LobbyMember | User, lobby: Lobby, **kwargs):
     from .routes import play
     if is_player(reciever) or lobby.locked: return None
     return Card(H3('Hive Mind', cls='m-0'),
-                P('Each round everyone answers the same question in secret. Answers that agree '
-                  'score a point; answers nobody else gave score nothing.', cls=TextT.muted),
+                P('Each round everyone answers the same question with up to six words. '
+                  'A word somebody else also wrote scores you a point; a word nobody '
+                  'shares scores nothing.', cls=TextT.muted),
                 Button(UkIcon('play', cls='mr-2'), 'Join the game', type='button',
                        hx_post=play, hx_swap='none', cls=(ButtonT.primary, 'w-full')),
                 id='hivemind-join', cls='mg-panel', body_cls='space-y-3 p-4',
@@ -164,7 +206,7 @@ def PackSelectModal() -> FT:
 
 
 def HiveMindSettings(reciever: LobbyMember | User, lobby: Lobby, **kwargs):
-    """Host controls: start, move the round on, restart, and the deck itself."""
+    """Host controls: start, move the round on, restart, and the deck and clock."""
     if not is_host(reciever): return None
     from .routes import advance, restart_game, start_game, update_settings
     state: HiveMindState = lobby.state
@@ -174,7 +216,7 @@ def HiveMindSettings(reciever: LobbyMember | User, lobby: Lobby, **kwargs):
                          hx_swap='none', disabled=len(player_uids(lobby)) < 2,
                          cls=(ButtonT.primary, 'w-full'))
     else:
-        label = 'Reveal answers' if state.phase == HivePhase.WRITING else (
+        label = 'Reveal now' if state.phase == HivePhase.WRITING else (
             'Start a new game' if state.finished else 'Next round')
         control = Div(
             Button(label, hx_post=advance, hx_swap='none', disabled=state.finished,
@@ -191,7 +233,10 @@ def HiveMindSettings(reciever: LobbyMember | User, lobby: Lobby, **kwargs):
               'at the top.', cls=(TextT.muted, TextT.sm)),
             Form(LabelInput('Rounds', name='total_rounds', type='number', min=1, max=ROUNDS_MAX,
                             value=str(state.total_rounds), disabled=not waiting),
-                 Button('Save rounds', type='submit', disabled=not waiting,
+                 LabelInput('Seconds per round (0 = no clock)', name='seconds', type='number',
+                            min=0, max=SECONDS_MAX, value=str(state.seconds),
+                            disabled=not waiting),
+                 Button('Save rounds and clock', type='submit', disabled=not waiting,
                         cls=(ButtonT.default, 'w-full')),
                  hx_post=update_settings, hx_swap='none', cls='space-y-2'),
             cls='space-y-2'),
@@ -199,15 +244,15 @@ def HiveMindSettings(reciever: LobbyMember | User, lobby: Lobby, **kwargs):
 
 
 def Game(reciever: LobbyMember | User, lobby: Lobby, **kwargs):
-    """The board: what a receiver may see depends on the phase, and answers are on the
-    table only once the round has closed."""
+    """The board. The scoreboard rides on the left; what a receiver may see of the round
+    depends on its phase, and words are on the table only once it has closed."""
     state: HiveMindState = lobby.state
     return Div(
-        Div(QuestionCard(lobby), AnswerArea(reciever, lobby), RevealBoard(reciever, lobby),
-            JoinCard(reciever, lobby), cls='min-w-0 space-y-4'),
         Scoreboard(reciever, lobby),
+        Div(QuestionCard(lobby), AnswerArea(reciever, lobby), RevealBoard(reciever, lobby),
+            JoinCard(reciever, lobby), cls='mx-auto w-full max-w-3xl space-y-4'),
         id='game',
-        cls=classes('mg-game mg-game-hivemind grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]',
+        cls=classes('mg-game mg-game-hivemind grid min-w-0 items-start gap-6 lg:grid-cols-[18rem_minmax(0,1fr)]',
                     kwargs.pop('cls', '')),
         data_ui='game', data_game=HIVEMIND, data_phase=state.phase.value, **kwargs)
 

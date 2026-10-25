@@ -50,9 +50,24 @@ async def play(req: Request):
 
 
 @rt
-async def submit_answer(req: Request, answer: str):
+async def set_word(req: Request, index: int, text: str):
     lobby, _, p = pre_init(req)
-    try: await hivemind_actions.submit(lobby, p, answer)
+    try: await hivemind_actions.set_word(lobby, p, index, text)
+    except ActionRejected as error: return rejected(req, error)
+
+
+@rt
+async def set_ready(req: Request, is_ready: bool = True):
+    lobby, _, p = pre_init(req)
+    try: await hivemind_actions.set_ready(lobby, p, is_ready)
+    except ActionRejected as error: return rejected(req, error)
+
+
+@rt
+async def edit_word(req: Request, uid: str, index: int, text: str):
+    """Rewriting a word on the revealed round, to settle a near miss by hand."""
+    lobby, _, p = pre_init(req)
+    try: await hivemind_actions.edit_word(lobby, p, uid, index, text)
     except ActionRejected as error: return rejected(req, error)
 
 
@@ -78,9 +93,10 @@ async def restart_game(req: Request):
 
 
 @rt
-async def update_settings(req: Request, total_rounds: int = DEFAULT_ROUNDS):
+async def update_settings(req: Request, total_rounds: int = DEFAULT_ROUNDS,
+                          seconds: int = DEFAULT_SECONDS):
     lobby, _, p = pre_init(req)
-    try: await hivemind_actions.update_settings(lobby, p, total_rounds)
+    try: await hivemind_actions.update_settings(lobby, p, total_rounds, seconds)
     except ActionRejected as error: return rejected(req, error)
 
 
@@ -115,13 +131,10 @@ register_game_view(HIVEMIND, HiveMindView)
 
 
 def _render_hivemind_event(event: LobbyChanged, lobby: Lobby):
-    if event.game != HIVEMIND: return
-    if 'game' in event.topics:
-        return notify_all(lobby, lambda r, *_: (
-            Game(r, lobby, hx_swap_oob='true'),
-            HiveMindSettings(r, lobby, hx_swap_oob='outerHTML') if is_host(r) else None))
-    if 'progress' in event.topics:
-        return notify_all(lobby, lambda r, *_: Status(r, lobby, hx_swap_oob='outerHTML'))
+    if event.game != HIVEMIND or 'game' not in event.topics: return
+    return notify_all(lobby, lambda r, *_: (
+        Game(r, lobby, hx_swap_oob='true'),
+        HiveMindSettings(r, lobby, hx_swap_oob='outerHTML') if is_host(r) else None))
 
 
 lobby_events.subscribe(_render_hivemind_event)

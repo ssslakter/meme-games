@@ -171,56 +171,59 @@ guessable, and inside the topic.'''
 
 HIVEMIND_RULES = '''# Hive Mind
 
-Everyone answers the same question at the same time, in secret. Then the
-answers are revealed and compared: if your answer agrees with at least one
-other player's, you score a point. An answer nobody else gave scores nothing.
-So the winning move is not to be clever - it is to be *ordinary*. The game
-runs for a fixed number of rounds and the highest score wins.
+Everyone answers the same question at the same time, in secret - with a list of
+up to six words. Then the lists are revealed and compared: every one of your
+words that somebody else also wrote scores you a point, and a word nobody else
+shared scores nothing. So the winning move is not to be clever, it is to be
+*ordinary*. The game runs for a fixed number of rounds and the highest score
+wins.
 
 ## Setup
 
-The host picks the deck and the number of rounds (5 by default) in game
-settings. A deck is a wordpack - one question per line - so you can write your
-own under Word Packs and play it here, the same way Codenames and Alias use
-theirs. The app ships one called "Prompts". Rounds past the end of the deck
-start again from the top. The deck and the round count can only change between
-games, not mid-match.
+The host picks the deck, the number of rounds (5 by default) and the seconds per
+round (120 by default; 0 means no clock) in game settings. A deck is a wordpack -
+one question per line - so you can write your own under Word Packs and play it
+here, like Codenames and Alias. The app ships one called "Prompts". Rounds past
+the end of the deck start again from the top. Deck, rounds and clock can only
+change between games, not mid-match.
 
 At least two players join the game, then the host starts it. The lobby locks
 while a match is running.
 
 ## A round
 
-A question goes up - something like "Name a pizza topping". Every player types
-one answer. Answers stay hidden while the round is open: the board shows only
-how many are in, never who wrote what. You may submit again to replace your
-answer until the round closes.
+A question goes up - something like "Name a pizza topping". You fill up to six
+cells with words. Each cell saves as you type and nobody else sees your list
+while the round is open: the board shows only how many players are done. Fill in
+what you have and press **Done**.
 
-The round closes when the host presses "Reveal answers" - the host cannot wait
-forever for one idle player.
+The round closes as soon as every player is done, or when the clock runs out,
+whichever comes first - so one player cannot hold the table up. The host can
+also close it early with "Reveal now".
 
-## Scoring
+## The reveal
 
-Answers are compared as text: capitals, extra spaces and trailing punctuation
-do not matter, so "Pizza!", "pizza" and "  pizza " are the same answer.
+Every player's list goes on the board, each word marked:
 
-- your answer matches at least one other player's: **1 point**
-- nobody else wrote your answer: **0 points**
+- marked: at least one other player wrote the same word (capitals, spacing and
+trailing punctuation do not matter) - one point each
+- unmarked: nobody else wrote it - no point
 
-A group of two and a group of five pay the same point; agreeing at all is what
-scores. The reveal shows the matching groups first, then the answers that went
-nobody's way. The next round is dealt when the host says so.
+A word that did not match on the letter can be rewritten right there, by its
+author or by the host: fix a typo, or reword a paraphrase so the table agrees it
+counts. The scores follow the words, so the board stays the single source of
+truth. The host then deals the next round.
 
 ## Playing well
 
-Answer with the first ordinary thing that comes to mind, not the funniest or
-the most precise: "pizza topping" wants pepperoni, not truffle oil. If a
-question has an obvious local or cultural answer, that is usually the hive's
-answer too.
+Answer with the first ordinary thing that comes to mind, not the funniest or the
+most precise: "pizza topping" wants pepperoni, not truffle oil. Six easy words
+usually beat two clever ones - every word that agrees is a point, and a word
+nobody shares is worth nothing.
 
-Read the room between rounds: the reveal tells you what this table finds
-obvious, and it is often not what the answer would be for people in general.
-Scores reset when a new game starts.'''
+Read the room between rounds: the reveal tells you what this table finds obvious,
+and it is often not what people in general would say. Scores reset when a new
+game starts.'''
 
 
 RULES: dict[str, str] = {

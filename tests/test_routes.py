@@ -9,7 +9,8 @@ service = DI.get(LobbyService)
 
 ACTION_PATHS = ['/alias/vote', '/alias/guess', '/alias/start_game', '/whoami/play', '/whoami/notes',
                 '/codenames/join_team', '/codenames/start_game', '/codenames/vote_card',
-                '/hivemind/play', '/hivemind/advance', '/hivemind/submit_answer']
+                '/hivemind/play', '/hivemind/advance', '/hivemind/set_word',
+                '/hivemind/set_ready', '/hivemind/edit_word']
 
 
 def test_action_routes_do_not_create_lobbies():
