@@ -1,0 +1,73 @@
+meme_games/apps/hivemind/components.py
+  s_6afb2663b5571c::t_23f8d3d4781897 100
+  s_6afb2663b5571c::t_d767d9d086cf97 102
+  s_6afb2663b5571c::t_cfa500f0470861 3,14-18,20-32,34,37-39,42,46,50,56,61,64,74-99,101,103-135,138-141,146-153,197,201-210,217-220,222,232
+static/scripts/common/socket.js
+  s_3638b8f401f986::t_4031e1e1fd3759 1-2,4-66
+  s_3638b8f401f986::t_a69147a4403144 3
+tests/test_lobby_games.py
+  s_3638b8f401f986::t_d28cd21495d587 86-87,89-106
+meme_games/apps/shared/ws_route.py
+  s_3638b8f401f986::t_64b66c9acdca8a 35
+static/scripts/common/timer.js
+  s_3638b8f401f986::t_4b06b35d49c561 24-29
+meme_games/apps/alias/routes.py
+  s_3638b8f401f986::t_602bac9bf6292c 214-215
+  s_3638b8f401f986::t_2a74d45411abec 194,196-197
+meme_games/apps/hivemind/actions.py
+  s_6afb2663b5571c::t_480bd91a6805ff 57,60
+static/styles/hivemind.css
+  s_6afb2663b5571c::t_3a7bb06c771d82 1-46
+tests/test_alias_ui.py
+  s_3638b8f401f986::t_35edc57c76936b 134,138-151
+  s_3638b8f401f986::t_382c1ca4a6aeb4 152-153
+meme_games/apps/hivemind/domain.py
+  s_6afb2663b5571c::t_6d98a325f8049c 224
+  s_6afb2663b5571c::t_afd976bc4b78f0 152-153,155
+  s_6afb2663b5571c::t_cbd2636677c1d9 123
+  s_6afb2663b5571c::t_1223561535d328 198
+  s_6afb2663b5571c::t_04f2e70341fc81 143
+  s_6afb2663b5571c::t_6da5f3eb8e49db 84
+tests/test_hivemind.py
+  s_6afb2663b5571c::t_1f4b0b6fdb4700 183
+  s_6afb2663b5571c::t_32be047c7cfd70 224-225
+  s_6afb2663b5571c::t_b81d6c0f7e062b 135,139-141
+  s_6afb2663b5571c::t_bf8ea5c466eddc 228,231-232
+  s_6afb2663b5571c::t_1b397a1bb5ab54 205
+  s_6afb2663b5571c::t_2c3e51a922f97d 190
+meme_games/domain/lobby/member.py
+  s_3638b8f401f986::t_d7c6e84bf8821a 42-44,46
+meme_games/apps/alias/domain/game.py
+  s_3638b8f401f986::t_06f31cbf9d7171 111-112
+meme_games/domain/notify.py
+  s_3638b8f401f986::t_931505db5350da 13-16,18-20
+tests/test_routes.py
+  s_3638b8f401f986::t_d29856301cf950 171-185
+  s_3638b8f401f986::t_bdc7c00b39ff3c 186-215
+meme_games/apps/alias/components/settings.py
+  s_3638b8f401f986::t_f546a144ac1a91 160
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7a8efe245ae7eb9f23e1fc3f594b305120410992",
+  "prompts": {},
+  "sessions": {
+    "s_3638b8f401f986": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "003b6a3f-40fd-45d8-9153-8554c3790baa",
+        "model": "grok-4.7"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    },
+    "s_6afb2663b5571c": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "09ca3aa6-e08d-4f01-b8d5-1f8461009554",
+        "model": "grok-4.7"
+      },
+      "human_author": null
+    }
+  }
+}
