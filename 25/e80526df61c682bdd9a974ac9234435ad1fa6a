@@ -1,0 +1,26 @@
+meme_games/apps/shared/rules.py
+  s_6afb2663b5571c::t_4280909bb357f8 186-188
+tests/test_hivemind.py
+  s_6afb2663b5571c::t_bf9ed7d260f662 100-104,115
+  s_6afb2663b5571c::t_2ca334ceaa8c13 99,114
+meme_games/apps/hivemind/domain.py
+  s_6afb2663b5571c::t_22441cb2b9e891 238-239
+  s_6afb2663b5571c::t_9c7b0d877e7f28 151,157-161,163-164,166-167
+  s_6afb2663b5571c::t_8e00ea2414493e 104-105
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "25e80526df61c682bdd9a974ac9234435ad1fa6a",
+  "prompts": {},
+  "sessions": {
+    "s_6afb2663b5571c": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "09ca3aa6-e08d-4f01-b8d5-1f8461009554",
+        "model": "grok-4.7"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
