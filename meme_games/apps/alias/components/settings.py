@@ -157,7 +157,7 @@ def VoteButton(r: LobbyMember, game: gm.GameState):
     between_rounds = game.state == gm.StateMachine.BETWEEN_WORD_ROUNDS
     if between_rounds and not game.team_by_player(r): return None
     if not between_rounds and (game.state not in [gm.StateMachine.REVIEWING, gm.StateMachine.VOTING_TO_START]
-                               or r not in game.active_team): return None
+                               or game.active_team is None or r not in game.active_team): return None
     btn = Button(cls=(ButtonT.primary, 'px-8 py-3'), hx_swap='none')
     if (game.state == gm.StateMachine.VOTING_TO_START and r == game.active_player and
             game.all_voted(game.active_team)):

@@ -1,0 +1,46 @@
+/* Chat lives in the left rail, under the score, and takes the height the score
+   does not. Tailwind's min-height utility is injected later, so the lock needs
+   !important, same as the Alias column. */
+
+@media (min-width: 1024px) {
+  [data-page="hivemind"] .mg-hive-rail {
+    height: calc(100vh - 7rem) !important;
+    max-height: calc(100vh - 7rem) !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  [data-page="hivemind"] .mg-hive-chat {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+  }
+
+  [data-page="hivemind"] .mg-hive-chat > .uk-card-body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  [data-page="hivemind"] .mg-hive-chat .mg-chat-messages {
+    flex: 1;
+    max-height: none;
+    min-height: 0;
+  }
+}
+
+[data-page="hivemind"] .mg-hive-word.mg-hive-match {
+  border-color: hsl(var(--primary));
+  background: hsl(var(--primary) / .12);
+  font-weight: 600;
+}
+
+@media (max-width: 1023px) {
+  [data-page="hivemind"] .mg-hive-stage { order: 1; }
+  [data-page="hivemind"] .mg-hive-rail {
+    order: 2;
+    min-height: 0 !important;
+  }
+}

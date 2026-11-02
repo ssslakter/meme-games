@@ -168,6 +168,51 @@ def test_alias_settings_keep_the_selected_wordpack() -> None:
         assert not lobby.state.config.hide_skipped_words
 
 
+def test_vote_without_an_active_team_is_refused() -> None:
+    headers = {'user-agent': 'Mozilla/5.0 Firefox', 'HX-Request': 'true'}
+    with TestClient(app, client=("10.0.0.14", 1)) as host:
+        host.get('/alias/no-active-team', headers=headers)
+        lobby = service.lobbies['no-active-team']
+        lobby.state.state = StateMachine.VOTING_TO_START
+        lobby.state.active_team = None
+
+        response = host.post('/alias/vote?voted=true', headers=headers)
+
+        assert response.status_code == 200
+        assert 'Cannot vote now' in response.text
+        assert lobby.state.votes == set()
+
+
+def test_stale_alias_socket_does_not_drop_the_live_one_or_the_round():
+    headers = {'user-agent': 'Mozilla/5.0 Firefox'}
+    with TestClient(app, client=("10.0.0.13", 1)) as client:
+        client.get('/alias/reconnect-round', headers=headers)
+        lobby = service.lobbies['reconnect-round']
+        game = lobby.state
+        first = client.websocket_connect('/ws/alias')
+        stale = first.__enter__()
+        try:
+            stale.receive_text()
+            live = client.websocket_connect('/ws/alias').__enter__()
+            try:
+                live.receive_text()
+                game.active_word = 'durian'
+                game.word_pool = ['kiwi', 'plum']
+                game.turn = 3
+                stale.__exit__(None, None, None)
+                stale = None
+                member = lobby.get_member(lobby.host.uid)
+                assert member.is_connected
+                assert game.active_word == 'durian'
+                assert game.word_pool == ['kiwi', 'plum']
+                assert game.turn == 3
+                assert game.state == StateMachine.WAITING_FOR_PLAYERS
+            finally:
+                live.__exit__(None, None, None)
+        finally:
+            if stale is not None: stale.__exit__(None, None, None)
+
+
 def test_pages_are_never_served_from_the_browser_cache():
     """A cached page replays state the server has moved past, e.g. a nickname prompt
     for a user who has since been named."""

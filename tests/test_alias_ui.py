@@ -131,8 +131,24 @@ def test_player_words_timer_ends_round_and_returns_word_to_pool() -> None:
 
     assert game.state == StateMachine.REVIEWING
     assert game.active_word is None
-    assert game.word_pool == ['apple', 'banana']
+    assert set(game.word_pool) == {'apple', 'banana'}
     assert game.guess_log == []
+
+
+def test_unfinished_player_word_is_shuffled_back_into_the_pool(monkeypatch) -> None:
+    member = LobbyMember(user=User('shuffle-writer', 'Writer'))
+    team = Team(members=[member])
+    game = GameState(config=GameConfig(player_words=True), state=StateMachine.ROUND_PLAYING,
+                     teams={team.id: team}, active_team=team, active_player=member,
+                     active_word='fig', word_pool=['apple', 'pear', 'plum'])
+
+    def reverse(seq):
+        seq.reverse()
+
+    monkeypatch.setattr('meme_games.apps.alias.domain.game.random.shuffle', reverse)
+    game.next_state()
+
+    assert game.word_pool == ['fig', 'plum', 'pear', 'apple']
 
 
 def test_player_words_can_keep_the_last_word_after_timeout() -> None:

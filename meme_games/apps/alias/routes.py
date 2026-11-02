@@ -191,9 +191,10 @@ async def set_end_word_collection_timer(lobby: Lobby):
 async def vote(req: Request, voted: bool) -> Any:
     lobby, game_state, p = pre_init(req)
     between_rounds = game_state.state == gm.StateMachine.BETWEEN_WORD_ROUNDS
+    team = game_state.active_team
     if not ((between_rounds and game_state.team_by_player(p)) or
-            (p in game_state.active_team and game_state.state in [gm.StateMachine.VOTING_TO_START,
-                                                                   gm.StateMachine.REVIEWING])):
+            (team is not None and p in team and game_state.state in [gm.StateMachine.VOTING_TO_START,
+                                                                      gm.StateMachine.REVIEWING])):
         return add_toast(req.session, 'Cannot vote now', 'error')
     if game_state.has_voted(p) == voted: return VoteButton(p, game_state)
     if voted: game_state.add_vote(p)
@@ -210,7 +211,8 @@ async def vote(req: Request, voted: bool) -> Any:
 @rt
 async def start_round(req: Request):
     lobby, game_state, p = pre_init(req)
-    if not (p == game_state.active_player and game_state.state == gm.StateMachine.VOTING_TO_START and
+    if not (game_state.active_team and p == game_state.active_player and
+            game_state.state == gm.StateMachine.VOTING_TO_START and
             game_state.all_voted(game_state.active_team)):
         return add_toast(req.session, 'Cannot start the round now', 'error')
     game_state.next_state()

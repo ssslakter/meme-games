@@ -81,6 +81,7 @@ class HiveMindState:
     question: str = ''
     answers: dict[str, list[str]] = field(default_factory=dict)
     ready: set[str] = field(default_factory=set)
+    players: set[str] = field(default_factory=set)  # seated when the match started
     revealed: list[HiveRound] = field(default_factory=list)
     timer: Timer = field(default_factory=Timer)
     timer_token: int = 0
@@ -119,6 +120,7 @@ class HiveMindState:
 
     def start(self, uids: list[str]) -> bool:
         if not self.can_start(uids): return False
+        self.players = set(uids)
         self.round_number = 0
         self.revealed.clear()
         self._deal()
@@ -138,7 +140,7 @@ class HiveMindState:
     def set_word(self, uid: str, index: int, text: str) -> bool:
         """Save one cell of this player's list. Emptying a cell drops it."""
         text = ' '.join(str(text or '').split())
-        if self.phase != HivePhase.WRITING or uid in self.ready: return False
+        if self.phase != HivePhase.WRITING or uid not in self.players or uid in self.ready: return False
         if not 0 <= index < ANSWERS_PER_ROUND or len(text) > ANSWER_MAX: return False
         words = list(self.answers.get(uid, []))
         words += [''] * (index + 1 - len(words))
@@ -147,9 +149,10 @@ class HiveMindState:
         return True
 
     def set_ready(self, uid: str, is_ready: bool = True) -> bool:
-        """Whether this player is done writing. Everyone being ready closes the round."""
-        if self.phase != HivePhase.WRITING: return False
+        """Done writing. The last player to say so closes the round."""
+        if self.phase != HivePhase.WRITING or uid not in self.players: return False
         self.ready.add(uid) if is_ready else self.ready.discard(uid)
+        if self.players <= self.ready: self.reveal()
         return True
 
     def reveal(self) -> bool:
@@ -192,6 +195,7 @@ class HiveMindState:
         self.question = ''
         self.answers.clear()
         self.ready.clear()
+        self.players.clear()
         self.revealed.clear()
         self.timer.stop()
 
@@ -217,6 +221,7 @@ class HiveMindState:
         """Drop everything this player wrote, so no view renders a name that left."""
         self.answers.pop(uid, None)
         self.ready.discard(uid)
+        self.players.discard(uid)
         for played in self.revealed: played.answers.pop(uid, None)
 
 

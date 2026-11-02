@@ -39,10 +39,11 @@ class LobbyMember(fc.GetAttr, Model):
     def connect(self, send: FunctionType, ws: Optional[WebSocket] = None): 
         """Connects the member with a websocket."""
         self.send, self.ws = send, ws
-    def disconnect(self, ws: Optional[WebSocket] = None):
-        """Disconnects the member."""
-        if ws is not None and self.ws is not ws: return
+    def disconnect(self, ws: Optional[WebSocket] = None) -> bool:
+        """Drops this connection. A close from an older socket leaves the live one in place."""
+        if ws is not None and self.ws is not ws: return False
         self.send, self.ws = None, None
+        return True
     def add_score(self, score: int): 
         """Adds a score to the member."""
         self.score += score

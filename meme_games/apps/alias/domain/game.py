@@ -108,6 +108,8 @@ class GameState:
                 if self.config.player_words and self.active_word is not None:
                     self.word_pool.append(self.active_word)
                     self.active_word = None
+                    # the next explainer would otherwise continue this exact deck
+                    random.shuffle(self.word_pool)
                 self.timer.stop()
                 self.review_team = self.active_team
                 self.review_player = self.active_player

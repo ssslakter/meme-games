@@ -83,9 +83,27 @@ def test_stale_websocket_cannot_disconnect_the_new_connection():
     member.connect(lambda _: None, old_ws)
     member.connect(lambda _: None, new_ws)
 
-    member.disconnect(old_ws)
+    assert member.disconnect(old_ws) is False
+    assert member.ws is new_ws and member.is_connected
 
-    assert member.ws is new_ws
+
+def test_failed_send_on_a_replaced_socket_keeps_the_new_one():
+    import asyncio
+    from meme_games.domain.lobby.member import LobbyMember
+    from meme_games.domain.notify import send
+    from meme_games.domain.user import User
+
+    member = LobbyMember(user=User('replaced-socket', 'Sock'))
+    new_ws = object()
+
+    async def fail(_message):
+        member.connect(lambda *_: None, new_ws)
+        raise RuntimeError('gone')
+
+    member.connect(fail, object())
+    asyncio.run(send(member, lambda *_: 'update'))
+
+    assert member.ws is new_ws and member.is_connected
 
 
 def test_the_host_seat_is_never_left_empty():

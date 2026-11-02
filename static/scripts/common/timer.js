@@ -21,6 +21,12 @@ function walkTimers(renderType, fn) {
     const duration = parseFloat(el.dataset.duration);
     fn(el, diff, duration);
 
+    if (!Number.isFinite(diff)) continue;
+    if (!el.dataset.armed) {
+      el.dataset.armed = "true";
+      // inserted already finished: a reconnect re-render must not resubmit the word form
+      if (diff <= 0) el.dataset.expired = "true";
+    }
     if (diff <= 0 && !el.dataset.expired) {
       el.dataset.expired = 'true';
       el.dispatchEvent(new CustomEvent('timer:expired', { bubbles: true }));

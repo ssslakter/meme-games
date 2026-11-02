@@ -132,12 +132,13 @@ def test_a_game_needs_two_players_and_a_deck_and_cells_are_bounded():
 def test_being_done_is_what_closes_a_round():
     state = HiveMindState(seconds=0)
     state.start(['a', 'b'])
-    assert state.set_ready('a') and not state.all_ready(['a', 'b'])
+    assert state.set_ready('a') and state.phase == HivePhase.WRITING
     assert not state.set_word('a', 0, 'late'), 'a player who is done cannot keep writing'
     assert state.set_ready('a', False), 'but can take it back to keep writing'
     assert state.set_word('a', 0, 'pizza')
-    assert state.set_ready('a') and state.set_ready('b') and state.all_ready(['a', 'b'])
-    assert state.reveal() and not state.all_ready(['a', 'b'])
+    assert state.set_ready('a') and state.phase == HivePhase.WRITING
+    assert state.set_ready('b') and state.phase == HivePhase.REVEAL
+    assert not state.all_ready(['a', 'b'])
 
 
 def test_the_clock_is_armed_by_the_hosts_seconds_and_stopped_when_the_round_closes():
@@ -179,13 +180,14 @@ def test_the_open_round_never_shows_another_players_words():
     assert 'truffle oil' not in markup and 'basil' not in markup
     assert markup.count('data-ui="hivemind-cell"') == ANSWERS_PER_ROUND
     assert 'data-ui="hivemind-word"' not in markup, 'words only go on the board after a reveal'
+    assert 'data-ui="hivemind-join"' not in markup, 'joining is over once the round has started'
 
     assert AnswerArea(members[0], lobby) is not None
     assert AnswerArea(um.create(name='watcher-hive-secret'), lobby) is None
 
 
 def test_a_spectator_gets_the_join_card_instead_of_cells():
-    lobby, _, state = _playing('hive-spectator', {0: ['pizza']})
+    lobby, _ = _game('hive-spectator', players=2)
     markup = to_xml(Game(um.create(name='watcher-hive-spectator'), lobby))
     assert 'data-ui="hivemind-cell"' not in markup
     assert 'data-ui="hivemind-join"' in markup
@@ -200,7 +202,7 @@ def test_the_reveal_marks_agreed_words_and_only_their_author_may_edit_them():
     markup = host_view[0]
     assert markup.count('data-matched="true"') == 2 and markup.count('data-matched="false"') == 2
     assert 'readonly' not in markup
-    assert 'Words that agreed' in markup and 'pizza' in markup
+    assert 'pizza' in markup
 
     other_player = to_xml(RevealBoard(members[1], lobby))
     assert other_player.count('readonly') == 3, 'a player may only rewrite their own word'
@@ -219,16 +221,15 @@ def test_the_winner_is_named_only_once_the_last_round_is_revealed():
     assert state.finished and not state.next_round()
 
     markup = to_xml(Game(members[0], lobby))
-    assert 'Winner: host-hive-winner, p0-hive-winner with 2 points' in markup
-    assert 'data-winner="true"' in markup
+    assert markup.count('data-winner="true"') == 2
+    assert 'Winner' not in markup
 
 
-def test_the_scoreboard_rides_on_the_left_of_the_board():
+def test_the_scoreboard_and_chat_ride_on_the_left_of_the_board():
     lobby, members, state = _playing('hive-layout', {0: ['pizza']})
     markup = to_xml(Game(members[0], lobby))
-    assert 'lg:grid-cols-[18rem_minmax(0,1fr)]' in markup
-    assert markup.index('hivemind-scoreboard') < markup.index('hivemind-question'), \
-        'the scoreboard column comes first, the board is centred next to it'
+    assert 'lg:grid-cols-[20rem_minmax(0,1fr)]' in markup
+    assert markup.index('hivemind-scoreboard') < markup.index('chat-panel') < markup.index('hivemind-question')
 
 
 def test_only_the_host_gets_settings_and_they_name_the_deck():

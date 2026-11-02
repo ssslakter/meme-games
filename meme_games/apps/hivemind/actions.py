@@ -54,14 +54,10 @@ class HiveMindActions(GameActions):
         return await self._change(lobby, mutate, 'Word saved', (), 'Cannot save that word')
 
     async def set_ready(self, lobby: Lobby, member: LobbyMember, is_ready: bool = True):
-        """Everyone being ready closes the round on the spot."""
+        """The domain closes the round once every seated player is done."""
         state: HiveMindState = lobby.state
-        uids = self.uids(lobby)
         def mutate():
-            if member is None or not member.is_player: return False
-            if not state.set_ready(member.uid, is_ready): return False
-            if is_ready and state.all_ready(uids): state.reveal()
-            return True
+            return member is not None and member.is_player and state.set_ready(member.uid, is_ready)
         return await self._change(lobby, mutate, 'Ready' if is_ready else 'Not ready', 'game',
                                   'The round is already closed')
 

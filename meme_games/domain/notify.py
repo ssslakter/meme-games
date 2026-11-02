@@ -10,11 +10,14 @@ logger = logging.getLogger(__name__)
 
 async def send(u: LobbyMember, fn, *args, json=False, **kwargs):
     """Sends a message to a lobby member's websocket."""
-    sock = u.ws.send_json if json else u.send
-    try: await sock(fn(u, *args, **kwargs))
+    ws = u.ws
+    try:
+        sock = ws.send_json if json else u.send
+        await sock(fn(u, *args, **kwargs))
     except Exception as e:
-        logger.error(e,exc_info=True)
-        u.disconnect()
+        logger.error(e, exc_info=True)
+        # a newer socket may already have replaced this one while the send was in flight
+        u.disconnect(ws)
 
 
 async def notify(u: User | LobbyMember,

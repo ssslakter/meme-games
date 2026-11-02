@@ -32,7 +32,7 @@ def ws_fn(connected=True, render_fn: Callable = lobby_view):
         if not lobby: return
         if m := lobby.get_member(u.uid):
             if connected: m.connect(send, ws)
-            else: m.disconnect(ws)
+            elif not m.disconnect(ws): return
 
         else:
             if not connected: return  # user not found in the lobby and not connecting
