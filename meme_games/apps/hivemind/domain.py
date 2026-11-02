@@ -29,9 +29,14 @@ def normalize_answer(text: str) -> str:
 
 @dataclass
 class HiveRound:
-    """One question, the list every player wrote for it, and what it scored."""
+    """One question, the list every player wrote for it, and what it scored.
+
+    `unique` is a "different" round: a word scores when nobody else wrote it.
+    Otherwise a word scores when somebody else did.
+    """
     question: str
     answers: dict[str, list[str]] = field(default_factory=dict)  # uid -> words as typed
+    unique: bool = False
 
     def words(self, uid: str) -> list[str]:
         """This player's non-empty words, in cell order."""
@@ -53,10 +58,23 @@ class HiveRound:
                 for index, word in enumerate(words)
                 if (normalized := normalize_answer(word)) and len(owners[normalized]) > 1}
 
+    def scored_positions(self) -> set[tuple[str, int]]:
+        """Cells that earn a point on this round. A same-round pays for a shared word,
+        a different-round pays for a word nobody else wrote."""
+        owners = self.owners()
+        scored = set()
+        for uid, words in self.answers.items():
+            for index, word in enumerate(words):
+                normalized = normalize_answer(word)
+                if not normalized: continue
+                shared = len(owners[normalized]) > 1
+                if shared != self.unique: scored.add((uid, index))
+        return scored
+
     def points(self) -> dict[str, int]:
-        """A point for every word of yours that somebody else also wrote."""
+        """A point for every cell of yours that scored this round."""
         scored = defaultdict(int)
-        for uid, _ in self.matched_positions(): scored[uid] += 1
+        for uid, _ in self.scored_positions(): scored[uid] += 1
         return dict(scored)
 
     def matches(self) -> dict[str, list[str]]:
@@ -82,6 +100,7 @@ class HiveMindState:
     answers: dict[str, list[str]] = field(default_factory=dict)
     ready: set[str] = field(default_factory=set)
     players: set[str] = field(default_factory=set)  # seated when the match started
+    alternate: bool = False  # round 1 same, round 2 different, and so on
     revealed: list[HiveRound] = field(default_factory=list)
     timer: Timer = field(default_factory=Timer)
     timer_token: int = 0
@@ -110,6 +129,10 @@ class HiveMindState:
 
     def all_ready(self, uids: list[str]) -> bool:
         return bool(uids) and all(uid in self.ready for uid in uids)
+
+    def round_is_unique(self) -> bool:
+        """Different-round: even rounds, and only when the host turned alternating on."""
+        return self.alternate and self.round_number % 2 == 0
 
     def deck(self) -> list[str]:
         """The questions this lobby plays, straight from the host's wordpack."""
@@ -158,8 +181,10 @@ class HiveMindState:
     def reveal(self) -> bool:
         """Close the open round and score it; `last()` is what the board then shows."""
         if self.phase != HivePhase.WRITING: return False
-        self.revealed.append(HiveRound(self.question, {uid: list(words)
-                                                      for uid, words in self.answers.items()}))
+        seated = set(self.players) | set(self.answers)
+        self.revealed.append(HiveRound(
+            self.question, {uid: self._six(self.answers.get(uid, [])) for uid in seated},
+            unique=self.round_is_unique()))
         self.answers.clear()
         self.ready.clear()
         self.phase = HivePhase.REVEAL
@@ -171,15 +196,21 @@ class HiveMindState:
         if self.phase != HivePhase.WRITING: return False
         return self.reveal()
 
+    @staticmethod
+    def _six(words) -> list[str]:
+        """Calibration always has six cells, so clearing one does not remove it."""
+        words = list(words)[:ANSWERS_PER_ROUND]
+        return words + [''] * (ANSWERS_PER_ROUND - len(words))
+
     def edit_word(self, uid: str, index: int, text: str) -> bool:
-        """Rewrite a word on the revealed round, so a paraphrase can be made to agree
-        (or a typo fixed) before the scores are taken as final."""
+        """Rewrite one of the six cells. Empty is a cell, not a deleted one."""
         text = ' '.join(str(text or '').split())
         played = self.last()
         if self.phase != HivePhase.REVEAL or not played or len(text) > ANSWER_MAX: return False
-        words = played.answers.get(uid)
-        if not words or not 0 <= index < len(words): return False
+        if uid not in played.answers or not 0 <= index < ANSWERS_PER_ROUND: return False
+        words = self._six(played.answers[uid])
         words[index] = text
+        played.answers[uid] = words
         return True
 
     def next_round(self) -> bool:
@@ -208,6 +239,11 @@ class HiveMindState:
         if not 0 <= seconds <= SECONDS_MAX: return False
         self.seconds = seconds
         self.arm_timer()
+        return True
+
+    def set_alternate(self, on: bool) -> bool:
+        if self.phase != HivePhase.WAITING: return False
+        self.alternate = bool(on)
         return True
 
     def arm_timer(self):

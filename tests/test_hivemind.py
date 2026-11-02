@@ -200,12 +200,13 @@ def test_the_reveal_marks_agreed_words_and_only_their_author_may_edit_them():
 
     host_view = to_xml(RevealBoard(members[0], lobby)), 'the host may rewrite every word'
     markup = host_view[0]
-    assert markup.count('data-matched="true"') == 2 and markup.count('data-matched="false"') == 2
+    assert markup.count('data-ui="hivemind-word"') == ANSWERS_PER_ROUND * 3, 'six cells each, empties included'
+    assert markup.count('data-matched="true"') == 2 and markup.count('data-matched="false"') == 16
     assert 'readonly' not in markup
     assert 'pizza' in markup
 
     other_player = to_xml(RevealBoard(members[1], lobby))
-    assert other_player.count('readonly') == 3, 'a player may only rewrite their own word'
+    assert other_player.count('readonly') == ANSWERS_PER_ROUND * 2, 'a player may only rewrite their own row'
 
 
 def test_the_winner_is_named_only_once_the_last_round_is_revealed():
@@ -225,6 +226,51 @@ def test_the_winner_is_named_only_once_the_last_round_is_revealed():
     assert 'Winner' not in markup
 
 
+def test_clearing_a_cell_keeps_all_six():
+    _, members, state = _playing('hive-six', {0: ['pizza'], 1: ['pizza']})
+    state.reveal()
+    uid = members[0].uid
+    assert len(state.last().answers[uid]) == ANSWERS_PER_ROUND
+    assert state.edit_word(uid, 0, '')
+    assert len(state.last().answers[uid]) == ANSWERS_PER_ROUND
+    assert state.edit_word(uid, 5, 'basil'), 'an empty cell can be filled during calibration'
+    assert state.last().answers[uid][5] == 'basil'
+
+
+def test_alternate_rounds_score_sames_then_differences():
+    state = HiveMindState(wordpack=WordPack(name='Qs', words_='one\ntwo'), seconds=0)
+    assert state.set_alternate(True) and state.set_total_rounds(2)
+    assert state.start(['a', 'b']) and not state.round_is_unique()
+    state.set_word('a', 0, 'pizza'), state.set_word('a', 1, 'basil')
+    state.set_word('b', 0, 'pizza')
+    state.reveal()
+    assert state.score('a') == 1 and state.score('b') == 1, 'only the shared word pays'
+    assert state.next_round() and state.round_is_unique()
+    state.set_word('a', 0, 'pizza'), state.set_word('a', 1, 'basil')
+    state.set_word('b', 0, 'pizza')
+    state.reveal()
+    assert state.score('a') == 2, 'basil was theirs alone on the different round'
+    assert state.score('b') == 1, 'pizza was shared, so it paid nothing the second time'
+
+
+def test_someone_finishing_updates_the_count_and_not_the_cells():
+    from meme_games.apps.hivemind.routes import render_hivemind
+    lobby, members, state = _playing('hive-race', {0: ['pizza'], 1: ['basil']}, players=3)
+    state.set_ready(members[2].uid)
+    markup = to_xml(render_hivemind({'status'}, members[0], lobby))
+    assert '1 of 3 done' in markup
+    assert 'data-ui="hivemind-cell"' not in markup and 'basil' not in markup
+
+    state.set_ready(members[0].uid), state.set_ready(members[1].uid)
+    revealed = to_xml(render_hivemind({'status'}, members[0], lobby))
+    assert 'data-ui="hivemind-word"' in revealed, 'the last ready closes the round for everyone'
+
+    state.edit_word(members[0].uid, 0, 'Pizza!')
+    sync = to_xml(render_hivemind({'edit'}, members[1], lobby))
+    assert 'hive-sync' in sync and 'id="game"' not in sync
+    assert 'Pizza!' in sync
+
+
 def test_the_scoreboard_and_chat_ride_on_the_left_of_the_board():
     lobby, members, state = _playing('hive-layout', {0: ['pizza']})
     markup = to_xml(Game(members[0], lobby))
@@ -239,6 +285,7 @@ def test_only_the_host_gets_settings_and_they_name_the_deck():
     markup = to_xml(HiveMindSettings(members[0], lobby))
     assert 'Prompts' in markup and 'data-ui="hivemind-deck"' in markup
     assert f'value="{DEFAULT_SECONDS}"' in markup, 'the clock is a host setting'
+    assert 'Alternate same / different' in markup and 'hive-alternate' in markup
 
 
 #------------------------------#

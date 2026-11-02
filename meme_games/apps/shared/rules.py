@@ -187,6 +187,10 @@ here, like Codenames and Alias. The app ships one called "Prompts". Rounds past
 the end of the deck start again from the top. Deck, rounds and clock can only
 change between games, not mid-match.
 
+"Alternate same / different" swaps the scoring every round. Round 1, 3, 5… pay
+for a shared word. Round 2, 4, 6… pay for a word nobody else wrote. Off, every
+round pays for a shared word.
+
 At least two players join the game, then the host starts it. The lobby locks
 while a match is running.
 
@@ -203,16 +207,15 @@ also close it early with "Reveal now".
 
 ## The reveal
 
-Every player's list goes on the board, each word marked:
+Every player's list goes on the board as six cells, empty ones included. On a
+same round a cell is marked when somebody else wrote that word. On a different
+round it is marked when nobody else did. Capitals, spacing and trailing
+punctuation do not matter. A marked cell is one point. An empty cell is never a
+point, and clearing a cell does not remove it.
 
-- marked: at least one other player wrote the same word (capitals, spacing and
-trailing punctuation do not matter) - one point each
-- unmarked: nobody else wrote it - no point
-
-A word that did not match on the letter can be rewritten right there, by its
-author or by the host: fix a typo, or reword a paraphrase so the table agrees it
-counts. The scores follow the words, so the board stays the single source of
-truth. The host then deals the next round.
+A cell can be rewritten right there, by its author or by the host: fix a typo,
+or reword a paraphrase so the table agrees it counts. The scores follow the
+words. The host then deals the next round.
 
 ## Playing well
 

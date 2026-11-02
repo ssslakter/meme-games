@@ -1,3 +1,5 @@
+from starlette.responses import Response
+
 from ..shared import *
 from ..shared.spectators import register_game_view
 from ..shared.ws_route import lobby_ws
@@ -57,10 +59,18 @@ async def set_word(req: Request, index: int, text: str):
 
 
 @rt
-async def set_ready(req: Request, is_ready: bool = True):
+async def set_ready(req: Request):
     lobby, _, p = pre_init(req)
-    try: await hivemind_actions.set_ready(lobby, p, is_ready)
+    raw = req.query_params.get('is_ready', 'true')
+    is_ready = str(raw).lower() not in ('0', 'false', 'no')
+    form = await req.form()
+    words = form.getlist('words') if is_ready and 'words' in form else None
+    try: await hivemind_actions.set_ready(lobby, p, is_ready, words)
     except ActionRejected as error: return rejected(req, error)
+    # Still writing: hand this player their own locked list. Everyone else only
+    # gets the count, so a keystroke they have not saved yet stays on screen.
+    if lobby.state.phase == HivePhase.WRITING: return AnswerArea(p, lobby)
+    return Response(status_code=204)
 
 
 @rt
@@ -94,9 +104,10 @@ async def restart_game(req: Request):
 
 @rt
 async def update_settings(req: Request, total_rounds: int = DEFAULT_ROUNDS,
-                          seconds: int = DEFAULT_SECONDS):
+                          seconds: int = DEFAULT_SECONDS, alternate: str = ''):
     lobby, _, p = pre_init(req)
-    try: await hivemind_actions.update_settings(lobby, p, total_rounds, seconds)
+    on = str(alternate).lower() in ('1', 'on', 'true')
+    try: await hivemind_actions.update_settings(lobby, p, total_rounds, seconds, on)
     except ActionRejected as error: return rejected(req, error)
 
 
@@ -130,11 +141,20 @@ def HiveMindView(reciever: LobbyMember | User, lobby: Lobby, **kwargs):
 register_game_view(HIVEMIND, HiveMindView)
 
 
+def render_hivemind(topics: set[str], reciever, lobby: Lobby):
+    """What one receiver is sent. An open round's 'ready' is only the count."""
+    if 'edit' in topics and 'game' not in topics: return RevealSync(lobby, oob=True)
+    writing = lobby.state.phase == HivePhase.WRITING
+    if 'status' in topics and 'game' not in topics and writing:
+        return Status(lobby, hx_swap_oob='outerHTML')
+    if topics & {'game', 'status'}:
+        return (Game(reciever, lobby, hx_swap_oob='true'),
+                HiveMindSettings(reciever, lobby, hx_swap_oob='outerHTML') if is_host(reciever) else None)
+
+
 def _render_hivemind_event(event: LobbyChanged, lobby: Lobby):
-    if event.game != HIVEMIND or 'game' not in event.topics: return
-    return notify_all(lobby, lambda r, *_: (
-        Game(r, lobby, hx_swap_oob='true'),
-        HiveMindSettings(r, lobby, hx_swap_oob='outerHTML') if is_host(r) else None))
+    if event.game != HIVEMIND or not event.topics & {'game', 'status', 'edit'}: return
+    return notify_all(lobby, lambda r, *_: render_hivemind(event.topics, r, lobby))
 
 
 lobby_events.subscribe(_render_hivemind_event)

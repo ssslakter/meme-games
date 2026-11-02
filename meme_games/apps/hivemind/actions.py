@@ -7,7 +7,7 @@ from meme_games.domain import Lobby as _Lobby, LobbyMember, LobbyService, is_hos
 from meme_games.apps.shared.actions import ActionRejected, ActionResult, GameActions
 from meme_games.apps.word_packs.domain import WordPackRepo
 
-from .domain import HIVEMIND, HiveMindState, HivePhase
+from .domain import ANSWER_MAX, ANSWERS_PER_ROUND, HIVEMIND, HiveMindState, HivePhase
 
 Lobby = _Lobby[HiveMindState]
 
@@ -53,21 +53,32 @@ class HiveMindActions(GameActions):
             return member is not None and member.is_player and state.set_word(member.uid, index, text)
         return await self._change(lobby, mutate, 'Word saved', (), 'Cannot save that word')
 
-    async def set_ready(self, lobby: Lobby, member: LobbyMember, is_ready: bool = True):
-        """The domain closes the round once every seated player is done."""
+    async def set_ready(self, lobby: Lobby, member: LobbyMember, is_ready: bool = True,
+                        words: list[str] | None = None):
+        """Save this player's list, then mark them done. The render step decides whether
+        that is a count change or the reveal: a full board swap while others are still
+        typing would wipe whatever they have not saved yet."""
         state: HiveMindState = lobby.state
         def mutate():
-            return member is not None and member.is_player and state.set_ready(member.uid, is_ready)
-        return await self._change(lobby, mutate, 'Ready' if is_ready else 'Not ready', 'game',
+            if member is None or not member.is_player: return False
+            if is_ready and words is not None:
+                cleaned = [' '.join(str(word or '').split()) for word in words[:ANSWERS_PER_ROUND]]
+                if any(len(word) > ANSWER_MAX for word in cleaned): return False
+                for index, word in enumerate(cleaned):
+                    if not state.set_word(member.uid, index, word): return False
+            return state.set_ready(member.uid, is_ready)
+        # 'status' while the round stays open, so the page only refreshes the count.
+        # The subscriber sends the whole board once the phase has left writing.
+        return await self._change(lobby, mutate, 'Ready' if is_ready else 'Not ready', 'status',
                                   'The round is already closed')
 
     async def edit_word(self, lobby: Lobby, member: LobbyMember, uid: str, index: int, text: str):
-        """Rewriting a word on the revealed round is how a paraphrase gets counted."""
+        """One cell. Published on its own so the other cells stay as the reader left them."""
         state: HiveMindState = lobby.state
         def mutate():
             if member is None or (member.uid != uid and not is_host(member)): return False
             return state.edit_word(uid, index, text)
-        return await self._change(lobby, mutate, 'Word edited', 'game',
+        return await self._change(lobby, mutate, 'Word edited', 'edit',
                                   "Only that word's author or the host can change it")
 
     async def advance(self, lobby: Lobby, member: LobbyMember):
@@ -112,14 +123,15 @@ class HiveMindActions(GameActions):
                                   'Cannot select that wordpack')
 
     async def update_settings(self, lobby: Lobby, member: LobbyMember, total_rounds: int,
-                              seconds: int):
+                              seconds: int, alternate: bool = False):
         """Between matches only, so neither the round count nor the clock can change
         under a match in play."""
         state: HiveMindState = lobby.state
         def mutate():
             if not is_host(member) or state.phase != HivePhase.WAITING: return False
             if not state.set_total_rounds(total_rounds): return False
-            return state.set_seconds(seconds)
+            if not state.set_seconds(seconds): return False
+            return state.set_alternate(alternate)
         return await self._change(lobby, mutate, 'Settings updated', 'game',
                                   'Rounds must be 1 to 20, seconds 0 to 900, and only between games')
 
