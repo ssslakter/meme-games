@@ -1,0 +1,50 @@
+meme_games/apps/shared/rules.py
+  s_6afb2663b5571c::t_cf47c602049843 190-193
+  s_6afb2663b5571c::t_2a0d27e4ed3696 210-214,216-218
+meme_games/apps/hivemind/components.py
+  s_6afb2663b5571c::t_37ff3e63f9a906 289-307
+  s_6afb2663b5571c::t_d75895f7eab1c3 260-263
+  s_6afb2663b5571c::t_c877421f142b3d 192-193,195-196
+  s_6afb2663b5571c::t_11e174c0dab989 78-107,115-116,122,124,126-127,133,136,138-139,141-142
+  s_6afb2663b5571c::t_d8bc563784ea74 1-2
+  s_6afb2663b5571c::t_150a217d2141e6 24-29,33,40,48,57,61,65-75
+  s_6afb2663b5571c::t_1a622aa388e0f5 76-77
+meme_games/apps/hivemind/routes.py
+  s_6afb2663b5571c::t_067f182948c013 107,109-110
+  s_6afb2663b5571c::t_d8bf4e4ee79cdd 144-154,156-157
+  s_6afb2663b5571c::t_605e89cc4e8359 62,64-68,70-73
+  s_6afb2663b5571c::t_8764049916a355 1-2
+tests/test_hivemind.py
+  s_6afb2663b5571c::t_a302300f5357e8 288
+  s_6afb2663b5571c::t_2fd940369b8e3d 203-204,209
+  s_6afb2663b5571c::t_11955fcc46642c 229-273
+meme_games/apps/hivemind/actions.py
+  s_6afb2663b5571c::t_46b113b1ac097c 10
+  s_6afb2663b5571c::t_4e026b1ba8b207 56-60,63-72,76,81
+  s_6afb2663b5571c::t_985515e33589cf 126,133-134
+meme_games/apps/hivemind/domain.py
+  s_6afb2663b5571c::t_c4489f447ee380 61-73,75,77
+  s_6afb2663b5571c::t_5b8b26cc4f1b83 184,186
+  s_6afb2663b5571c::t_07da3011fe1b12 103
+  s_6afb2663b5571c::t_15ba4e5e5179ac 32-36,39
+  s_6afb2663b5571c::t_0b184e1d8e4cd6 199-204,206,210-211,213
+  s_6afb2663b5571c::t_eaf5218846f3df 185,187
+  s_6afb2663b5571c::t_c71d7e6f5c8500 244-248
+  s_6afb2663b5571c::t_30d7cfba4499c5 133-136
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0f5e6218eb95b5489fda9b729cf4d5ab2adf4d67",
+  "prompts": {},
+  "sessions": {
+    "s_6afb2663b5571c": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "09ca3aa6-e08d-4f01-b8d5-1f8461009554",
+        "model": "grok-4.7"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
