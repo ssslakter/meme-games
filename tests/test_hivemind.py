@@ -96,7 +96,12 @@ def test_a_player_who_leaves_is_dropped_from_the_rounds_they_played():
 #------------- Rounds ----------#
 #-------------------------------#
 
-def test_rounds_run_out_and_a_short_deck_starts_over():
+def test_rounds_run_out_and_a_short_deck_is_shuffled_again(monkeypatch):
+    calls = []
+    def shuffle(items):
+        calls.append(list(items))
+        if len(calls) == 1: items.reverse()
+    monkeypatch.setattr('meme_games.apps.hivemind.domain.random.shuffle', shuffle)
     state = HiveMindState(wordpack=WordPack(name='Two', words_='one\ntwo'), seconds=0)
     assert state.set_total_rounds(3)
     assert state.start(['a', 'b'])
@@ -106,7 +111,8 @@ def test_rounds_run_out_and_a_short_deck_starts_over():
         state.set_word('a', 0, 'shared'), state.set_word('b', 0, 'shared')
         assert state.reveal()
         state.next_round()
-    assert questions == ['one', 'two', 'one'], 'the deck cycles'
+    assert questions == ['two', 'one', 'one'], 'shuffled, then shuffled again at the end of the deck'
+    assert len(calls) == 2
     assert state.finished and not state.next_round()
     assert state.score('a') == 3
 

@@ -183,8 +183,9 @@ wins.
 The host picks the deck, the number of rounds (5 by default) and the seconds per
 round (120 by default; 0 means no clock) in game settings. A deck is a wordpack -
 one question per line - so you can write your own under Word Packs and play it
-here, like Codenames and Alias. The app ships one called "Prompts". Rounds past
-the end of the deck start again from the top. Deck, rounds and clock can only
+here, like Codenames and Alias. The app ships one called "Prompts". The deck
+is shuffled when the match starts, and shuffled again once every question has
+been dealt. Deck, rounds and clock can only
 change between games, not mid-match.
 
 "Alternate same / different" swaps the scoring every round. Round 1, 3, 5… pay

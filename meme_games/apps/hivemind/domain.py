@@ -101,6 +101,8 @@ class HiveMindState:
     ready: set[str] = field(default_factory=set)
     players: set[str] = field(default_factory=set)  # seated when the match started
     alternate: bool = False  # round 1 same, round 2 different, and so on
+    order: list[str] = field(default_factory=list)  # the deck, shuffled for this match
+    dealt: int = 0
     revealed: list[HiveRound] = field(default_factory=list)
     timer: Timer = field(default_factory=Timer)
     timer_token: int = 0
@@ -146,17 +148,23 @@ class HiveMindState:
         self.players = set(uids)
         self.round_number = 0
         self.revealed.clear()
+        self._reshuffle()
         self._deal()
         self.phase = HivePhase.WRITING
         self.arm_timer()
         return True
 
+    def _reshuffle(self):
+        self.order = list(self.deck())
+        random.shuffle(self.order)
+        self.dealt = 0
+
     def _deal(self):
-        """The next question, cycling the deck when the host asked for more rounds than
-        it holds."""
-        deck = self.deck()
+        """The next question. Past the end of the deck, shuffle and deal again."""
+        if self.dealt >= len(self.order): self._reshuffle()
         self.round_number += 1
-        self.question = deck[(self.round_number - 1) % len(deck)]
+        self.question = self.order[self.dealt]
+        self.dealt += 1
         self.answers.clear()
         self.ready.clear()
 
@@ -227,6 +235,8 @@ class HiveMindState:
         self.answers.clear()
         self.ready.clear()
         self.players.clear()
+        self.order.clear()
+        self.dealt = 0
         self.revealed.clear()
         self.timer.stop()
 
