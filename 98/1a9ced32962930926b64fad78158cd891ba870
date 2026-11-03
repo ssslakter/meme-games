@@ -1,0 +1,33 @@
+tests/test_hivemind.py
+  s_3cccbfcf727521::t_9111beeec9ae6d 349-353
+  s_3cccbfcf727521::t_703edd7c8bdabc 356-373
+  s_3cccbfcf727521::t_fb8ad5f672c62a 354-355
+meme_games/apps/shared/rules.py
+  s_3cccbfcf727521::t_1dee9d0980483a 187-189
+  s_3cccbfcf727521::t_0ad7520c1cf257 195-198
+meme_games/apps/hivemind/domain.py
+  s_3cccbfcf727521::t_5aef2319f82205 220-223
+  s_3cccbfcf727521::t_2f0961546bba14 314-316
+meme_games/apps/hivemind/components.py
+  s_3cccbfcf727521::t_a5765dd0d5c26d 309,317,319,321,323,327
+  s_3cccbfcf727521::t_37931166524cc9 260-261,263
+meme_games/apps/hivemind/actions.py
+  s_3cccbfcf727521::t_d98dddba9a2bba 117,120-127
+  s_3cccbfcf727521::t_02219fe63be25c 135,138,144
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "981a9ced32962930926b64fad78158cd891ba870",
+  "prompts": {},
+  "sessions": {
+    "s_3cccbfcf727521": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "aa0495f3-79a9-4cc7-98c2-d89278ebe741",
+        "model": "grok-4.7"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
