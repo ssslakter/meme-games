@@ -1,0 +1,108 @@
+meme_games/apps/shared/navigation.py
+  s_3cccbfcf727521::t_e2766fc3498501 28-30
+meme_games/apps/hivemind/components.py
+  s_d33b4587887592::t_b1eaee24f89deb 111-113,119-123
+  s_d33b4587887592::t_30d4f8a1588ea6 352-353
+  s_3cccbfcf727521::t_22abe23121b4fa 21-54
+  s_3cccbfcf727521::t_e5aaf97d1ef3e8 367-369
+  s_3cccbfcf727521::t_a188531f2895ed 228
+  s_d33b4587887592::t_1063a70d0afa46 255-258,265,268,271,273-276,278,282-285,287-288,290-291,294,296-301
+  s_d33b4587887592::t_5327ef8e1ef352 61-62,67-68,70-73,80-81
+  s_3cccbfcf727521::t_7fe769a1b08154 238-239
+  s_3cccbfcf727521::t_911ae452302380 150-151
+  s_d33b4587887592::t_2f91a8dad56f25 313-314,319-320,324
+  s_3cccbfcf727521::t_06b0c811c09507 183-184
+  s_d33b4587887592::t_bd3a9c5c09fdfa 102
+  s_d33b4587887592::t_7d171847b03e76 321-323,325,327
+  s_d33b4587887592::t_f0c9084c33212d 55-60,69
+  s_d33b4587887592::t_1cd8b9e7830529 2
+  s_d33b4587887592::t_8fede5c6c5b865 105-106
+  s_3cccbfcf727521::t_ff6cf12fc565e7 236-237
+  s_d33b4587887592::t_7502839841b826 171
+meme_games/apps/hivemind/routes.py
+  s_d33b4587887592::t_af8a8ea77d778e 122,124,128,130,134,136
+  s_d33b4587887592::t_6bc532835a6291 108-110,113-114,116-117
+  s_d33b4587887592::t_480f2c058c9527 68-70
+  s_d33b4587887592::t_454aa2b48e82dd 59
+meme_games/apps/hivemind/actions.py
+  s_d33b4587887592::t_560d121dc67453 115-117,121-122,128-129,137,139
+meme_games/apps/shared/rules.py
+  s_d33b4587887592::t_aa61d5b17271a7 206-207
+  s_d33b4587887592::t_9f84b56533223c 217-220
+  s_d33b4587887592::t_62db6a95b661b4 203-205
+  s_d33b4587887592::t_a38dd63a8814a5 183-196
+meme_games/apps/word_packs/data/topics.txt
+  s_d33b4587887592::t_00e285c1135cd1 1-36
+static/styles/app.css
+  s_3cccbfcf727521::t_0e67cdf9f258f3 708-712
+static/styles/hivemind.css
+  s_d33b4587887592::t_ace6c705818903 34-40
+  s_3cccbfcf727521::t_07520da890f315 41-51
+meme_games/apps/hivemind/domain.py
+  s_d33b4587887592::t_9a6d8c60d9bd6c 48-53,56-58,67,70-71,78-79
+  s_d33b4587887592::t_7abd78e1a770b3 150-158,164-169,171-174
+  s_d33b4587887592::t_c559616bd63090 309-310,312-313
+  s_d33b4587887592::t_7f99593a32e661 247
+  s_d33b4587887592::t_27fed00d641f7d 181-183
+  s_d33b4587887592::t_8c38a48cf17081 103-104,110,114-117,119-120
+  s_d33b4587887592::t_0706899852b00f 16
+  s_d33b4587887592::t_d17f211ee415f8 194-207,209-210,214-221
+  s_d33b4587887592::t_0ecbcb91b40d5c 287,293-294
+  s_d33b4587887592::t_d4087e8be99b11 35-37,41-42
+  s_d33b4587887592::t_27d9eb75c1bc3f 2-3
+tests/test_word_packs.py
+  s_22564596f7be4b::t_542f5bc9dcc68f 12-25
+meme_games/apps/shared/utils.py
+  s_3cccbfcf727521::t_1506d9069bb5e2 44-50
+meme_games/apps/word_packs/components.py
+  s_22564596f7be4b::t_1bff8eacb01d46 93,97-99
+  s_22564596f7be4b::t_3448f46bbb6036 118
+tests/test_hivemind.py
+  s_3cccbfcf727521::t_45ee66579184ef 225,234-239
+  s_d33b4587887592::t_a70a61aad08453 343-348
+  s_d33b4587887592::t_0850d9413bbf3e 340,342
+  s_d33b4587887592::t_261e4977fec749 363-373
+  s_d33b4587887592::t_cbac1a64417f5a 253-262,267-268,275-305
+  s_d33b4587887592::t_69ee8c1568e5c1 81,84
+  s_d33b4587887592::t_40248982ac4bee 189
+  s_d33b4587887592::t_44b96cb512e3b6 188
+  s_3cccbfcf727521::t_cdd08c3ba95de8 331
+  s_d33b4587887592::t_29eae82198240b 306
+meme_games/apps/home/routes.py
+  s_3cccbfcf727521::t_e84b750ed5a7f2 65
+  s_3cccbfcf727521::t_c00c0cebb422ef 14,20-21,26
+meme_games/apps/word_packs/domain.py
+  s_d33b4587887592::t_83bb6a827db4ee 74-75
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "84f6d1b9a46cfe79609f21168da0ea8150b25e5b",
+  "prompts": {},
+  "sessions": {
+    "s_22564596f7be4b": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "f6834cdd-98d6-490b-ad2c-5fc413542127",
+        "model": "grok-4.7"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    },
+    "s_3cccbfcf727521": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "aa0495f3-79a9-4cc7-98c2-d89278ebe741",
+        "model": "grok-4.7"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    },
+    "s_d33b4587887592": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "4665a1c9-b5e4-4051-be62-d18e64a2f4bd",
+        "model": "grok-4.7"
+      },
+      "human_author": "Slava Chaunin <67190162+Ssslakter@users.noreply.github.com>"
+    }
+  }
+}
