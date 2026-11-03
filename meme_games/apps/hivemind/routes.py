@@ -56,6 +56,7 @@ async def set_word(req: Request, index: int, text: str):
     lobby, _, p = pre_init(req)
     try: await hivemind_actions.set_word(lobby, p, index, text)
     except ActionRejected as error: return rejected(req, error)
+    return Response(status_code=204)
 
 
 @rt
@@ -64,7 +65,9 @@ async def set_ready(req: Request):
     raw = req.query_params.get('is_ready', 'true')
     is_ready = str(raw).lower() not in ('0', 'false', 'no')
     form = await req.form()
-    words = form.getlist('words') if is_ready and 'words' in form else None
+    # cells are named `text`, which is also what a single cell posts as it is typed
+    key = 'text' if 'text' in form else 'words' if 'words' in form else None
+    words = form.getlist(key) if is_ready and key else None
     try: await hivemind_actions.set_ready(lobby, p, is_ready, words)
     except ActionRejected as error: return rejected(req, error)
     # Still writing: hand this player their own locked list. Everyone else only
@@ -102,31 +105,35 @@ async def restart_game(req: Request):
     except ActionRejected as error: return rejected(req, error)
 
 
+def _on(value: str) -> bool: return str(value).lower() in ('1', 'on', 'true')
+
+
 @rt
 async def update_settings(req: Request, total_rounds: int = DEFAULT_ROUNDS,
-                          seconds: int = DEFAULT_SECONDS, alternate: str = ''):
+                          seconds: int = DEFAULT_SECONDS, same: str = '',
+                          different: str = '', topics: str = ''):
     lobby, _, p = pre_init(req)
-    on = str(alternate).lower() in ('1', 'on', 'true')
-    try: await hivemind_actions.update_settings(lobby, p, total_rounds, seconds, on)
+    try: await hivemind_actions.update_settings(
+        lobby, p, total_rounds, seconds, _on(same), _on(different), _on(topics))
     except ActionRejected as error: return rejected(req, error)
 
 
 @rt
-def editor_readonly(req: Request, id: str):
+def editor_readonly(req: Request, id: str, slot: str = 'prompts'):
     _, state, member = pre_init(req)
-    return SelectEditor(member, wordpack_manager.get_by_id(id), state)
+    return SelectEditor(member, wordpack_manager.get_by_id(id), state, slot)
 
 
 @rt
-def pack_select(req: Request):
+def pack_select(req: Request, slot: str = 'prompts'):
     _, state, member = pre_init(req)
-    return PackSelectContents(member, state)
+    return PackSelectContents(member, state, slot)
 
 
 @rt
-async def select_pack(req: Request, id: str):
+async def select_pack(req: Request, id: str, slot: str = 'prompts'):
     lobby, _, p = pre_init(req)
-    try: await hivemind_actions.select_pack(lobby, p, id)
+    try: await hivemind_actions.select_pack(lobby, p, id, slot)
     except ActionRejected as error: return rejected(req, error)
 
 

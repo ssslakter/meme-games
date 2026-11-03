@@ -11,16 +11,19 @@ GAME_BLURBS = {
     "Alias": "Guess the words before time runs out!",
     "Codenames": "Give clever clues to find your team's words.",
     "Who Am I": "Ask yes/no questions to guess your identity.",
+    "Hive Mind": "Write the obvious answer. Matching the room is the whole point.",
 }
 
 
 def GameCard(title, desc, href):
     return A(
+        Span(UkIcon(GAME_ICONS.get(title, 'gamepad-2'), width=26, height=26),
+             cls="mg-game-card-icon mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl"),
         H2(title, cls="text-xl font-semibold mb-2 text-[color:hsl(var(--card-foreground))]"),
         P(desc, cls="text-sm text-[color:hsl(var(--muted-foreground))]"),
         href=href,
         cls=(
-            "mg-game-card mg-game-link p-6 rounded-xl shadow hover:shadow-lg transition "
+            "mg-game-card mg-game-link flex flex-col p-6 rounded-xl shadow hover:shadow-lg transition "
             "bg-[color:hsl(var(--card))] "
             "border border-[color:hsl(var(--border))]"
         ), data_ui='game-card'
@@ -59,7 +62,7 @@ def index():
                 Div(
                     *[GameCard(name, desc, page_url(PAGES_REGISTRY[name]))
                       for name, desc in GAME_BLURBS.items() if name in PAGES_REGISTRY],
-                    cls="mg-game-cards grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+                    cls="mg-game-cards grid gap-6 sm:grid-cols-2"
                 ),
                 cls=(
                     "max-w-5xl mx-auto px-4 py-12"

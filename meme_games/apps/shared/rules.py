@@ -180,27 +180,31 @@ wins.
 
 ## Setup
 
-The host picks the deck, the number of rounds (5 by default) and the seconds per
-round (120 by default; 0 means no clock) in game settings. A deck is a wordpack -
-one question per line - so you can write your own under Word Packs and play it
-here, like Codenames and Alias. The app ships one called "Prompts". The deck
-is shuffled when the match starts, and shuffled again once every question has
-been dealt. Deck, rounds and clock can only
-change between games, not mid-match.
+The host picks the decks, which round types are on, the number of rounds (5 by
+default) and the seconds per round (120 by default; 0 means no clock). A deck is
+a wordpack, one line per entry, so you can write your own under Word Packs.
+The app ships "Prompts" (one question a round) and "Topics" (six lines a round).
+Settings can only change between games, not mid-match.
 
-"Alternate same / different" swaps the scoring every round. Round 1, 3, 5… pay
-for a shared word. Round 2, 4, 6… pay for a word nobody else wrote. Off, every
-round pays for a shared word.
+Three round types, and a match cycles through the ones the host left on. With
+all three on, that is same, different, topics, same, different, topics. Same
+pays for a shared word. Different pays for a word nobody else wrote. Topics
+deals six lines from its own deck and pays when somebody else wrote the same
+word on that same line. The topic deck is shuffled once when the match starts,
+then each topics round takes the next six lines, so a line is not repeated
+until the deck runs out. The prompt deck is shuffled at the start and again
+once every question has been dealt.
 
 At least two players join the game, then the host starts it. The lobby locks
 while a match is running.
 
 ## A round
 
-A question goes up - something like "Name a pizza topping". You fill up to six
-cells with words. Each cell saves as you type and nobody else sees your list
-while the round is open: the board shows only how many players are done. Fill in
-what you have and press **Done**.
+A question goes up - something like "Name a pizza topping". On a topics round
+there are six of them, numbered, and each cell answers the line with that
+number. You fill up to six cells with words. Each cell saves as you type and
+nobody else sees your list while the round is open: the board shows only how
+many players are done. Fill in what you have and press **Done**.
 
 The round closes as soon as every player is done, or when the clock runs out,
 whichever comes first - so one player cannot hold the table up. The host can
@@ -210,9 +214,10 @@ also close it early with "Reveal now".
 
 Every player's list goes on the board as six cells, empty ones included. On a
 same round a cell is marked when somebody else wrote that word. On a different
-round it is marked when nobody else did. Capitals, spacing and trailing
-punctuation do not matter. A marked cell is one point. An empty cell is never a
-point, and clearing a cell does not remove it.
+round it is marked when nobody else did. On a topics round a cell is marked
+only when somebody else wrote that word on the same line. Capitals, spacing and
+trailing punctuation do not matter. A marked cell is one point. An empty cell
+is never a point, and clearing a cell does not remove it.
 
 A cell can be rewritten right there, by its author or by the host: fix a typo,
 or reword a paraphrase so the table agrees it counts. The scores follow the

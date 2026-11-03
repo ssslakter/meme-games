@@ -71,7 +71,8 @@ class WordPackRepo(DataRepository[WordPack]):
         '''The packs the app ships with: a word list, and a Hive Mind deck of prompts.
         A pack the user has edited (it has an author) is left alone.'''
         data = files('meme_games.apps.word_packs').joinpath('data')
-        for name, fname in (('Default', 'default.txt'), ('Prompts', 'prompts.txt')):
+        for name, fname in (('Default', 'default.txt'), ('Prompts', 'prompts.txt'),
+                             ('Topics', 'topics.txt')):
             words = data.joinpath(fname).read_text(encoding='utf-8')
             pack = self.find(name)
             if not pack:

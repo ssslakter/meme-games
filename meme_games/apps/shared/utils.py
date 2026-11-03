@@ -41,6 +41,13 @@ def lobby_state(req, game: str = None):
 
 # page name -> url, or a callable building one from a lobby id
 PAGES_REGISTRY: dict[str, str | Callable[[str], str]] = {}
+# lucide names, shared by the home cards and the "select game" menu
+GAME_ICONS = {
+    'Alias': 'megaphone',
+    'Codenames': 'fingerprint',
+    'Who Am I': 'venetian-mask',
+    'Hive Mind': 'brain-circuit',
+}
 # game key -> (display name, url builder), for switching the game of an existing lobby
 GAME_PAGES: dict[str, tuple[str, Callable[[str], str]]] = {}
 

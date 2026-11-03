@@ -705,3 +705,8 @@ html.dark .mg-theme-toggle-thumb {
 }
 .mg-word-pack-editor input[name="name"],
 .mg-word-pack-editor textarea { width: 100%; }
+
+[data-page="home"] .mg-game-card-icon {
+  color: hsl(var(--primary));
+  background: color-mix(in srgb, hsl(var(--primary)) 14%, transparent);
+}

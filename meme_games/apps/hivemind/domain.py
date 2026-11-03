@@ -1,6 +1,6 @@
 __all__ = ['HIVEMIND', 'HivePhase', 'HiveRound', 'HiveMindState', 'PROMPT_PACK',
-           'normalize_answer', 'ANSWERS_PER_ROUND', 'ANSWER_MAX', 'ROUNDS_MAX',
-           'DEFAULT_ROUNDS', 'SECONDS_MAX', 'DEFAULT_SECONDS']
+           'TOPIC_PACK', 'normalize_answer', 'ANSWERS_PER_ROUND', 'ANSWER_MAX',
+           'ROUNDS_MAX', 'DEFAULT_ROUNDS', 'SECONDS_MAX', 'DEFAULT_SECONDS']
 
 from collections import defaultdict
 
@@ -13,6 +13,7 @@ ANSWERS_PER_ROUND, ANSWER_MAX = 6, 60
 ROUNDS_MAX, DEFAULT_ROUNDS = 20, 5
 SECONDS_MAX, DEFAULT_SECONDS = 900, 120
 PROMPT_PACK = 'Prompts'  # the shipped deck of prompts a lobby plays by default
+TOPIC_PACK = 'Topics'    # one topic per line; a topics round deals six of them
 
 
 class HivePhase(Enum):
@@ -31,23 +32,30 @@ def normalize_answer(text: str) -> str:
 class HiveRound:
     """One question, the list every player wrote for it, and what it scored.
 
-    `unique` is a "different" round: a word scores when nobody else wrote it.
-    Otherwise a word scores when somebody else did.
+    `kind` is `same` (a word scores when somebody else wrote it), `different`
+    (when nobody else did), or `topics` (same scoring, but only within one row:
+    the six cells are six topics, and row 1 does not agree with row 2).
     """
     question: str
     answers: dict[str, list[str]] = field(default_factory=dict)  # uid -> words as typed
-    unique: bool = False
+    kind: str = 'same'
+    topics: list[str] = field(default_factory=list)
 
     def words(self, uid: str) -> list[str]:
         """This player's non-empty words, in cell order."""
         return [word for word in self.answers.get(uid, []) if word]
 
-    def owners(self) -> dict[str, set[str]]:
-        """Normalized word -> the players who wrote it."""
+    def _key(self, index: int, normalized: str):
+        return (index, normalized) if self.kind == 'topics' else normalized
+
+    def owners(self) -> dict:
+        """Normalized word -> the players who wrote it. On a topics round the key is
+        (row, word), so the same word on two different topics is not one answer."""
         owners = defaultdict(set)
         for uid, words in self.answers.items():
-            for word in words:
-                if normalized := normalize_answer(word): owners[normalized].add(uid)
+            for index, word in enumerate(words):
+                if normalized := normalize_answer(word):
+                    owners[self._key(index, normalized)].add(uid)
         return dict(owners)
 
     def matched_positions(self) -> set[tuple[str, int]]:
@@ -56,19 +64,19 @@ class HiveRound:
         owners = self.owners()
         return {(uid, index) for uid, words in self.answers.items()
                 for index, word in enumerate(words)
-                if (normalized := normalize_answer(word)) and len(owners[normalized]) > 1}
+                if (normalized := normalize_answer(word)) and len(owners[self._key(index, normalized)]) > 1}
 
     def scored_positions(self) -> set[tuple[str, int]]:
-        """Cells that earn a point on this round. A same-round pays for a shared word,
-        a different-round pays for a word nobody else wrote."""
+        """Cells that earn a point. Same and topics pay for a shared word, different
+        pays for a word nobody else wrote. Topics only compare a cell with that same row."""
         owners = self.owners()
         scored = set()
         for uid, words in self.answers.items():
             for index, word in enumerate(words):
                 normalized = normalize_answer(word)
                 if not normalized: continue
-                shared = len(owners[normalized]) > 1
-                if shared != self.unique: scored.add((uid, index))
+                shared = len(owners[self._key(index, normalized)]) > 1
+                if shared != (self.kind == 'different'): scored.add((uid, index))
         return scored
 
     def points(self) -> dict[str, int]:
@@ -92,17 +100,24 @@ class HiveMindState:
     """
     wordpack: Optional[WordPack] = field(
         default_factory=lambda: DI.get(WordPackRepo).find(PROMPT_PACK))
+    topicpack: Optional[WordPack] = field(
+        default_factory=lambda: DI.get(WordPackRepo).find(TOPIC_PACK))
     total_rounds: int = DEFAULT_ROUNDS
     seconds: int = DEFAULT_SECONDS                        # 0 means no round timer
     phase: HivePhase = HivePhase.WAITING
     round_number: int = 0
     question: str = ''
+    round_topics: list[str] = field(default_factory=list)  # the six topics, this round only
     answers: dict[str, list[str]] = field(default_factory=dict)
     ready: set[str] = field(default_factory=set)
     players: set[str] = field(default_factory=set)  # seated when the match started
-    alternate: bool = False  # round 1 same, round 2 different, and so on
-    order: list[str] = field(default_factory=list)  # the deck, shuffled for this match
+    same: bool = True
+    different: bool = False
+    topics: bool = False
+    order: list[str] = field(default_factory=list)  # the prompt deck, shuffled for this match
     dealt: int = 0
+    topic_order: list[str] = field(default_factory=list)  # shuffled once per match
+    topic_dealt: int = 0
     revealed: list[HiveRound] = field(default_factory=list)
     timer: Timer = field(default_factory=Timer)
     timer_token: int = 0
@@ -132,23 +147,40 @@ class HiveMindState:
     def all_ready(self, uids: list[str]) -> bool:
         return bool(uids) and all(uid in self.ready for uid in uids)
 
-    def round_is_unique(self) -> bool:
-        """Different-round: even rounds, and only when the host turned alternating on."""
-        return self.alternate and self.round_number % 2 == 0
+    def enabled_kinds(self) -> list[str]:
+        """Round types the host turned on, in the order a match cycles through them."""
+        kinds = [kind for kind, on in (('same', self.same), ('different', self.different),
+                                       ('topics', self.topics)) if on]
+        return kinds or ['same']
+
+    def round_kind(self) -> str:
+        kinds = self.enabled_kinds()
+        return kinds[(max(self.round_number, 1) - 1) % len(kinds)]
 
     def deck(self) -> list[str]:
         """The questions this lobby plays, straight from the host's wordpack."""
         return self.wordpack.words if self.wordpack else []
 
+    def topic_deck(self) -> list[str]:
+        return self.topicpack.words if self.topicpack else []
+
+    def _plays_prompts(self) -> bool:
+        return self.same or self.different or not self.topics
+
     def can_start(self, uids: list[str]) -> bool:
-        return self.phase == HivePhase.WAITING and len(uids) >= 2 and bool(self.deck())
+        if self.phase != HivePhase.WAITING or len(uids) < 2: return False
+        if self._plays_prompts() and not self.deck(): return False
+        if self.topics and len(self.topic_deck()) < ANSWERS_PER_ROUND: return False
+        return True
 
     def start(self, uids: list[str]) -> bool:
         if not self.can_start(uids): return False
         self.players = set(uids)
         self.round_number = 0
         self.revealed.clear()
-        self._reshuffle()
+        if self._plays_prompts(): self._reshuffle()
+        else: self.order, self.dealt = [], 0
+        if self.topics: self._shuffle_topics()
         self._deal()
         self.phase = HivePhase.WRITING
         self.arm_timer()
@@ -159,14 +191,34 @@ class HiveMindState:
         random.shuffle(self.order)
         self.dealt = 0
 
+    def _shuffle_topics(self):
+        """Once per match. Rounds then take the next six lines, so a topic is not
+        repeated until that list runs out."""
+        self.topic_order = list(self.topic_deck())
+        random.shuffle(self.topic_order)
+        self.topic_dealt = 0
+
+    def _take_topics(self) -> list[str]:
+        # shortcut: fewer than six lines left reshuffles the whole topic deck, so a line can repeat
+        if self.topic_dealt + ANSWERS_PER_ROUND > len(self.topic_order): self._shuffle_topics()
+        chunk = self.topic_order[self.topic_dealt:self.topic_dealt + ANSWERS_PER_ROUND]
+        self.topic_dealt += ANSWERS_PER_ROUND
+        return chunk
+
     def _deal(self):
-        """The next question. Past the end of the deck, shuffle and deal again."""
-        if self.dealt >= len(self.order): self._reshuffle()
+        """The next round. A prompt past the end of its deck is shuffled and dealt again.
+        A topics round takes the next six lines of the topic deck shuffled at the start."""
         self.round_number += 1
-        self.question = self.order[self.dealt]
-        self.dealt += 1
         self.answers.clear()
         self.ready.clear()
+        if self.round_kind() == 'topics':
+            self.question = ''
+            self.round_topics = self._take_topics()
+            return
+        self.round_topics = []
+        if self.dealt >= len(self.order): self._reshuffle()
+        self.question = self.order[self.dealt]
+        self.dealt += 1
 
     def set_word(self, uid: str, index: int, text: str) -> bool:
         """Save one cell of this player's list. Emptying a cell drops it."""
@@ -192,7 +244,7 @@ class HiveMindState:
         seated = set(self.players) | set(self.answers)
         self.revealed.append(HiveRound(
             self.question, {uid: self._six(self.answers.get(uid, [])) for uid in seated},
-            unique=self.round_is_unique()))
+            kind=self.round_kind(), topics=list(self.round_topics)))
         self.answers.clear()
         self.ready.clear()
         self.phase = HivePhase.REVEAL
@@ -232,11 +284,14 @@ class HiveMindState:
         self.phase = HivePhase.WAITING
         self.round_number = 0
         self.question = ''
+        self.round_topics = []
         self.answers.clear()
         self.ready.clear()
         self.players.clear()
         self.order.clear()
         self.dealt = 0
+        self.topic_order.clear()
+        self.topic_dealt = 0
         self.revealed.clear()
         self.timer.stop()
 
@@ -251,9 +306,11 @@ class HiveMindState:
         self.arm_timer()
         return True
 
-    def set_alternate(self, on: bool) -> bool:
+    def set_kinds(self, same: bool, different: bool, topics: bool) -> bool:
+        """Which round types play, in order same, different, topics. At least one."""
         if self.phase != HivePhase.WAITING: return False
-        self.alternate = bool(on)
+        if not (same or different or topics): return False
+        self.same, self.different, self.topics = bool(same), bool(different), bool(topics)
         return True
 
     def arm_timer(self):

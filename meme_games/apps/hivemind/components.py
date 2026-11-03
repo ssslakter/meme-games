@@ -1,4 +1,5 @@
 import json
+from types import SimpleNamespace
 
 from ..shared import *
 from ..user import *
@@ -17,23 +18,67 @@ def players(lobby: Lobby) -> list:
     return [member for member in lobby.sorted_members() if member.is_player]
 
 
+def _ranked(lobby: Lobby) -> list:
+    totals = lobby.state.totals()
+    return sorted(players(lobby), key=lambda member: (-totals.get(member.uid, 0), member.name))
+
+
+def _winners(lobby: Lobby) -> list:
+    """Tied for the top score once the match is over. A table that scored nothing has no winner."""
+    if not lobby.state.finished: return []
+    seated = _ranked(lobby)
+    totals = lobby.state.totals()
+    top = max((totals.get(member.uid, 0) for member in seated), default=0)
+    if not top: return []
+    return [member for member in seated if totals.get(member.uid, 0) == top]
+
+
+def outcome(lobby: Lobby) -> str:
+    winners = _winners(lobby)
+    if not lobby.state.finished: return ''
+    if not winners: return 'Nobody scored'
+    if len(winners) == 1: return f'{winners[0].name} wins!'
+    names = [member.name for member in winners]
+    return f'{", ".join(names[:-1])} and {names[-1]} tie!'
+
+
+def Result(lobby: Lobby):
+    """The end of the match, the same kind of line Codenames puts up when a team wins."""
+    title = outcome(lobby)
+    if not title: return None
+    return Card(H2(title, id='hivemind-result-title', cls='m-0'),
+                P('The host can start a new game.', cls=(TextT.muted, 'm-0')),
+                id='hivemind-result', cls='mg-panel text-center', body_cls='space-y-2 p-5',
+                data_ui='hivemind-result')
+
+
+# Shown on the round and next to the setting, so a player can tell the scoring without opening the rules.
+_KIND_LABEL = {
+    'same': 'Same — write what others will',
+    'different': 'Different — write what nobody else will',
+    'topics': 'Topics — match each line',
+}
+
+
 def Question(lobby: Lobby):
     state: HiveMindState = lobby.state
     if state.phase == HivePhase.WAITING: return None
     ticking = state.seconds and state.phase == HivePhase.WRITING
-    goal = None
-    if state.alternate:
-        unique = (state.last().unique if state.phase == HivePhase.REVEAL and state.last()
-                  else state.round_is_unique())
-        goal = Span('Different' if unique else 'Same', data_ui='hivemind-goal',
-                    cls='text-xs font-semibold uppercase tracking-wide')
+    played = state.last()
+    kind = played.kind if state.phase == HivePhase.REVEAL and played else state.round_kind()
+    goal = Span(_KIND_LABEL[kind], data_ui='hivemind-goal',
+                 cls='text-xs font-semibold uppercase tracking-wide')
+    topics = (Ol(*[Li(topic) for topic in state.round_topics],
+                 cls='m-0 list-decimal space-y-1 pl-6 text-left', data_ui='hivemind-topics')
+              if state.round_topics else None)
     return Div(
         Div(Span(f'{state.round_number} / {state.total_rounds}',
                  cls='text-xs uppercase tracking-wide opacity-60'),
             goal,
             CircleTimer(state.timer.time, total=state.timer.total) if ticking else None,
             cls='flex items-center justify-between gap-3'),
-        H2(state.question, cls='m-0 text-center'),
+        H2(state.question, cls='m-0 text-center') if state.question else None,
+        topics,
         id='hivemind-question', cls='space-y-2', data_ui='hivemind-question')
 
 
@@ -54,24 +99,28 @@ def AnswerArea(reciever: LobbyMember | User, lobby: Lobby):
     if state.phase != HivePhase.WRITING or not is_player(reciever): return None
     words = state.answers.get(reciever.uid, [])
     ready = state.is_ready(reciever.uid)
-    cells = [Input(name='words', value=words[index] if index < len(words) else '',
+    cells = [Input(name='text', value=words[index] if index < len(words) else '',
                    maxlength=ANSWER_MAX, autocomplete='off', readonly=ready,
                    placeholder=str(index + 1),
-                   hx_post=None if ready else set_word.to(index=index),
+                   # qp drops a falsy 0, so the first cell would post `index=` and never save
+                   hx_post=None if ready else set_word.to(index=str(index)),
                    hx_trigger=None if ready else 'input changed delay:400ms, blur',
                    hx_swap='none', cls=classes('uk-input w-full', 'opacity-60' if ready else None),
                    data_ui='hivemind-cell')
              for index in range(ANSWERS_PER_ROUND)]
-    grid = Div(*cells, cls='grid grid-cols-2 gap-2 sm:grid-cols-3')
+    # Outside the form: a cell posts only itself. Inside it, htmx would send every
+    # cell named text and the server would keep the last, empty one.
+    grid = Div(*cells, id='hivemind-cells', cls='grid grid-cols-2 gap-2 sm:grid-cols-3')
     if ready:
         controls = (grid, Button('Not done yet', hx_post=set_ready.to(is_ready='false'),
                                  hx_target='#hivemind-answers', hx_swap='outerHTML',
                                  cls=(ButtonT.default, 'w-full')))
     else:
-        # Done posts the cells themselves, so the last keystrokes are not lost to the debounce.
-        controls = (Form(grid, Button('Done', type='submit', cls=(ButtonT.primary, 'w-full')),
-                         hx_post=set_ready.to(is_ready='true'),
-                         hx_target='#hivemind-answers', hx_swap='outerHTML', cls='space-y-3'),)
+        # Done includes the cells, so the last keystrokes are not lost to the debounce.
+        controls = (grid, Form(Button('Done', type='submit', cls=(ButtonT.primary, 'w-full')),
+                               hx_post=set_ready.to(is_ready='true'),
+                               hx_include='#hivemind-cells',
+                               hx_target='#hivemind-answers', hx_swap='outerHTML'))
     return Div(*controls, id='hivemind-answers', cls='space-y-3', data_ui='hivemind-answer')
 
 
@@ -98,9 +147,8 @@ def RevealSync(lobby: Lobby, oob: bool = False):
         'cells': cells,
         'round': {member.uid: points.get(member.uid, 0) for member in players(lobby)},
         'total': {member.uid: totals.get(member.uid, 0) for member in players(lobby)},
-        'winners': [member.uid for member in players(lobby)
-                    if state.finished and totals.get(member.uid, 0)
-                    and totals.get(member.uid, 0) == max(totals.values(), default=0)],
+        'winners': [member.uid for member in _winners(lobby)],
+        'headline': outcome(lobby),
     })
     return Div(id='hive-sync', data_payload=payload, data_ui='hive-sync',
                hx_swap_oob='outerHTML' if oob else None,
@@ -120,7 +168,7 @@ def RevealBoard(reciever: LobbyMember | User, lobby: Lobby):
         editable = isinstance(reciever, LobbyMember) and (reciever.uid == uid or reciever.is_host)
         return Input(name='text', value=word, maxlength=ANSWER_MAX, readonly=not editable,
                      id=f'hive-word-{uid}-{index}',
-                     hx_post=edit_word.to(uid=uid, index=index) if editable else None,
+                     hx_post=edit_word.to(uid=uid, index=str(index)) if editable else None,
                      hx_trigger='input changed delay:400ms, blur' if editable else None,
                      hx_swap='none',
                      cls=classes('uk-input mg-hive-word',
@@ -132,7 +180,8 @@ def RevealBoard(reciever: LobbyMember | User, lobby: Lobby):
         uid = member.uid
         words = _slots(played.answers.get(uid, []))
         rows.append(Div(
-            Div(MemberName(reciever, member, cls='mg-hivemind-name'),
+            Div(UserInfo(reciever, member.user, member.is_connected, member.is_host,
+                         avatar_cls='h-8 w-8'),
                 Span(points.get(uid, 0), id=f'hive-round-{uid}', cls='tabular-nums font-semibold'),
                 cls='flex items-center justify-between gap-2'),
             Div(*[cell(uid, index, word) for index, word in enumerate(words)],
@@ -176,7 +225,7 @@ def Waiting(reciever: LobbyMember | User, lobby: Lobby):
 
 
 def Stage(reciever: LobbyMember | User, lobby: Lobby):
-    return Div(Question(lobby), Waiting(reciever, lobby), AnswerArea(reciever, lobby),
+    return Div(Result(lobby), Question(lobby), Waiting(reciever, lobby), AnswerArea(reciever, lobby),
                Status(lobby), RevealBoard(reciever, lobby), RoundControl(reciever, lobby),
                cls='mg-hive-stage mx-auto flex w-full max-w-3xl flex-col gap-4')
 
@@ -184,11 +233,10 @@ def Stage(reciever: LobbyMember | User, lobby: Lobby):
 def Scoreboard(reciever: LobbyMember | User, lobby: Lobby):
     state: HiveMindState = lobby.state
     totals = state.totals()
-    seated = sorted(players(lobby), key=lambda member: (-totals.get(member.uid, 0), member.name))
-    top = max((totals.get(member.uid, 0) for member in seated), default=0)
-    winners = {member.uid for member in seated
-               if state.finished and top and totals.get(member.uid, 0) == top}
-    rows = [Div(MemberName(reciever, member, cls='mg-hivemind-name'),
+    seated = _ranked(lobby)
+    winners = {member.uid for member in _winners(lobby)}
+    rows = [Div(UserInfo(reciever, member.user, member.is_connected, member.is_host,
+                         avatar_cls='h-8 w-8'),
                 Span(totals.get(member.uid, 0), id=f'hive-total-{member.uid}',
                      cls='tabular-nums font-semibold', data_ui='hive-total'),
                 cls='flex items-center justify-between gap-2',
@@ -204,43 +252,53 @@ def Scoreboard(reciever: LobbyMember | User, lobby: Lobby):
                 body_cls='space-y-3 p-4', data_ui='hivemind-scoreboard')
 
 
-def SelectEditor(member: LobbyMember | User, pack, state: HiveMindState):
+def _modal_id(slot: str) -> str: return 'pack-select' if slot == 'prompts' else 'topic-select'
+
+
+def SelectEditor(member: LobbyMember | User, pack, state: HiveMindState, slot: str = 'prompts'):
     from .routes import select_pack
     waiting = state.phase == HivePhase.WAITING
     allowed = is_host(member) and waiting
     label = ('Select this deck' if allowed else
              'Game in progress' if not waiting else 'Must be host to select')
     return WordPackEditor(pack, readonly=True,
-                          form_kwargs=dict(hx_post=select_pack, hx_swap='none'),
+                          form_kwargs=dict(hx_post=select_pack.to(slot=slot), hx_swap='none'),
                           submit_button=Button(label, disabled=not allowed),
                           cls='mg-pack-select-editor',
-                          hx_on__after_request="UIkit.modal('#pack-select').hide()")
+                          hx_on__after_request=f"UIkit.modal('#{_modal_id(slot)}').hide()")
 
 
-def PackSelectContents(member: LobbyMember | User, state: HiveMindState):
+def PackSelectContents(member: LobbyMember | User, state: HiveMindState, slot: str = 'prompts'):
     from .routes import editor_readonly
-    return Div(Div(PacksSelect(wordpack_manager.get_all(), editor_readonly,
-                               hx_target='#editor', hx_swap='outerHTML'),
+    pack = state.wordpack if slot == 'prompts' else state.topicpack
+    route = SimpleNamespace(to=lambda **kw: editor_readonly.to(slot=slot, **kw))
+    return Div(Div(PacksSelect(wordpack_manager.get_all(), route,
+                               hx_target=f'#{_modal_id(slot)} #editor', hx_swap='outerHTML'),
                    cls='mg-pack-select-list overflow-auto'),
-               SelectEditor(member, state.wordpack, state),
+               SelectEditor(member, pack, state, slot),
                ModalCloseButton(), cls='mg-pack-select-layout')
 
 
-def PackSelectButton(state: HiveMindState, **kwargs):
-    return Div(Button(UkIcon('book-open', cls='mr-2 shrink-0'), 'Question deck',
+def PackSelectButton(state: HiveMindState, slot: str = 'prompts', **kwargs):
+    pack = state.wordpack if slot == 'prompts' else state.topicpack
+    title = 'Question deck' if slot == 'prompts' else 'Topic deck'
+    return Div(Button(UkIcon('book-open', cls='mr-2 shrink-0'), title,
                       cls=(ButtonT.default, 'w-full justify-start'),
-                      data_uk_toggle='target: #pack-select'),
-               P(state.wordpack.name if state.wordpack else 'No deck selected',
+                      data_uk_toggle=f'target: #{_modal_id(slot)}'),
+               P(pack.name if pack else 'No deck selected',
                  cls=(TextT.muted, 'truncate text-sm')),
-               cls='space-y-1', data_ui='hivemind-deck', **kwargs)
+               cls='space-y-1', data_ui='hivemind-deck' if slot == 'prompts' else 'hivemind-topic-deck',
+               **kwargs)
 
 
-def PackSelectModal() -> FT:
+def PackSelectModal(slot: str = 'prompts') -> FT:
     from .routes import pack_select
-    return Modal(ModalTitle('Question deck'),
-                 Div(P('Loading wordpacks…', cls=TextT.muted), id='pack-select-content'),
-                 id='pack-select', hx_get=pack_select, hx_trigger='shown',
-                 hx_target='#pack-select-content', hx_swap='innerHTML', cls='mg-pack-select-modal')
+    modal_id = _modal_id(slot)
+    title = 'Question deck' if slot == 'prompts' else 'Topic deck'
+    return Modal(ModalTitle(title),
+                 Div(P('Loading wordpacks…', cls=TextT.muted), id=f'{modal_id}-content'),
+                 id=modal_id, hx_get=pack_select.to(slot=slot), hx_trigger='shown',
+                 hx_target=f'#{modal_id}-content', hx_swap='innerHTML', cls='mg-pack-select-modal')
 
 
 def HiveMindSettings(reciever: LobbyMember | User, lobby: Lobby, **kwargs):
@@ -252,17 +310,21 @@ def HiveMindSettings(reciever: LobbyMember | User, lobby: Lobby, **kwargs):
         Button('New game', hx_post=restart_game, hx_swap='none',
                hx_confirm='Clear the scores?', cls=(ButtonT.destructive, 'w-full'))
             if not waiting and not state.finished else None,
-        PackSelectButton(state),
+        PackSelectButton(state, 'prompts'),
+        PackSelectButton(state, 'topics'),
         Form(LabelInput('Rounds', name='total_rounds', type='number', min=1, max=ROUNDS_MAX,
                         value=str(state.total_rounds), disabled=not waiting),
              LabelInput('Seconds (0 = no clock)', name='seconds', type='number',
                         min=0, max=SECONDS_MAX, value=str(state.seconds), disabled=not waiting),
-             Div(CheckboxX(id='hive-alternate', name='alternate', value='1',
-                           checked=state.alternate, disabled=not waiting),
-                 FormLabel('Alternate same / different', fr='hive-alternate', cls='m-0'),
-                 cls='flex items-center gap-2'),
+             *[Div(CheckboxX(id=f'hive-{kind}', name=kind, value='1',
+                             checked=getattr(state, kind), disabled=not waiting),
+                   # disabled omits the box from a submit, so the stored tick rides along
+                   Input(type='hidden', name=kind, value='1') if not waiting and getattr(state, kind) else None,
+                   FormLabel(_KIND_LABEL[kind], fr=f'hive-{kind}', cls='m-0'),
+                   cls='flex items-center gap-2')
+               for kind in ('same', 'different', 'topics')],
              Button('Save', type='submit', disabled=not waiting, cls=(ButtonT.default, 'w-full')),
-             hx_post=update_settings, hx_swap='none', cls='space-y-2'),
+             hx_post=update_settings, hx_trigger='change, submit', hx_swap='none', cls='space-y-2'),
         id='hivemind-settings', cls='space-y-3', data_ui='hivemind-settings', **kwargs)
 
 
@@ -287,7 +349,8 @@ def MainBlock(reciever: LobbyMember | User, lobby: Lobby):
                   LobbyTools(reciever, lobby, HiveMindSettings(reciever, lobby), show_chat=False)),
         hx_ext='ws', ws_connect=ws_url, user=reciever, no_image=True,
         title=f'Hive Mind lobby: {lobby.id}', page='hivemind'),
-        PackSelectModal(),
+        PackSelectModal('prompts'),
+        PackSelectModal('topics'),
         # A cell you are typing in is not replaced. Everyone else sees the saved text.
         Script('''function hiveSync(raw) {
   const data = typeof raw === "string" ? JSON.parse(raw) : raw;
@@ -301,7 +364,9 @@ def MainBlock(reciever: LobbyMember | User, lobby: Lobby):
   const paint = (map, prefix) => { for (const uid in map || {}) {
     const el = document.getElementById(prefix + uid); if (el) el.textContent = map[uid]; } };
   paint(data.round, "hive-round-"); paint(data.total, "hive-total-");
-  if (!data.winners) return;
+  const title = document.getElementById("hivemind-result-title");
+  if (title && typeof data.headline === "string" && data.headline) title.textContent = data.headline;
+  if (!Array.isArray(data.winners)) return;
   document.querySelectorAll("[data-ui=hivemind-score-row]").forEach(row => {
     row.dataset.winner = data.winners.indexOf(row.dataset.uid) >= 0 ? "true" : "false"; });
 }'''))

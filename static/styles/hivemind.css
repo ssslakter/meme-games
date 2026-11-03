@@ -31,6 +31,24 @@
   }
 }
 
+/* A disabled tick is the theme's :checked mark with the control greyed out. Franken
+   draws that mark as a background image, and a disabled control drops it. */
+[data-page="hivemind"] .uk-checkbox:disabled:checked {
+  opacity: 1;
+  background-image: var(--uk-form-checkbox-image);
+}
+
+[data-page="hivemind"] [data-winner="true"] {
+  border-radius: .5rem;
+  outline: 2px solid hsl(var(--primary));
+  padding: .2rem .45rem;
+}
+
+[data-page="hivemind"] [data-winner="true"] .mg-user::after {
+  content: "🏆";
+  margin-left: .35rem;
+}
+
 [data-page="hivemind"] .mg-hive-word.mg-hive-match {
   border-color: hsl(var(--primary));
   background: hsl(var(--primary) / .12);

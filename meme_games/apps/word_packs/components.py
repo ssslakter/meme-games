@@ -90,10 +90,13 @@ def Packs(wordpacks: list[WordPack], author_id: str = ''):
 def WordPackEditor(wp: Optional[WordPack] = None,
                    readonly: bool = False,
                    disable_submit: bool = False,
-                   submit_button = Button("Save", cls=(ButtonT.primary, 'w-full')),
+                   submit_button = None,
                    form_kwargs = None,
                    **kwargs):
     from .routes import save
+    # A default Button() is one mutable object. disable_submit used to set
+    # disabled on it, and every later editor in the process kept that Save.
+    button = submit_button or Button("Save", cls=(ButtonT.primary, 'w-full'))
     editor_cls = kwargs.pop('cls', '')
     editor = Div(id="editor", cls=stringify(('mg-word-pack-editor', editor_cls)),
                  data_ui='word-pack-editor', **kwargs)
@@ -112,7 +115,7 @@ def WordPackEditor(wp: Optional[WordPack] = None,
             TextArea(wp.words_ , cls='resize-y whitespace-pre', name="words", 
                      placeholder='words', rows=min(max(len(wp.words), 5), 25), readonly=readonly),
             Div(
-                submit_button(disabled=True) if disable_submit else submit_button,
+                button(disabled=True) if disable_submit else button,
                 style="display: flex; flex-direction: row; gap: 10px;",
             ),
             style="display: flex; flex-direction: column; gap: 10px; align-items: stretch; width: 100%;",

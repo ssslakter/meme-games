@@ -78,10 +78,10 @@ def test_normalize_answer_ignores_case_spacing_and_trailing_punctuation():
 
 
 def test_revealing_empties_the_open_round():
-    _, _, state = _playing('hive-leak', {0: ['pizza'], 1: ['pizza']})
+    _, members, state = _playing('hive-leak', {0: ['pizza'], 1: ['pizza']})
     assert state.reveal()
     assert state.answers == {} and state.ready == set(), 'the reveal is the only record now'
-    assert state.last().words(list(state.last().answers)[0]) == ['pizza']
+    assert state.last().words(members[0].uid) == ['pizza']
 
 
 def test_a_player_who_leaves_is_dropped_from_the_rounds_they_played():
@@ -185,6 +185,8 @@ def test_the_open_round_never_shows_another_players_words():
     markup = to_xml(Game(members[0], lobby))
     assert 'truffle oil' not in markup and 'basil' not in markup
     assert markup.count('data-ui="hivemind-cell"') == ANSWERS_PER_ROUND
+    assert 'name="text"' in markup and 'set_word?index=0' in markup, 'the first cell saves itself, without Done'
+    assert 'write what others will' in markup, 'the round says whether to match'
     assert 'data-ui="hivemind-word"' not in markup, 'words only go on the board after a reveal'
     assert 'data-ui="hivemind-join"' not in markup, 'joining is over once the round has started'
 
@@ -220,7 +222,7 @@ def test_the_winner_is_named_only_once_the_last_round_is_revealed():
                                      rounds=2)
     state.reveal()
     assert not state.finished
-    assert 'Winner' not in to_xml(Game(members[0], lobby)), 'a match in play has no winner'
+    assert 'data-ui="hivemind-result"' not in to_xml(Game(members[0], lobby))
 
     assert state.next_round()
     for member in members: _write(state, member, ['x'])
@@ -229,7 +231,12 @@ def test_the_winner_is_named_only_once_the_last_round_is_revealed():
 
     markup = to_xml(Game(members[0], lobby))
     assert markup.count('data-winner="true"') == 2
-    assert 'Winner' not in markup
+    assert 'host-hive-winner and p0-hive-winner tie!' in markup
+
+    state.edit_word(members[0].uid, 0, 'unique')
+    revised = to_xml(Game(members[0], lobby))
+    assert 'p0-hive-winner wins!' in revised
+    assert 'tie!' not in revised
 
 
 def test_clearing_a_cell_keeps_all_six():
@@ -243,20 +250,59 @@ def test_clearing_a_cell_keeps_all_six():
     assert state.last().answers[uid][5] == 'basil'
 
 
-def test_alternate_rounds_score_sames_then_differences():
-    state = HiveMindState(wordpack=WordPack(name='Qs', words_='one\ntwo'), seconds=0)
-    assert state.set_alternate(True) and state.set_total_rounds(2)
-    assert state.start(['a', 'b']) and not state.round_is_unique()
+def test_enabled_kinds_cycle_same_different_then_topics(monkeypatch):
+    def shuffle(items): items.reverse()
+    monkeypatch.setattr('meme_games.apps.hivemind.domain.random.shuffle', shuffle)
+    topics = [f't{i}' for i in range(6)]
+    state = HiveMindState(wordpack=WordPack(name='Qs', words_='one\ntwo\nthree'),
+                          topicpack=WordPack(name='Ts', words_='\n'.join(topics)), seconds=0)
+    assert state.set_kinds(True, True, True) and state.set_total_rounds(3)
+    assert not state.set_kinds(False, False, False), 'a match needs a round type'
+    assert state.start(['a', 'b']) and state.round_kind() == 'same'
+    assert state.question == 'three' and state.round_topics == []
     state.set_word('a', 0, 'pizza'), state.set_word('a', 1, 'basil')
     state.set_word('b', 0, 'pizza')
     state.reveal()
     assert state.score('a') == 1 and state.score('b') == 1, 'only the shared word pays'
-    assert state.next_round() and state.round_is_unique()
+
+    assert state.next_round() and state.round_kind() == 'different' and state.question == 'two'
     state.set_word('a', 0, 'pizza'), state.set_word('a', 1, 'basil')
     state.set_word('b', 0, 'pizza')
     state.reveal()
     assert state.score('a') == 2, 'basil was theirs alone on the different round'
     assert state.score('b') == 1, 'pizza was shared, so it paid nothing the second time'
+
+    assert state.next_round() and state.round_kind() == 'topics' and state.question == ''
+    assert state.round_topics == list(reversed(topics))
+    state.set_word('a', 0, 'pepperoni'), state.set_word('a', 1, 'basil')
+    state.set_word('b', 1, 'basil'), state.set_word('b', 2, 'pepperoni')
+    state.reveal()
+    assert state.score('a') == 3 and state.score('b') == 2, 'pepperoni on another topic is not a match'
+    assert state.last().kind == 'topics'
+
+
+def test_topics_take_six_lines_from_one_shuffle(monkeypatch):
+    calls = []
+    def shuffle(items):
+        calls.append(list(items))
+        items.reverse()
+    monkeypatch.setattr('meme_games.apps.hivemind.domain.random.shuffle', shuffle)
+    lines = [f't{i}' for i in range(12)]
+    state = HiveMindState(topicpack=WordPack(name='Ts', words_='\n'.join(lines)), seconds=0)
+    assert state.set_kinds(False, False, True) and state.set_total_rounds(2)
+    assert state.start(['a', 'b'])
+    first = list(state.round_topics)
+    state.reveal()
+    assert state.next_round()
+    second = list(state.round_topics)
+    assert first == [f't{i}' for i in range(11, 5, -1)]
+    assert second == [f't{i}' for i in range(5, -1, -1)]
+    assert set(first).isdisjoint(second)
+    assert calls == [lines], 'the topic deck is shuffled once, then cut into sixes'
+
+    short = HiveMindState(topicpack=WordPack(name='Short', words_='only\ntwo'), seconds=0)
+    assert short.set_kinds(False, False, True)
+    assert not short.can_start(['a', 'b']), 'six topics a round needs six lines'
 
 
 def test_someone_finishing_updates_the_count_and_not_the_cells():
@@ -282,6 +328,7 @@ def test_the_scoreboard_and_chat_ride_on_the_left_of_the_board():
     markup = to_xml(Game(members[0], lobby))
     assert 'lg:grid-cols-[20rem_minmax(0,1fr)]' in markup
     assert markup.index('hivemind-scoreboard') < markup.index('chat-panel') < markup.index('hivemind-question')
+    assert markup.count('data-ui="avatar"') == 3, 'each seated player has a face on the scoreboard'
 
 
 def test_only_the_host_gets_settings_and_they_name_the_deck():
@@ -290,8 +337,15 @@ def test_only_the_host_gets_settings_and_they_name_the_deck():
     assert HiveMindSettings(members[1], lobby) is None
     markup = to_xml(HiveMindSettings(members[0], lobby))
     assert 'Prompts' in markup and 'data-ui="hivemind-deck"' in markup
+    assert 'Topics' in markup and 'data-ui="hivemind-topic-deck"' in markup
     assert f'value="{DEFAULT_SECONDS}"' in markup, 'the clock is a host setting'
-    assert 'Alternate same / different' in markup and 'hive-alternate' in markup
+    assert 'hive-same' in markup and 'hive-different' in markup and 'hive-topics' in markup
+    assert 'write what nobody else will' in markup and 'hx-trigger="change, submit"' in markup
+
+    lobby.state.set_kinds(True, True, False)
+    assert lobby.state.start([member.uid for member in members])
+    playing = to_xml(HiveMindSettings(members[0], lobby))
+    assert 'name="different"' in playing and 'checked' in playing, 'the tick survives the match'
 
 
 #------------------------------#
@@ -304,6 +358,17 @@ def _client(ip): return TestClient(app, client=(ip, 1), raise_server_exceptions=
 def _join(client, lobby_id, uid=None):
     client.get(f'/hivemind/{lobby_id}', headers=BROWSER)
     client.post('/hivemind/play', headers=BROWSER)
+
+
+def test_the_socket_delivers_a_round_to_the_other_player():
+    with _client('172.20.0.21') as host, _client('172.20.0.22') as guest:
+        _join(host, 'hive-ws'), _join(guest, 'hive-ws')
+        with guest.websocket_connect('/ws/hivemind') as ws:
+            ws.receive_text()
+            host.post('/hivemind/start_game', headers=BROWSER)
+            update = ws.receive_text()
+        assert 'data-phase="writing"' in update
+        assert 'write what others will' in update
 
 
 def test_a_full_game_over_http():

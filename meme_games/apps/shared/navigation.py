@@ -25,7 +25,9 @@ def Navbar(*args: Any, **kwargs: Any) -> FT:
         Button("Select game", cls=(ButtonT.primary, 'shrink-0 whitespace-nowrap px-5 py-2')),
         DropDownNavContainer(
             *[
-                Li(A(name, href=page_url(url), data_new_lobby='true',
+                Li(A(UkIcon(GAME_ICONS.get(name, 'gamepad-2'), width=18, height=18, cls='shrink-0'),
+                     Span(name), href=page_url(url), data_new_lobby='true',
+                     cls='inline-flex items-center gap-2',
                      _="on click call hideDropdowns()"))
                 for name, url in PAGES_REGISTRY.items()
             ]

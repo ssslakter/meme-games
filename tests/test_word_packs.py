@@ -9,6 +9,20 @@ HEADERS = {'user-agent': 'Mozilla/5.0 Firefox', 'HX-Request': 'true'}
 BROWSER = {'user-agent': 'Mozilla/5.0 Firefox'}
 
 
+def _save_button(html: str) -> str:
+    return html.split('>Save<', 1)[0].rsplit('<button', 1)[-1]
+
+
+def test_looking_at_someone_elses_pack_leaves_save_enabled():
+    with TestClient(app, client=('10.8.8.2', 1)) as client:
+        client.get('/word_packs', headers=BROWSER)
+        foreign = next(p for p in DI.get(WordPackRepo).get_all() if not p.author_id)
+        opened = client.post(f'/word_packs/editor?id={foreign.id}', headers=HEADERS)
+        assert opened.status_code == 200 and 'disabled' in _save_button(opened.text)
+        created = client.post('/word_packs/new_creation', headers=HEADERS)
+        assert created.status_code == 200 and 'disabled' not in _save_button(created.text)
+
+
 def test_words_from_upload_reads_common_txt_encodings():
     assert words_from_upload('кот\nпёс\n'.encode('utf-8')) == 'кот\nпёс\n'
     assert words_from_upload(b'\xef\xbb\xbfapple\npear\n') == 'apple\npear\n'
