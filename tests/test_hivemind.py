@@ -346,6 +346,31 @@ def test_only_the_host_gets_settings_and_they_name_the_deck():
     assert lobby.state.start([member.uid for member in members])
     playing = to_xml(HiveMindSettings(members[0], lobby))
     assert 'name="different"' in playing and 'checked' in playing, 'the tick survives the match'
+    assert 'disabled' in playing, 'a round being written keeps the settings it opened with'
+
+    lobby.state.reveal()
+    between = to_xml(HiveMindSettings(members[0], lobby))
+    assert 'disabled' not in between, 'between rounds the host can change the next one'
+
+
+def test_settings_changed_between_rounds_apply_to_the_next_one():
+    lobby, members, state = _playing('hive-between', {0: ['pizza'], 1: ['pizza']}, players=2, rounds=3)
+
+    async def change(**kwargs):
+        await hivemind_actions.update_settings(lobby, members[0], **kwargs)
+
+    try:
+        asyncio.run(change(total_rounds=4, seconds=45, same=True, different=True, topics=True))
+        raise AssertionError('an open round keeps the settings it started with')
+    except ActionRejected:
+        pass
+    assert state.total_rounds == 3 and not state.topics
+
+    state.reveal()
+    asyncio.run(change(total_rounds=4, seconds=45, same=True, different=False, topics=True))
+    assert state.total_rounds == 4 and state.seconds == 45 and state.topics and not state.different
+    assert state.next_round() and state.round_kind() == 'topics'
+    assert state.phase == HivePhase.WRITING and state.timer.total == 45
 
 
 #------------------------------#

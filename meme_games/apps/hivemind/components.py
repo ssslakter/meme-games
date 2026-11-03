@@ -257,10 +257,10 @@ def _modal_id(slot: str) -> str: return 'pack-select' if slot == 'prompts' else 
 
 def SelectEditor(member: LobbyMember | User, pack, state: HiveMindState, slot: str = 'prompts'):
     from .routes import select_pack
-    waiting = state.phase == HivePhase.WAITING
-    allowed = is_host(member) and waiting
+    open = state.phase != HivePhase.WRITING
+    allowed = is_host(member) and open
     label = ('Select this deck' if allowed else
-             'Game in progress' if not waiting else 'Must be host to select')
+             'Round in progress' if not open else 'Must be host to select')
     return WordPackEditor(pack, readonly=True,
                           form_kwargs=dict(hx_post=select_pack.to(slot=slot), hx_swap='none'),
                           submit_button=Button(label, disabled=not allowed),
@@ -306,6 +306,7 @@ def HiveMindSettings(reciever: LobbyMember | User, lobby: Lobby, **kwargs):
     from .routes import restart_game, update_settings
     state: HiveMindState = lobby.state
     waiting = state.phase == HivePhase.WAITING
+    open = state.phase != HivePhase.WRITING
     return Div(
         Button('New game', hx_post=restart_game, hx_swap='none',
                hx_confirm='Clear the scores?', cls=(ButtonT.destructive, 'w-full'))
@@ -313,17 +314,17 @@ def HiveMindSettings(reciever: LobbyMember | User, lobby: Lobby, **kwargs):
         PackSelectButton(state, 'prompts'),
         PackSelectButton(state, 'topics'),
         Form(LabelInput('Rounds', name='total_rounds', type='number', min=1, max=ROUNDS_MAX,
-                        value=str(state.total_rounds), disabled=not waiting),
+                        value=str(state.total_rounds), disabled=not open),
              LabelInput('Seconds (0 = no clock)', name='seconds', type='number',
-                        min=0, max=SECONDS_MAX, value=str(state.seconds), disabled=not waiting),
+                        min=0, max=SECONDS_MAX, value=str(state.seconds), disabled=not open),
              *[Div(CheckboxX(id=f'hive-{kind}', name=kind, value='1',
-                             checked=getattr(state, kind), disabled=not waiting),
+                             checked=getattr(state, kind), disabled=not open),
                    # disabled omits the box from a submit, so the stored tick rides along
-                   Input(type='hidden', name=kind, value='1') if not waiting and getattr(state, kind) else None,
+                   Input(type='hidden', name=kind, value='1') if not open and getattr(state, kind) else None,
                    FormLabel(_KIND_LABEL[kind], fr=f'hive-{kind}', cls='m-0'),
                    cls='flex items-center gap-2')
                for kind in ('same', 'different', 'topics')],
-             Button('Save', type='submit', disabled=not waiting, cls=(ButtonT.default, 'w-full')),
+             Button('Save', type='submit', disabled=not open, cls=(ButtonT.default, 'w-full')),
              hx_post=update_settings, hx_trigger='change, submit', hx_swap='none', cls='space-y-2'),
         id='hivemind-settings', cls='space-y-3', data_ui='hivemind-settings', **kwargs)
 

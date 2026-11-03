@@ -114,12 +114,17 @@ class HiveMindActions(GameActions):
 
     async def select_pack(self, lobby: Lobby, member: LobbyMember, pack_id: str,
                           slot: str = 'prompts'):
-        """Host-only, between matches. `topics` is the deck a topics round deals six lines from."""
+        """Host-only, before the match and between rounds. `topics` is the deck a topics round deals from."""
         pack = self.wordpacks.get_by_id(pack_id)
         def mutate():
-            if not is_host(member) or lobby.state.phase != HivePhase.WAITING or not pack: return False
-            if slot == 'topics': lobby.state.topicpack = pack
-            else: lobby.state.wordpack = pack
+            state: HiveMindState = lobby.state
+            if not is_host(member) or state.phase == HivePhase.WRITING or not pack: return False
+            if slot == 'topics':
+                state.topicpack = pack
+                if state.phase == HivePhase.REVEAL: state._shuffle_topics()
+            else:
+                state.wordpack = pack
+                if state.phase == HivePhase.REVEAL: state._reshuffle()
             return True
         return await self._change(lobby, mutate, 'Deck selected', 'game',
                                   'Cannot select that wordpack')
@@ -127,17 +132,16 @@ class HiveMindActions(GameActions):
     async def update_settings(self, lobby: Lobby, member: LobbyMember, total_rounds: int,
                               seconds: int, same: bool = False, different: bool = False,
                               topics: bool = False):
-        """Between matches only, so neither the round count nor the clock can change
-        under a match in play."""
+        """Before the match and between rounds. A round that is still being written keeps its clock."""
         state: HiveMindState = lobby.state
         def mutate():
-            if not is_host(member) or state.phase != HivePhase.WAITING: return False
+            if not is_host(member) or state.phase == HivePhase.WRITING: return False
             if not state.set_total_rounds(total_rounds): return False
             if not state.set_seconds(seconds): return False
             return state.set_kinds(same, different, topics)
         return await self._change(lobby, mutate, 'Settings updated', 'game',
                                   'Turn on at least one of same, different and topics. '
-                                  'Rounds must be 1 to 20, seconds 0 to 900, and only between games')
+                                  'Rounds must be 1 to 20, seconds 0 to 900, and only between rounds')
 
 
 hivemind_actions = HiveMindActions(DI.get(LobbyService), DI.get(WordPackRepo))

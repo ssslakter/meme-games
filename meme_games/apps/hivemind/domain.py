@@ -217,6 +217,10 @@ class HiveMindState:
             return
         self.round_topics = []
         if self.dealt >= len(self.order): self._reshuffle()
+        if not self.order:
+            # shortcut: an empty deck deals a blank prompt, refuse it when a pack is chosen
+            self.question = ''
+            return
         self.question = self.order[self.dealt]
         self.dealt += 1
 
@@ -307,8 +311,9 @@ class HiveMindState:
         return True
 
     def set_kinds(self, same: bool, different: bool, topics: bool) -> bool:
-        """Which round types play, in order same, different, topics. At least one."""
-        if self.phase != HivePhase.WAITING: return False
+        """Which round types play, in order same, different, topics. At least one.
+        Locked only while a round is being written; the next deal uses the new set."""
+        if self.phase == HivePhase.WRITING: return False
         if not (same or different or topics): return False
         self.same, self.different, self.topics = bool(same), bool(different), bool(topics)
         return True

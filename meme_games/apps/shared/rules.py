@@ -184,15 +184,18 @@ The host picks the decks, which round types are on, the number of rounds (5 by
 default) and the seconds per round (120 by default; 0 means no clock). A deck is
 a wordpack, one line per entry, so you can write your own under Word Packs.
 The app ships "Prompts" (one question a round) and "Topics" (six lines a round).
-Settings can only change between games, not mid-match.
+The host can change the decks, the round types, the number of rounds and the
+clock between rounds, once the answers are on the table. While everyone is
+still writing, those stay as they were when the round opened.
 
 Three round types, and a match cycles through the ones the host left on. With
 all three on, that is same, different, topics, same, different, topics. Same
 pays for a shared word. Different pays for a word nobody else wrote. Topics
 deals six lines from its own deck and pays when somebody else wrote the same
-word on that same line. The topic deck is shuffled once when the match starts,
-then each topics round takes the next six lines, so a line is not repeated
-until the deck runs out. The prompt deck is shuffled at the start and again
+word on that same line. The topic deck is shuffled once when the match starts, and again if the host
+picks another deck between rounds. Each topics round takes the next six lines,
+so a line is not repeated until the deck runs out. The prompt deck is shuffled
+at the start, again when the host picks another one between rounds, and again
 once every question has been dealt.
 
 At least two players join the game, then the host starts it. The lobby locks
